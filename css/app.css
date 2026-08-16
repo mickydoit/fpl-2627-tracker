@@ -273,6 +273,34 @@ table.players .proj { color: var(--accent); font-weight: 900; }
 }
 .bench-strip .shirt .slot { color: var(--cyan); }
 
+/* ---------- manual substitutions ---------- */
+/* Shirts are drag handles on mouse and touch alike. Scrolling is suppressed
+   per-drag in JS rather than with touch-action, so a swipe that starts on a
+   shirt still scrolls the page until the hold completes. */
+.shirt {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.shirt.dragging {
+  transform: scale(1.06);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  opacity: 0.9;
+  cursor: grabbing;
+  z-index: 5;
+}
+/* Legal target: lime outline. Illegal: dimmed, never highlighted. */
+.shirt.drop-ok { outline: 2px solid var(--lime); outline-offset: 2px; }
+.shirt.drop-no { opacity: 0.35; }
+.shirt.drop-hot {
+  outline: 3px solid var(--lime);
+  outline-offset: 3px;
+  transform: scale(1.04);
+}
+@media (prefers-reduced-motion: reduce) {
+  .shirt.dragging, .shirt.drop-hot { transform: none; }
+}
+
 /* ---------- ladder-style ranked lists ---------- */
 /* Ladder-style gradient rows. The gradient runs dark purple → light cyan, so
    text colour has to flip across the row: light on the left where the fill is

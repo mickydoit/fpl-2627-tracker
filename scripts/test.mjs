@@ -8,7 +8,7 @@ import {
   projectAll, poissonAtLeast, availability, inferGamesPlayed,
   teamDefence, upcomingByTeam, SQUAD_RULES,
 } from '../js/model.js';
-import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers } from '../js/optimiser.js';
+import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
 
 let failures = 0;
 let checks = 0;
@@ -18,6 +18,7 @@ const ok = (name, cond, detail = '') => {
   else { console.error(`  ✗ ${name} ${detail}`); failures++; }
 };
 const near = (a, b, tol = 1e-6) => Math.abs(a - b) < tol;
+const MIN_DEF = 3;
 
 console.log('\nPoisson');
 ok('P(X>=0) is 1', near(poissonAtLeast(3, 0), 1));
@@ -200,6 +201,69 @@ for (let trial = 0; trial < 40; trial++) {
   if (res.xi.length !== 11 || res.bench.length !== 4) { stressFails++; console.error(`  ✗ trial ${trial}: bad XI/bench split`); }
 }
 ok(`40 perturbed datasets all solve legally${nulls ? ` (${nulls} genuinely infeasible)` : ''}`, stressFails === 0, `${stressFails} bad`);
+
+/* ------------------------------------------------------------------ *
+ * manual substitutions — canSwap / splitXI
+ * ------------------------------------------------------------------ */
+console.log('\nManual substitutions');
+{
+  const sq = opt.squad;
+  const { xi: base } = bestXI(sq);
+  const inXI = (pos) => base.find((p) => p.element_type === pos);
+  const onBench = (pos) => sq.find((p) => p.element_type === pos && !base.includes(p));
+
+  const gkOut = inXI(1), gkIn = onBench(1);
+  ok('keeper swaps with the reserve keeper', canSwap(gkOut, gkIn, base));
+
+  const outfieldBench = sq.find((p) => p.element_type !== 1 && !base.includes(p));
+  ok('keeper cannot be swapped for an outfielder', !canSwap(gkOut, outfieldBench, base));
+  ok('outfielder cannot take the keeper slot', !canSwap(outfieldBench, gkOut, base));
+
+  // A swap that changes formation is legal while the minimums hold.
+  const defsIn = base.filter((p) => p.element_type === 2).length;
+  const midBench = onBench(3);
+  const defOut = inXI(2);
+  if (midBench && defOut) {
+    ok('outfield swap allowed when minimums still hold',
+      canSwap(defOut, midBench, base) === (defsIn - 1 >= MIN_DEF), `defs ${defsIn}`);
+  }
+
+  // Strip to exactly the minimum and the next removal must be refused.
+  const threeDef = base.filter((p) => p.element_type === 2).slice(0, 3);
+  const minXI = [inXI(1), ...threeDef, ...base.filter((p) => p.element_type === 3).slice(0, 1),
+    ...base.filter((p) => p.element_type === 4).slice(0, 1)].filter(Boolean);
+  if (minXI.filter((p) => p.element_type === 2).length === 3 && midBench) {
+    ok('cannot drop below three defenders', !canSwap(threeDef[0], midBench, minXI));
+  }
+  const fwdInMin = minXI.find((p) => p.element_type === 4);
+  if (fwdInMin && midBench && minXI.filter((p) => p.element_type === 4).length === 1) {
+    ok('cannot drop the last forward', !canSwap(fwdInMin, midBench, minXI));
+  }
+
+  ok('a player cannot swap with himself', !canSwap(gkOut, gkOut, base));
+
+  // splitXI rebuilds a legal split from an explicit starter set.
+  const manual = splitXI(sq, base.map((p) => p.id));
+  ok('splitXI reproduces the same XI', manual.xi.length === 11
+    && manual.xi.every((p) => base.includes(p)));
+  ok('splitXI benches the rest', manual.bench.length === 4);
+  ok('splitXI keeps the reserve keeper in slot one', manual.bench[0].element_type === 1);
+  ok('splitXI names a captain from the XI', !!manual.captain && manual.xi.includes(manual.captain));
+  ok('splitXI reports the formation', /^\d-\d-\d$/.test(manual.formation));
+
+  // Applying a real swap round-trips into a legal XI.
+  if (gkOut && gkIn) {
+    const swapped = base.map((p) => (p === gkOut ? gkIn : p));
+    const after = splitXI(sq, swapped.map((p) => p.id));
+    ok('a completed keeper swap yields a legal XI',
+      after.xi.filter((p) => p.element_type === 1).length === 1 && after.xi.length === 11);
+    ok('the swapped-out keeper is now benched', after.bench.includes(gkOut));
+  }
+
+  ok('splitXI rejects a starter set that is not 11', splitXI(sq, [sq[0].id]) === null);
+  ok('splitXI rejects an illegal starter set',
+    splitXI(sq, sq.filter((p) => p.element_type !== 1).slice(0, 11).map((p) => p.id)) === null);
+}
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);
 process.exit(failures === 0 ? 0 : 1);

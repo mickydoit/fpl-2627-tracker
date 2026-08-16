@@ -52,11 +52,68 @@ export function bestXI(squad) {
     ...benched.filter((p) => p.element_type === 1),
     ...benched.filter((p) => p.element_type !== 1).sort((a, b) => b.proj - a.proj),
   ];
+  return dressXI(squad, xi);
+}
+
+/**
+ * Is an XI legal to field? Exactly one keeper, and the outfield minimums.
+ * This is the rule the manual-substitution UI enforces while dragging.
+ */
+export function legalXI(xi) {
+  if (xi.length !== 11) return false;
+  const c = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  for (const p of xi) c[p.element_type]++;
+  return c[1] === MIN_PLAY[1] && c[2] >= MIN_PLAY[2] && c[3] >= MIN_PLAY[3] && c[4] >= MIN_PLAY[4];
+}
+
+/**
+ * Build the bench, captain, vice and formation around a chosen XI. Shared by
+ * bestXI and splitXI so the bench ordering rule lives in exactly one place.
+ */
+function dressXI(squad, xi) {
+  const used = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  for (const p of xi) used[p.element_type]++;
+
+  // FPL benches the reserve keeper in its own slot — it is not part of the
+  // outfield autosub order. Keep the keeper first, then subs 1-3 by projection.
+  const benched = squad.filter((p) => !xi.includes(p));
+  const bench = [
+    ...benched.filter((p) => p.element_type === 1),
+    ...benched.filter((p) => p.element_type !== 1).sort((a, b) => b.proj - a.proj),
+  ];
   const captain = xi.reduce((best, p) => (!best || p.proj > best.proj ? p : best), null);
   const vice = xi.filter((p) => p !== captain).reduce((best, p) => (!best || p.proj > best.proj ? p : best), null);
 
   const formation = `${used[2]}-${used[3]}-${used[4]}`;
   return { xi, bench, captain, vice, formation };
+}
+
+/**
+ * May `out` (currently starting) be exchanged for `inc` (currently benched)?
+ *
+ * FPL only fixes the keeper: it is one of the two, never swapped for an
+ * outfielder. Everything else is legal as long as the resulting XI still
+ * holds the outfield minimums — which is how you change formation without
+ * making a transfer.
+ */
+export function canSwap(out, inc, xi) {
+  if (!out || !inc || out === inc || out.id === inc.id) return false;
+  const isGK = (p) => p.element_type === 1;
+  if (isGK(out) || isGK(inc)) return isGK(out) && isGK(inc);
+  if (!xi.includes(out) || xi.includes(inc)) return false;
+  return legalXI(xi.map((p) => (p === out ? inc : p)));
+}
+
+/**
+ * Split a 15 around an explicit set of starter ids — the manual XI the user
+ * has dragged into place. Returns null if those ids do not describe a legal
+ * XI, so a stale saved selection can never render an illegal team.
+ */
+export function splitXI(squad, starterIds) {
+  const want = new Set(starterIds);
+  const xi = squad.filter((p) => want.has(p.id));
+  if (xi.length !== want.size || !legalXI(xi)) return null;
+  return dressXI(squad, xi);
 }
 
 /** Objective: XI projection + captain again + a discounted bench. */
