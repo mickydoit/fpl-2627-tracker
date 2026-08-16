@@ -33,7 +33,7 @@ js/pages/*.js      one per page
 scripts/fetch-all.mjs    the Action's fetch step
 scripts/derive.mjs       re-runs the model server-side, fails the build on a bad squad
 scripts/make-sample.mjs  synthetic seed data, no network
-scripts/test.mjs         52 checks
+scripts/test.mjs         model + optimiser test suite
 scripts/build-pages.mjs  generates the six HTML shells
 data/manual/season-notes.json   hand-curated research; the workflow never touches it
 ```
@@ -84,7 +84,7 @@ Always compare optimiser and transfer-search at the **same** bank. Giving the tr
 ## Commands
 
 ```bash
-npm test      # seed data + 52 checks. Run this after touching model.js or optimiser.js
+npm test      # seed data + full check suite. Run this after touching model.js or optimiser.js
 npm run seed  # synthetic data, no network
 npm run refresh   # real fetch (needs network)
 npm run serve     # http://localhost:8080

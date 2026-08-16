@@ -19,7 +19,7 @@ Needs a Pro, Max, Team or Enterprise plan. The free Claude.ai tier doesn't inclu
 cd ~/Projects            # or wherever you keep code
 unzip ~/Downloads/fpl-2627-tracker.zip
 cd fpl-tracker
-git log --oneline        # three commits already here
+git log --oneline        # the history is already here
 ```
 
 The git history is committed, so there's nothing to stage.
@@ -30,7 +30,8 @@ The git history is committed, so there's nothing to stage.
 npm test
 ```
 
-52 checks, about 3 seconds, no network needed. If that passes, everything survived the move.
+Runs the model and optimiser checks in about three seconds, no network needed. It prints how many
+checks it ran and passes clean. If that passes, everything survived the move.
 
 ## 4. Start Claude Code
 

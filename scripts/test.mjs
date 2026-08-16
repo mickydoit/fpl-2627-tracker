@@ -11,7 +11,9 @@ import {
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers } from '../js/optimiser.js';
 
 let failures = 0;
+let checks = 0;
 const ok = (name, cond, detail = '') => {
+  checks++;
   if (cond) console.log(`  ✓ ${name}`);
   else { console.error(`  ✗ ${name} ${detail}`); failures++; }
 };
@@ -199,5 +201,5 @@ for (let trial = 0; trial < 40; trial++) {
 }
 ok(`40 perturbed datasets all solve legally${nulls ? ` (${nulls} genuinely infeasible)` : ''}`, stressFails === 0, `${stressFails} bad`);
 
-console.log(`\n${failures === 0 ? '✓ all checks passed' : `✗ ${failures} check(s) failed`}\n`);
+console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);
 process.exit(failures === 0 ? 0 : 1);

@@ -65,7 +65,7 @@ It needs write permission to commit the data back. **Settings → Actions → Ge
 ## Running it locally
 
 ```bash
-npm run test      # generates seed data, runs 52 checks on the model and optimiser
+npm run test      # generates seed data, runs the checks on the model and optimiser
 npm run seed      # synthetic data only, no network needed
 npm run refresh   # the real fetch (needs network access to the FPL and ESPN APIs)
 npm run serve     # http://localhost:8080
