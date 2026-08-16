@@ -12,6 +12,7 @@ import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
 import { snakePicks, replacementRank, buildBoard, assignTiers } from '../js/draft/board.js';
 import { ownershipFrom, availableRows, deriveSlot, myRoster, positionsNeeded } from '../js/draft/live.js';
 import { makeRng, picksBetween, survival } from '../js/draft/simulate.js';
+import { recommend } from '../js/draft/advise.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
 
 let failures = 0;
@@ -461,6 +462,44 @@ console.log('\nDraft survival simulation');
     survival(pool, 12, { seed: 7, trials: 300 }).get(1) <= s.get(1));
   ok('with no wait, everyone survives',
     survival(pool, 0, { seed: 7, trials: 50 }).get(1) === 1);
+}
+
+/* ------------------------------------------------------------------ *
+ * Draft recommendation
+ * ------------------------------------------------------------------ */
+console.log('\nDraft recommendation');
+{
+  // Two forwards worth 100, one certain to go, one certain to last.
+  const pool = [
+    { id: 1, element_type: 4, draft_rank: 1, vorp: 100 },
+    { id: 2, element_type: 4, draft_rank: 300, vorp: 98 },
+    { id: 3, element_type: 3, draft_rank: 2, vorp: 90 },
+    { id: 4, element_type: 3, draft_rank: 301, vorp: 88 },
+  ];
+  const rec = recommend(pool, { myPicks: [3, 10], currentPick: 3, roster: [], trials: 300 });
+
+  ok('every candidate is scored', rec.length === 4);
+  ok('candidates carry a survival probability',
+    rec.every((r) => r.survivalP >= 0 && r.survivalP <= 1));
+  ok('candidates carry a net value', rec.every((r) => Number.isFinite(r.netValue)));
+  ok('the list is sorted by net value',
+    rec.every((r, i) => i === 0 || rec[i - 1].netValue >= r.netValue));
+  ok('a player who will not last outranks an equal one who will',
+    rec[0].id === 1, `top was ${rec[0].id}`);
+
+  // A filled position is not recommended again.
+  const full = recommend(pool, {
+    myPicks: [3, 10], currentPick: 3, trials: 200,
+    roster: Array.from({ length: 3 }, () => ({ element_type: 4 })),
+  });
+  ok('a filled position drops out of the recommendation',
+    full.every((r) => r.element_type !== 4));
+
+  // With no later pick, timing is irrelevant and raw VORP wins.
+  const last = recommend(pool, { myPicks: [3], currentPick: 3, roster: [], trials: 200 });
+  ok('on the final pick the best player wins outright', last[0].id === 1);
+  ok('recommendation is deterministic',
+    recommend(pool, { myPicks: [3, 10], currentPick: 3, roster: [], trials: 300 })[0].id === rec[0].id);
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);
