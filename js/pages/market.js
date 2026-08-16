@@ -82,7 +82,7 @@ function render() {
     setKids(body, el('div', { class: 'notes' }, entries.map(([club, v]) =>
       el('div', { class: 'note' },
         el('h3', {}, club),
-        el('p', {}, el('strong', {}, 'Penalties: '), (v.pens || []).map((p, i) => el('span', {}, i === 0 ? el('strong', { style: 'color:var(--gold-light)' }, p) : p, i < v.pens.length - 1 ? ' → ' : '')) ),
+        el('p', {}, el('strong', {}, 'Penalties: '), (v.pens || []).map((p, i) => el('span', {}, i === 0 ? el('strong', { style: 'color:var(--accent)' }, p) : p, i < v.pens.length - 1 ? ' → ' : '')) ),
         v.corners?.length ? el('p', { class: 'small' }, el('span', { class: 'dim' }, 'Corners: '), v.corners.join(', ')) : null,
         v.note ? el('p', { class: 'small badge warn', style: 'display:block;padding:0.35rem 0.6rem' }, v.note) : null,
       ))));

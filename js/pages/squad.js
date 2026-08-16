@@ -112,7 +112,7 @@ function renderResult(ms) {
     title: `${p.first_name} ${p.second_name} — ${teams[p.team]?.name}`,
     onClick: () => showPlayer(p),
   },
-    isCap ? el('span', { class: 'arm' }, 'C') : isVice ? el('span', { class: 'arm', style: 'background:var(--panel-2);color:var(--gold-light)' }, 'V') : null,
+    isCap ? el('span', { class: 'arm' }, 'C') : isVice ? el('span', { class: 'arm vice' }, 'V') : null,
     el('span', { class: 'nm' }, p.web_name),
     el('span', { class: 'pr' }, fmt.price(p.now_cost)),
     el('span', { class: 'pt' }, fmt.pts(p.proj)),

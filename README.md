@@ -2,7 +2,7 @@
 
 A Fantasy Premier League tracker, squad optimiser and transfer suggester for the 2026/27 season. Static site on GitHub Pages, data pulled by a scheduled GitHub Action. No server, no database, no API keys.
 
-Same visual language as [World-Cup-Draft](https://github.com/mickydoit/World-Cup-Draft) — pitch green and gold, mobile-first.
+Built in the LBH Draft visual language, ported from the [WC Draft Figma file](https://www.figma.com/design/BkGUtiiNDfyw1IiSEqn3qD/WC-Draft) — acid lime, cyan and yellow on `#202123`, gradient ladder pills, heavy display type.
 
 ---
 
@@ -79,6 +79,35 @@ GitHub Actions (every 30 min)
 - The fetch aborts rather than committing a partial `bootstrap-static` — a truncated payload would silently poison every projection, and yesterday's snapshot beats that.
 - Files are only written when their content actually changes, hashed first. `bootstrap-static` is ~1.2 MB and mutates constantly; committing every run would bloat the repo without adding information.
 - `derive.mjs` re-runs the model server-side and fails the job if the optimiser produces an illegal squad, so a model regression breaks the build instead of quietly shipping bad advice.
+
+---
+
+## Design
+
+Ported from the WC Draft Figma file, node `82:138` (stats) and `11:18` (ladder). Tokens live at the top of `css/base.css`:
+
+| Token | Value | Where it comes from |
+|---|---|---|
+| `--bg` | `#202123` | page background |
+| `--surface` / `--border` | `#393939` / `#808080` | every card, 12px radius |
+| `--lime` `--cyan` `--yellow` | `#9fed00` `#8bffec` `#f4ff7b` | the three screen accents |
+| `--purple` → `--cyan` | `#510e93` → `#8bffec` | ladder-row gradient |
+| `--gold` → `--mint` | `#b4790a` → `#aaf9c7` | leader / captain rows |
+| `--pill` | `18.5px` | fully-rounded rows and buttons |
+
+**Each page owns an accent**, the way the Figma's ladder screen is cyan and its stats screen is lime. It's set with `data-accent` on `<body>` and everything downstream — top bar, page title, table headers, focus rings — follows from that one attribute.
+
+Two deliberate departures from the file:
+
+1. **The display font.** The design uses *FONTSPRING DEMO – PODIUM Sharp 4.13*, which is a demo licence and can't be redistributed in a public repo. **Anton** stands in — same heavy condensed uppercase character. If you license PODIUM Sharp, drop the webfont in `fonts/`, add an `@font-face`, and change `--font-display`. Nothing else needs touching.
+
+2. **Text colour flips across the gradient rows.** The gradient runs dark purple → light cyan, so a single text colour is unreadable at one end or the other. Labels on the left are white, values on the right are dark ink — which is what the Figma ladder does (white rank, purple points on the cyan end).
+
+Fonts are self-hosted from `fonts/` (~140 KB of woff2) rather than pulled from Google, so the site works offline and on locked-down networks with no third-party request and no flash of fallback type.
+
+Icons and the logo are the Figma file's own SVG exports, taken from the World-Cup-Draft repo's `assets/img/`.
+
+Page chrome is generated — edit `scripts/build-pages.mjs` and re-run it rather than editing the six HTML files by hand.
 
 ---
 

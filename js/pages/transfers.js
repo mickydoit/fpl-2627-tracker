@@ -146,7 +146,7 @@ function run() {
             el('h2', {}, 'Two-transfer combinations'),
             el('p', { class: 'hint' }, freeTransfers >= 2 ? 'Both free.' : `Costs a −${Math.max(0, 2 - freeTransfers) * 4} hit.`),
             el('div', {}, res.pairs.map((pair) =>
-              el('div', { style: 'border-bottom:1px solid var(--line);padding-bottom:0.4rem;margin-bottom:0.4rem' },
+              el('div', { style: 'border-bottom:1px solid var(--border-soft);padding-bottom:0.4rem;margin-bottom:0.4rem' },
                 pair.moves.map((m) => swapRow({ ...m, hit: 0, net: m.gain })),
                 el('p', { class: 'row between small', style: 'padding:0 0.75rem' },
                   el('span', { class: 'dim' }, 'Combined net'),
