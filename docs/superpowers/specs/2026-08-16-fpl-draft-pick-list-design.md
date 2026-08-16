@@ -207,10 +207,45 @@ Three views on one page, sharing state:
    `draft_rank` for comparison, and survival probability at your next pick.
 2. **Your picks** — each of your slots pre-computed, with a primary target and
    two fallbacks, and the expected board state when your turn arrives.
-3. **Live mode** — mark players as taken as the draft runs; the board, tiers,
-   replacement levels and survival odds all recompute immediately. This is the
-   view that gets used on the night, and it is the one that must be fast and
-   hard to misclick.
+3. **Live mode — the primary deliverable.** The board, tiers, replacement
+   levels and survival odds recompute as picks land. Everything else exists to
+   support this view.
+
+The draft slot is **not** a required input. It is derived: the manager picks
+their own name once from the league's entry list, and the slot falls out of the
+first round of picks.
+
+### Reading the live draft
+
+Two endpoints are public and need no authentication (verified 16 Aug 2026):
+
+- `GET /api/league/{league_id}/details` — `league_entries` (every manager),
+  scoring type, `draft_dt`, and `draft_pick_time_limit` (60 seconds).
+- `GET /api/draft/{league_id}/choices` — `choices` as picks land, and
+  `element_status`: all 587 players with an `owner` field.
+
+The Draft API sends no `Access-Control-Allow-Origin`, so the browser cannot
+call it — the same constraint that shapes v01. The scheduled Action is also
+useless here: it runs every 30 minutes against a 60-second pick clock.
+
+**Resolution: a local poller.** `npm run draft-live` runs a node script on the
+manager's own machine during the draft, polling `choices` every 5 seconds and
+writing `data/draft/live.json`, which the page reads same-origin. Node is not a
+browser, so CORS does not apply. The poller stops when `draft_status` leaves
+`live`. Polling is roughly 90 picks over an hour or two at 5-second intervals —
+modest, and well within the pick clock.
+
+**Fallback: manual entry.** If the manager is away from the laptop, players can
+be marked taken by hand. The board must work identically either way, so live
+state is modelled as a single `owner`-by-element map regardless of source.
+
+### What live state does to the simulation
+
+With the board state known exactly, we never simulate a whole draft. Only the
+opponent picks between the manager's current turn and their next need
+predicting — at most five in this league. That makes the simulation both
+cheaper and materially more accurate than the full-draft model originally
+specified, and it removes most of the calibration risk flagged below.
 
 League size and draft slot are inputs, defaulting to this league's 6 managers, so the board is usable before the
 slot is known.
