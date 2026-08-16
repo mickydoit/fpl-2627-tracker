@@ -121,7 +121,33 @@ replacement(pos) = projection of the (N * quota[pos] + 1)-th best player at pos
 VORP(player)     = projection(player) - replacement(player.position)
 ```
 
-For the default 8-manager league that is GKP #17, DEF #41, MID #41, FWD #25.
+**This league has 6 managers** (confirmed 16 Aug 2026), so replacement level is
+GKP #13, DEF #31, MID #31, FWD #19. The board defaults to 6; league size stays
+an input so the tool is not hardwired to one league.
+
+### What six managers does to the problem
+
+Six managers draft 90 of 587 players, leaving **497 in the free-agent pool**.
+That is a shallow draft, and it changes the advice in three ways:
+
+1. **Forwards are the scarce resource, and nothing else is close.** Measuring
+   the gap from the best player to replacement level at each position (using
+   2025/26 totals as a shape proxy): FWD 163, MID 110, DEF 94, GKP 57. Only 18
+   forwards are drafted and the curve behind them collapses; 30 midfielders and
+   30 defenders come off a much flatter curve. A board ranked on raw projection
+   would miss this entirely — it is exactly what VORP exists to surface.
+2. **Never draft a keeper early.** GKP #13 is still available as a free agent,
+   and the whole positional edge is worth 57 points across a season.
+3. **Mistakes are cheap.** With 497 players unowned, a bad pick is recoverable
+   on waivers. This argues against reaching, and against over-weighting the
+   survival simulation: the snake gaps are short (a maximum nine-pick wait, and
+   slots 5 and 6 pick almost back-to-back at the turn), so positional-run
+   pressure is far weaker than in a 10- or 12-manager league.
+
+Consequence for scope: the survival simulation stays in the design because it
+still informs the first three rounds, where the elite tier does run out. But it
+is explicitly the *secondary* signal here, and if it proves expensive to
+calibrate it should be cut before VORP or tiers are compromised.
 
 ### Tiers
 
@@ -133,9 +159,19 @@ which is the information VORP alone does not carry.
 
 ### Survival probability
 
-The snake gap is the whole problem. In an 8-manager league picking 3rd, your
-picks are 3, 14, 19, 30, 35, 46, 51, 62, 67, 78, 83, 94, 99, 110, 115 — an
-eleven-pick wait after your first.
+The snake gap is the whole problem. In this 6-manager league the pick sequences by slot are:
+
+```
+slot 1:  1, 12, 13, 24, 25, 36, 37, 48, 49, 60, 61, 72, 73, 84, 85
+slot 2:  2, 11, 14, 23, 26, 35, 38, 47, 50, 59, 62, 71, 74, 83, 86
+slot 3:  3, 10, 15, 22, 27, 34, 39, 46, 51, 58, 63, 70, 75, 82, 87
+slot 4:  4,  9, 16, 21, 28, 33, 40, 45, 52, 57, 64, 69, 76, 81, 88
+slot 5:  5,  8, 17, 20, 29, 32, 41, 44, 53, 56, 65, 68, 77, 80, 89
+slot 6:  6,  7, 18, 19, 30, 31, 42, 43, 54, 55, 66, 67, 78, 79, 90
+```
+
+Slot 1 waits longest between picks (1 to 12); slots 5 and 6 pick nearly
+back-to-back at each turn and so face the least uncertainty.
 
 Snake order, 1-indexed round `r` and slot `s` in a league of `N`:
 
@@ -176,8 +212,8 @@ Three views on one page, sharing state:
    view that gets used on the night, and it is the one that must be fast and
    hard to misclick.
 
-League size and draft slot are inputs, defaulting to 8 managers (the API's own
-`default_entries`) so the board is usable before the slot is known.
+League size and draft slot are inputs, defaulting to this league's 6 managers, so the board is usable before the
+slot is known.
 
 ## Testing
 
