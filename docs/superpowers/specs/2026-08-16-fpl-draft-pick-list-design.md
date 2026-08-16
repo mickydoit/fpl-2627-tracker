@@ -224,6 +224,20 @@ Two endpoints are public and need no authentication (verified 16 Aug 2026):
 - `GET /api/draft/{league_id}/choices` — `choices` as picks land, and
   `element_status`: all 587 players with an `owner` field.
 
+**Verified against a real completed draft (league 5, 4 managers, 60 picks) on
+17 Aug 2026.** Two facts that are easy to get wrong:
+
+- A choice object carries `choice_time, draft, element, entry, entry_name, id,
+  index, league, pick, player_first_name, player_last_name, round,
+  seconds_to_pick, was_auto`.
+- **`pick` is per-round, not a global pick number.** It never exceeds the league
+  size, and `round` is a separate field. A manager's slot is therefore the
+  `pick` of their `round === 1` choice — never inferred by comparing pick
+  numbers across rounds. Snake reversal is visible in the data: round 1 entry
+  order `[1077, 338, 5, 1131]`, round 2 exactly reversed.
+- `owner` in `element_status` is an integer entry id and is never `0`, so
+  truthiness checks on it are safe in practice.
+
 The Draft API sends no `Access-Control-Allow-Origin`, so the browser cannot
 call it — the same constraint that shapes v01. The scheduled Action is also
 useless here: it runs every 30 minutes against a 60-second pick clock.
