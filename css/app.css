@@ -257,6 +257,21 @@ table.players .proj { color: var(--accent); font-weight: 900; }
 }
 .bench-strip .shirt { background: linear-gradient(160deg, #3a3b3d, #55575a); color: var(--text); }
 .bench-strip .shirt .pt { color: var(--cyan); }
+/* Bench slot badge: the reserve keeper sits in its own slot, the outfield
+   subs are numbered in autosub order. Muted so it labels without competing
+   with the captain armband on the pitch above. */
+.shirt .slot {
+  align-self: center;
+  font-size: 0.55rem;
+  font-weight: 900;
+  background: rgba(32, 33, 35, 0.55);
+  color: var(--muted);
+  border-radius: 3px;
+  padding: 0 0.25rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.bench-strip .shirt .slot { color: var(--cyan); }
 
 /* ---------- ladder-style ranked lists ---------- */
 /* Ladder-style gradient rows. The gradient runs dark purple → light cyan, so

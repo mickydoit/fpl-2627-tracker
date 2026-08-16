@@ -107,11 +107,12 @@ function renderResult(ms) {
   const { squad, xi, bench, captain, vice, formation, cost, remaining, projected } = result;
   const check = validate(squad, budget);
 
-  const shirt = (p, isCap, isVice) => el('div', {
+  const shirt = (p, isCap, isVice, slot = null) => el('div', {
     class: `shirt ${isCap ? 'cap' : ''}`,
     title: `${p.first_name} ${p.second_name} — ${teams[p.team]?.name}`,
     onClick: () => showPlayer(p),
   },
+    slot ? el('span', { class: 'slot' }, slot) : null,
     isCap ? el('span', { class: 'arm' }, 'C') : isVice ? el('span', { class: 'arm vice' }, 'V') : null,
     el('span', { class: 'nm' }, p.web_name),
     el('span', { class: 'pr' }, fmt.price(p.now_cost)),
@@ -141,7 +142,11 @@ function renderResult(ms) {
       ),
       el('div', { class: 'pitch' },
         [1, 2, 3, 4].map(pitchRow).filter(Boolean),
-        el('div', { class: 'bench-strip' }, bench.map((p) => shirt(p, false, false))),
+        el('div', { class: 'bench-strip' }, (() => {
+          let sub = 0;
+          return bench.map((p) => shirt(p, false, false,
+            p.element_type === 1 ? POS[p.element_type] : `${++sub} · ${POS[p.element_type]}`));
+        })()),
       ),
     ),
     el('div', { class: 'card' },

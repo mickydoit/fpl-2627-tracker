@@ -45,7 +45,13 @@ export function bestXI(squad) {
     used[pos]++;
   }
 
-  const bench = squad.filter((p) => !xi.includes(p)).sort((a, b) => b.proj - a.proj);
+  // FPL benches the reserve keeper in its own slot — it is not part of the
+  // outfield autosub order. Keep the keeper first, then subs 1-3 by projection.
+  const benched = squad.filter((p) => !xi.includes(p));
+  const bench = [
+    ...benched.filter((p) => p.element_type === 1),
+    ...benched.filter((p) => p.element_type !== 1).sort((a, b) => b.proj - a.proj),
+  ];
   const captain = xi.reduce((best, p) => (!best || p.proj > best.proj ? p : best), null);
   const vice = xi.filter((p) => p !== captain).reduce((best, p) => (!best || p.proj > best.proj ? p : best), null);
 
