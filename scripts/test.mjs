@@ -469,21 +469,38 @@ console.log('\nDraft survival simulation');
  * ------------------------------------------------------------------ */
 console.log('\nDraft recommendation');
 {
-  // Two forwards worth 100, one certain to go, one certain to last.
+  // Four contenders plus filler, so the 6-pick gap cannot exhaust the pool.
+  // Ranks 1 and 2 are near-certain to be taken; ranks 300+ are near-certain
+  // to survive, which is what makes the timing logic observable.
   const pool = [
-    { id: 1, element_type: 4, draft_rank: 1, vorp: 100 },
-    { id: 2, element_type: 4, draft_rank: 300, vorp: 98 },
-    { id: 3, element_type: 3, draft_rank: 2, vorp: 90 },
-    { id: 4, element_type: 3, draft_rank: 301, vorp: 88 },
+    { id: 1, element_type: 4, draft_rank: 1, vorp: 100 },   // goes
+    { id: 2, element_type: 4, draft_rank: 300, vorp: 98 },  // lasts
+    { id: 3, element_type: 3, draft_rank: 2, vorp: 90 },    // goes
+    { id: 4, element_type: 3, draft_rank: 301, vorp: 88 },  // lasts
   ];
+  // Filler at keeper/defender so it absorbs opponent picks without changing
+  // the forward and midfield alternatives under test.
+  for (let i = 0; i < 20; i++) {
+    pool.push({ id: 100 + i, element_type: i % 2 ? 2 : 1, draft_rank: 10 + i, vorp: 20 - i });
+  }
   const rec = recommend(pool, { myPicks: [3, 10], currentPick: 3, roster: [], trials: 300 });
+  const rowFor = (id) => rec.find((r) => r.id === id);
 
-  ok('every candidate is scored', rec.length === 4);
+  ok('every candidate is scored', rec.length === pool.length);
   ok('candidates carry a survival probability',
     rec.every((r) => r.survivalP >= 0 && r.survivalP <= 1));
   ok('candidates carry a net value', rec.every((r) => Number.isFinite(r.netValue)));
   ok('the list is sorted by net value',
     rec.every((r, i) => i === 0 || rec[i - 1].netValue >= r.netValue));
+
+  // These two are the real test of the formula: they fail if netValue is
+  // just raw VORP, which is what the previous fixture could not detect.
+  ok('a player certain to survive scores near zero — passing costs nothing',
+    Math.abs(rowFor(2).netValue) < 0.5, `got ${rowFor(2).netValue}`);
+  ok('a player certain to be taken scores his edge over the next man up',
+    rowFor(1).netValue > 1 && rowFor(1).netValue < 4, `got ${rowFor(1).netValue}`);
+  ok('a top-ranked player is unlikely to survive the gap', rowFor(1).survivalP < 0.2);
+  ok('a deeply-ranked player is likely to survive the gap', rowFor(2).survivalP > 0.8);
   ok('a player who will not last outranks an equal one who will',
     rec[0].id === 1, `top was ${rec[0].id}`);
 
