@@ -10,6 +10,7 @@ import {
 } from '../js/model.js';
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
 import { snakePicks, replacementRank, buildBoard, assignTiers } from '../js/draft/board.js';
+import { ownershipFrom, availableRows, deriveSlot, myRoster, positionsNeeded } from '../js/draft/live.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
 
 let failures = 0;
@@ -379,6 +380,46 @@ console.log('\nDraft tiers');
 
   ok('tiers are numbered per position', assignTiers([...rows, ...even], 1.0)
     .filter((r) => r.element_type === 2).some((r) => r.tier === 1));
+}
+
+/* ------------------------------------------------------------------ *
+ * Draft live state
+ * ------------------------------------------------------------------ */
+console.log('\nDraft live state');
+{
+  const status = [
+    { element: 1, owner: null, status: 'a' },
+    { element: 2, owner: 55, status: 'o' },
+    { element: 3, owner: 77, status: 'o' },
+  ];
+  const own = ownershipFrom(status);
+  ok('ownership maps every element', own.size === 3);
+  ok('an unowned player maps to null', own.get(1) === null);
+  ok('an owned player maps to his entry', own.get(2) === 55);
+
+  const rows = [1, 2, 3, 4].map((id) => ({ id, element_type: 3, proj: 10, vorp: 1 }));
+  const avail = availableRows(rows, own);
+  ok('owned players drop out of the pool', avail.map((r) => r.id).join(',') === '1,4');
+  ok('a player absent from the map counts as available', avail.some((r) => r.id === 4));
+
+  // Six managers; entry 77 picked third, so slot 3.
+  const choices = [
+    { pick: 1, entry: 11 }, { pick: 2, entry: 22 }, { pick: 3, entry: 77 },
+    { pick: 4, entry: 44 },
+  ];
+  ok('the slot derives from the first-round pick', deriveSlot(choices, 77, 6) === 3);
+  ok('an unknown entry gives no slot', deriveSlot(choices, 999, 6) === null);
+  ok('an empty draft gives no slot', deriveSlot([], 77, 6) === null);
+
+  const roster = myRoster(
+    [{ id: 2, element_type: 1 }, { id: 3, element_type: 3 }], own, 77);
+  ok('the roster holds only my players', roster.length === 1 && roster[0].id === 3);
+
+  const need = positionsNeeded([{ element_type: 1 }, { element_type: 3 }]);
+  ok('needs count down from the quota', need[1] === 1 && need[3] === 4);
+  ok('an untouched position needs its full quota', need[2] === 5);
+  ok('needs never go negative', positionsNeeded(
+    Array.from({ length: 9 }, () => ({ element_type: 1 })))[1] === 0);
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);
