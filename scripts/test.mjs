@@ -11,6 +11,7 @@ import {
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
 import { snakePicks, replacementRank, buildBoard, assignTiers } from '../js/draft/board.js';
 import { ownershipFrom, availableRows, deriveSlot, myRoster, positionsNeeded } from '../js/draft/live.js';
+import { makeRng, picksBetween, survival } from '../js/draft/simulate.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
 
 let failures = 0;
@@ -424,6 +425,42 @@ console.log('\nDraft live state');
   ok('an untouched position needs its full quota', need[2] === 5);
   ok('needs never go negative', positionsNeeded(
     Array.from({ length: 9 }, () => ({ element_type: 1 })))[1] === 0);
+}
+
+/* ------------------------------------------------------------------ *
+ * Draft survival simulation
+ * ------------------------------------------------------------------ */
+console.log('\nDraft survival simulation');
+{
+  const rng = makeRng(42);
+  const first = [rng(), rng(), rng()];
+  const again = makeRng(42);
+  ok('the rng is deterministic for a seed',
+    [again(), again(), again()].join(',') === first.join(','));
+  ok('the rng stays in range', first.every((v) => v >= 0 && v < 1));
+
+  const myPicks = [3, 10, 15];
+  ok('six opponents pick between my first and second turn', picksBetween(3, myPicks) === 6);
+  ok('the count is taken from my current turn', picksBetween(10, myPicks) === 4);
+  ok('no further pick means nothing to wait for', picksBetween(15, myPicks) === Infinity);
+
+  // 30 players, draft_rank 1..30. Better ranks should be likelier to go.
+  const pool = Array.from({ length: 30 }, (_, i) => ({
+    id: i + 1, element_type: 3, draft_rank: i + 1, vorp: 100 - i,
+  }));
+  const s = survival(pool, 6, { seed: 7, trials: 300 });
+
+  ok('every available player gets a probability', s.size === 30);
+  ok('probabilities are probabilities',
+    [...s.values()].every((v) => v >= 0 && v <= 1));
+  ok('the best player is least likely to survive', s.get(1) < s.get(30));
+  ok('a deep player almost certainly survives six picks', s.get(30) > 0.9);
+  ok('the simulation is deterministic',
+    survival(pool, 6, { seed: 7, trials: 300 }).get(1) === s.get(1));
+  ok('waiting longer never improves survival',
+    survival(pool, 12, { seed: 7, trials: 300 }).get(1) <= s.get(1));
+  ok('with no wait, everyone survives',
+    survival(pool, 0, { seed: 7, trials: 50 }).get(1) === 1);
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);
