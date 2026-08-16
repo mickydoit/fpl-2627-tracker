@@ -1,0 +1,46 @@
+<svg viewBox="0 0 200 236" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LBH Club crest">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe9a8"/>
+      <stop offset="0.45" stop-color="#f5b731"/>
+      <stop offset="1" stop-color="#b9810c"/>
+    </linearGradient>
+    <linearGradient id="pitch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2aa15c"/>
+      <stop offset="1" stop-color="#0c4a29"/>
+    </linearGradient>
+  </defs>
+
+  <!-- shield -->
+  <path d="M100 6 L190 26 L190 116 C190 174 152 210 100 230 C48 210 10 174 10 116 L10 26 Z" fill="url(#gold)"/>
+  <path d="M100 16 L181 34 L181 116 C181 168 147 201 100 220 C53 201 19 168 19 116 L19 34 Z" fill="url(#pitch)"/>
+  <path d="M100 16 L181 34 L181 116 C181 168 147 201 100 220 C53 201 19 168 19 116 L19 34 Z" fill="none" stroke="#0a3a21" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- stars -->
+  <g fill="url(#gold)">
+    <path d="M78 32 l2.6 5.3 5.8 0.8 -4.2 4.1 1 5.8 -5.2 -2.7 -5.2 2.7 1 -5.8 -4.2 -4.1 5.8 -0.8 Z"/>
+    <path d="M100 26 l3 6.1 6.7 1 -4.85 4.7 1.15 6.7 -6 -3.15 -6 3.15 1.15 -6.7 -4.85 -4.7 6.7 -1 Z"/>
+    <path d="M122 32 l2.6 5.3 5.8 0.8 -4.2 4.1 1 5.8 -5.2 -2.7 -5.2 2.7 1 -5.8 -4.2 -4.1 5.8 -0.8 Z"/>
+  </g>
+
+  <!-- football -->
+  <circle cx="100" cy="92" r="30" fill="#ffffff" stroke="#0a3a21" stroke-width="2.5"/>
+  <g stroke="#10261a" stroke-width="2.4" fill="none" stroke-linecap="round">
+    <line x1="100" y1="80" x2="100" y2="62"/>
+    <line x1="111.4" y1="88.3" x2="128.5" y2="82.7"/>
+    <line x1="107.1" y1="101.7" x2="117.6" y2="116.3"/>
+    <line x1="92.9" y1="101.7" x2="82.4" y2="116.3"/>
+    <line x1="88.6" y1="88.3" x2="71.5" y2="82.7"/>
+  </g>
+  <polygon points="100,80 111.4,88.3 107.1,101.7 92.9,101.7 88.6,88.3" fill="#10261a"/>
+
+  <!-- name band -->
+  <path d="M22 150 L178 150 L170 184 L30 184 Z" fill="url(#gold)"/>
+  <path d="M22 150 L178 150 L170 184 L30 184 Z" fill="none" stroke="#8a5e08" stroke-width="1.5" opacity="0.5"/>
+  <text x="100" y="176" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif"
+        font-size="30" font-weight="800" fill="#0c4a29" letter-spacing="2">LBH</text>
+
+  <!-- year -->
+  <text x="100" y="206" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif"
+        font-size="15" font-weight="700" fill="url(#gold)" letter-spacing="3">2026</text>
+</svg>

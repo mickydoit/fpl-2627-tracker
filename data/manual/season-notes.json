@@ -1,0 +1,251 @@
+{
+  "updated": "2026-08-16",
+  "note": "Hand-curated research that no API exposes. Edit this file directly — the refresh workflow never overwrites it.",
+  "season": {
+    "first_deadline": "2026-08-21T17:30:00Z",
+    "first_fixture": "Arsenal v Coventry City, Fri 21 Aug 2026, 20:00 BST",
+    "window_closes": "2026-09-01T18:00:00Z",
+    "promoted": ["Coventry City", "Ipswich Town", "Hull City"],
+    "relegated_last_season": ["West Ham United", "Burnley", "Wolverhampton Wanderers"],
+    "champions_last_season": "Arsenal (85 pts)"
+  },
+
+  "rule_changes": [
+    {
+      "title": "Bonus Points System rebalanced",
+      "detail": "The tackle penalty is gone (players no longer lose 1 BPS for being tackled), clearances/blocks/interceptions now earn 1 BPS per three rather than per two, and goalkeeper saves are restructured: 3 BPS for an inside-box save, 2 for any other save, +1 for saving a big chance. A penalty save is 7 base +1 big chance = 8. Stated aim: reduce the overlap with defensive-contribution points and improve bonus prospects for keepers, full-backs and attackers.",
+      "impact": "Stationary centre-backs lose bonus upside. Attacking full-backs, shot-stopping keepers and dribblers gain. Reweight any 2025/26 bonus intuition accordingly.",
+      "source": "https://www.premierleague.com/news/4679946"
+    },
+    {
+      "title": "Defensive Contribution unchanged",
+      "detail": "Defenders still need 10 combined clearances, blocks, interceptions and tackles. Midfielders and forwards still need 12, with ball recoveries also counting. Worth 2 points, capped at 2 per match. Goalkeepers are ineligible. The widely predicted drop from 12 to 10 for midfielders did not happen.",
+      "impact": "High-volume defensive midfielders remain among the best points-per-million assets in the game.",
+      "source": "https://www.premierleague.com/news/4679873"
+    },
+    {
+      "title": "Live ranks and live bonus",
+      "detail": "Overall rank and mini-league standings now update in real time during matches, and projected bonus points appear after 20 minutes of each fixture rather than at full time.",
+      "source": "https://www.premierleague.com/news/4679873"
+    },
+    {
+      "title": "Later gameweek lockdown",
+      "detail": "Scores now finalise at 09:00 UK time the day after the gameweek's final match, rather than roughly an hour after the final whistle. This exists so late Opta corrections to defensive contributions and bonus can be applied.",
+      "impact": "Do not treat Sunday-evening points as final. Provisional bonus can still move overnight.",
+      "source": "https://www.premierleague.com/news/4679873"
+    },
+    {
+      "title": "Price changes move to midnight",
+      "detail": "Price changes now happen once daily at 00:00 UK time, up to ±£0.1m at a time and a maximum of £0.3m in any one gameweek. Wildcard transfers are excluded from the calculation. A new official Price Change Predictor shows each player's progress toward a change as a percentage, refreshed every 15 minutes.",
+      "source": "https://www.premierleague.com/news/4680462"
+    },
+    {
+      "title": "Chips: two sets of four, no Assistant Manager",
+      "detail": "Wildcard, Free Hit, Bench Boost and Triple Captain, each available twice — once before the GW19 deadline (2 Jan 2027) and once after. Bench Boost and Triple Captain can be played in GW1; Wildcard and Free Hit cannot (they start GW2). First-half chips do not carry over. Only one chip per gameweek. The Assistant Manager chip from 2025/26 has been removed, along with the Manager position.",
+      "source": "https://www.premierleague.com/news/4679879"
+    },
+    {
+      "title": "No extra AFCON transfers",
+      "detail": "The extra December free transfers granted in 2025/26 are not being repeated — the next Africa Cup of Nations is June/July 2027, outside the season.",
+      "source": "https://www.premierleague.com/news/4679873"
+    },
+    {
+      "title": "Free transfers still bank to five",
+      "detail": "One free transfer per gameweek, banking up to a maximum of five. Extra transfers cost 4 points each. Sell-on fee is 50% of any profit, rounded down to the nearest £0.1m; losses are borne in full.",
+      "source": "https://fantasy.premierleague.com/api/bootstrap-static/"
+    }
+  ],
+
+  "managers": [
+    {
+      "club": "Chelsea", "manager": "Xabi Alonso", "replaced": "Enzo Maresca",
+      "system": "3-4-3 / 3-4-2-1", "style": "Possession-heavy with a high press; Leverkusen averaged 62.1% possession.",
+      "fpl_angle": "The whole point of signing Geovany Quenda and Marco Palestra was to have attacking wing-backs in a back three — two brand-new defender assets with Palmer and Rogers ahead of them. Palmer inherits the ghosting inside-forward role. Prefers a dropping false nine to a target man.",
+      "beneficiaries": ["Cole Palmer", "Morgan Rogers", "Geovany Quenda", "Marco Palestra"],
+      "source": "https://www.premierleague.com/en/news/4677087/analysis-how-will-chelsea-look-under-alonso"
+    },
+    {
+      "club": "Manchester City", "manager": "Enzo Maresca", "replaced": "Pep Guardiola",
+      "system": "4-2-4 at restarts, 3-2-5 in settled possession", "style": "Inverted full-backs, deliberate 1v1 isolation for wide forwards.",
+      "fpl_angle": "Assists concentrate in the wide forwards; full-back attacking returns are suppressed because they invert rather than overlap. Semenyo had 4 assists in 3 pre-season games. Haaland remains the box finisher and takes penalties.",
+      "beneficiaries": ["Erling Haaland", "Antoine Semenyo", "Jérémy Doku"],
+      "avoid": ["City full-backs for attacking returns"],
+      "source": "https://www.squawka.com/en/features/enzo-maresca-manchester-city-pre-season-tactics/"
+    },
+    {
+      "club": "Liverpool", "manager": "Andoni Iraola", "replaced": "Arne Slot",
+      "system": "4-2-3-1 / 4-3-3", "style": "Transition rather than possession; press significantly higher than Slot; full-backs push high.",
+      "fpl_angle": "Explicit trade-off — more chances created, more defensive vulnerability. Liverpool clean sheets look riskier than the last two seasons while attacking returns look better. Wirtz moves into a central creative role. With Salah gone and Ekitiké out until 2027, Szoboszlai and Isak absorb the dead-ball and penalty value.",
+      "beneficiaries": ["Dominik Szoboszlai", "Florian Wirtz", "Alexander Isak"],
+      "avoid": ["Liverpool defenders as a set-and-forget clean-sheet block"],
+      "source": "https://readliverpoolfc.com/articles/what-liverpools-new-playing-style-already-reveals/"
+    },
+    {
+      "club": "Manchester United", "manager": "Michael Carrick", "replaced": "Rúben Amorim",
+      "system": "4-2-3-1 (used in 120 of 136 games at Middlesbrough)", "style": "Controlled possession but a mid/low block against stronger sides rather than an aggressive press.",
+      "fpl_angle": "The number 10 role is described as tailor-made for Matheus Cunha. No natural left-winger in the squad. Amad may be used as an attacking right-back. Bruno Fernandes keeps penalties but a Christmas-tree variant would push him to a number 8.",
+      "beneficiaries": ["Matheus Cunha", "Bruno Fernandes", "Benjamin Šeško"],
+      "source": "https://www.premierleague.com/en/news/4549172/analysis-how-will-man-utd-look-under-carrick"
+    },
+    {
+      "club": "Tottenham Hotspur", "manager": "Roberto De Zerbi", "replaced": "Thomas Frank (via Igor Tudor)",
+      "system": "4-3-3 / 4-2-3-1", "style": "Press and possess, goalkeeper-baiting build-up. In post since March 2026.",
+      "fpl_angle": "Ball-playing centre-backs Senesi and Van Hecke are the build-up base, Tonali holds, Maddison and Kulusevski are the creative conduit. Solanke has said publicly the style is great for attackers. Richarlison is on penalties.",
+      "beneficiaries": ["James Maddison", "Dejan Kulusevski", "Pedro Porro"],
+      "source": "https://themastermindsite.com/2026/08/06/how-roberto-de-zerbis-tottenham-hotspur-could-look-in-2026-27/"
+    },
+    {
+      "club": "Newcastle United", "manager": "Matthias Jaissle", "replaced": "Eddie Howe",
+      "system": "Narrow 4-4-2 with inverted wingers, or 4-2-3-1 building to 3-2-5", "style": "Red Bull DNA — high press, direct verticality; treats the keeper as a build-up player.",
+      "fpl_angle": "A fade until proven otherwise. Bruno Guimarães, Tonali, Gordon and Trippier all sold — that is penalties, corners, free-kicks and the captaincy gone in one summer. Two new goalkeepers signed means the number one spot is genuinely unsettled. Only about two weeks of preparation.",
+      "beneficiaries": ["Nick Woltemade (penalties)", "Lewis Hall (set pieces)"],
+      "avoid": ["Newcastle goalkeepers until the number one is confirmed"],
+      "source": "https://www.skysports.com/football/news/11678/13568347/"
+    },
+    {
+      "club": "Nottingham Forest", "manager": "Oliver Glasner", "replaced": "Vítor Pereira",
+      "system": "3-4-3 / 3-4-2-1", "style": "The Crystal Palace blueprint — wing-backs provide all the width, elite set-piece routines.",
+      "fpl_angle": "Neco Williams and Ola Aina are the systemic beneficiaries. Glasner's Palace were one of the best set-piece sides in the league; watch for the same pattern at the City Ground. Gibbs-White (15 PL goals last season) is the focal 10.",
+      "beneficiaries": ["Neco Williams", "Ola Aina", "Morgan Gibbs-White"],
+      "source": "https://www.squawka.com/en/news/nottingham-forest-premier-league-2026-27-preview/"
+    },
+    {
+      "club": "Crystal Palace", "manager": "Pierre Sage", "replaced": "Oliver Glasner",
+      "system": "Fluid 3-4-2-1", "style": "Aggressive counter-press; the first line pushes opponents wide so wing-backs and wide centre-backs trap on the touchline.",
+      "fpl_angle": "Muñoz and Mitchell are explicitly the beneficiaries — Palace's best performances come when the wing-backs are unleashed early. One of the central midfielders stays anchored, which caps Wharton's attacking ceiling.",
+      "beneficiaries": ["Daniel Muñoz", "Tyrick Mitchell"],
+      "source": "https://readcrystalpalace.com/2026/07/04/pierre-sage-3421-crystal-palace-tactical-reset/"
+    },
+    {
+      "club": "Bournemouth", "manager": "Marco Rose", "replaced": "Andoni Iraola",
+      "system": "Gegenpressing, even more aggressive than Iraola", "style": "Vertical intent, players occupying inside spaces, energetic full-backs as the width and main creative outlet.",
+      "fpl_angle": "Truffert is the model full-back for this system — 103 tackles, 188 possessions won and 141 crosses last season. Older legs (Adam Smith 35, Christie 31) are at risk. Bournemouth have lost both Senesi and Semenyo.",
+      "beneficiaries": ["Adrien Truffert", "Tyler Adams", "Evanilson", "Junior Kroupi"],
+      "source": "https://www.attackingfootball.com/how-marco-rose-reinvents-bournemouth/"
+    },
+    {
+      "club": "Fulham", "manager": "Álvaro Arbeloa", "replaced": "Marco Silva",
+      "system": "4-3-3", "style": "Front-foot high press — a sharp break from Silva's mid-block.",
+      "fpl_angle": "The biggest gamble of the eight appointments: no meaningful senior management experience beyond Real Madrid Castilla. Treat Fulham assets as high variance until the style settles. Gonzalo García arrives as the striker and first-choice penalty taker.",
+      "beneficiaries": ["Gonzalo García"],
+      "source": "https://www.skysports.com/football/news/11095/13553985/"
+    },
+    { "club": "Ipswich Town", "manager": "Gary O'Neil", "replaced": "Kieran McKenna", "system": "Pragmatic", "style": "Survival specialist, limited tactician but proven at keeping small clubs up.", "fpl_angle": "Around ten signings made. Jack Clarke on penalties." },
+    { "club": "Coventry City", "manager": "Frank Lampard", "replaced": "—", "system": "Attacking", "style": "Took Coventry up playing on the front foot.", "fpl_angle": "Haji Wright on penalties; Grimes takes set pieces." },
+    { "club": "Hull City", "manager": "Sergej Jakirović", "replaced": "—", "system": "—", "style": "—", "fpl_angle": "Oli McBurnie on penalties. Jack Butland signed but has an arm injury." }
+  ],
+
+  "penalty_takers": {
+    "Arsenal": { "pens": ["Viktor Gyökeres", "Bukayo Saka", "Martin Ødegaard"], "corners": ["Declan Rice", "Bukayo Saka", "Bruno Guimarães"], "note": "Sources conflict — RotoWire has Gyökeres first, AllAboutFPL still lists Saka. Treat as not fully nailed on." },
+    "Aston Villa": { "pens": ["Emiliano Buendía", "Ollie Watkins", "John McGinn"], "corners": ["Emiliano Buendía", "John McGinn"], "note": "The biggest quiet role upgrade in the league — Rogers, Tielemans and Digne all left, so Buendía inherits penalties, corners and free-kicks." },
+    "Bournemouth": { "pens": ["Justin Kluivert", "Junior Kroupi"], "corners": ["Alex Scott", "Marcus Tavernier"] },
+    "Brentford": { "pens": ["Igor Thiago", "Callum Wilson"], "corners": ["Mathias Jensen", "Mikkel Damsgaard"], "note": "Igor Thiago converted 8 of 9 last season. One of only four clubs with genuinely clear-cut duties." },
+    "Brighton": { "pens": ["Pascal Groß", "Charalampos Kostoulas"], "corners": ["Pascal Groß", "Maxim De Cuyper"] },
+    "Chelsea": { "pens": ["Cole Palmer", "Danny Welbeck", "Enzo Fernández"], "corners": ["Reece James", "Enzo Fernández", "Pedro Neto"], "note": "Palmer 6 of 8 last season. Clear-cut." },
+    "Coventry City": { "pens": ["Haji Wright"], "corners": ["Matt Grimes", "Jack Rudoni"] },
+    "Crystal Palace": { "pens": ["Jean-Philippe Mateta", "Ismaïla Sarr"], "corners": ["Adam Wharton", "Yeremy Pino"] },
+    "Everton": { "pens": ["Iliman Ndiaye", "James Garner"], "corners": ["James Garner", "Kiernan Dewsbury-Hall"] },
+    "Fulham": { "pens": ["Gonzalo García", "Alex Iwobi", "Rodrigo Muniz"], "corners": ["Antonee Robinson", "Alex Iwobi"] },
+    "Hull City": { "pens": ["Oli McBurnie"], "corners": ["Ryan Giles", "Regan Slater"] },
+    "Ipswich Town": { "pens": ["Jack Clarke", "Jaden Philogene"], "corners": ["Leif Davis", "Šaša Lukić"] },
+    "Leeds United": { "pens": ["Dominic Calvert-Lewin", "Lukas Nmecha"], "corners": ["Anton Stach", "Harry Wilson"] },
+    "Liverpool": { "pens": ["Dominik Szoboszlai", "Alexander Isak"], "corners": ["Dominik Szoboszlai", "Cody Gakpo", "Florian Wirtz"], "note": "Sources split on the order between Szoboszlai and Isak." },
+    "Manchester City": { "pens": ["Erling Haaland", "Antoine Semenyo", "Omar Marmoush"], "corners": ["Phil Foden", "Rayan Cherki", "Elliot Anderson"], "note": "Haaland 6 of 6 in all competitions. Clear-cut." },
+    "Manchester United": { "pens": ["Bruno Fernandes", "Benjamin Šeško", "Youri Tielemans"], "corners": ["Bruno Fernandes", "Bryan Mbeumo", "Youri Tielemans"], "note": "Clear-cut." },
+    "Newcastle United": { "pens": ["Nick Woltemade", "William Osula"], "corners": ["Lewis Hall", "Lewis Miley", "Anthony Elanga"], "note": "All previous takers sold. Genuinely unsettled." },
+    "Nottingham Forest": { "pens": ["Chris Wood", "Morgan Gibbs-White", "Igor Jesus"], "corners": ["Omari Hutchinson", "Neco Williams"] },
+    "Sunderland": { "pens": ["Enzo Le Fée", "Habib Diarra"], "corners": ["Granit Xhaka", "Enzo Le Fée"] },
+    "Tottenham Hotspur": { "pens": ["Richarlison", "Dominic Solanke", "Mohammed Kudus"], "corners": ["Pedro Porro", "Sandro Tonali", "James Maddison"] }
+  },
+
+  "injuries": [
+    { "player": "Hugo Ekitiké", "club": "Liverpool", "issue": "Ruptured Achilles", "out_until": "2027", "severity": "season" },
+    { "player": "Amadou Onana", "club": "Aston Villa", "issue": "ACL", "out_until": "~May 2027", "severity": "season" },
+    { "player": "William Saliba", "club": "Arsenal", "issue": "Back injury from the World Cup", "out_until": "Extended period, no return date", "severity": "long" },
+    { "player": "Rodri", "club": "Manchester City", "issue": "Back surgery", "out_until": "Misses the start of the season", "severity": "long" },
+    { "player": "Evan Ferguson", "club": "Brighton", "issue": "Ankle", "out_until": "~10 Oct", "severity": "medium" },
+    { "player": "Yankuba Minteh", "club": "Brighton", "issue": "Leg", "out_until": "~28 Nov", "severity": "long" },
+    { "player": "Wesley Fofana", "club": "Chelsea", "issue": "Suspended (red card carried over)", "out_until": "First two games", "severity": "short" },
+    { "player": "Joachim Andersen", "club": "Fulham", "issue": "Suspended", "out_until": "30 Aug", "severity": "short" },
+    { "player": "Ryan Christie", "club": "Bournemouth", "issue": "Suspended", "out_until": "29 Aug", "severity": "short" },
+    { "player": "Luke Shaw", "club": "Manchester United", "issue": "Fitness", "out_until": "Misses the opening games", "severity": "short" },
+    { "player": "Benjamin Šeško", "club": "Manchester United", "issue": "Shin (75%)", "out_until": "Doubt for GW1", "severity": "short" },
+    { "player": "Dejan Kulusevski", "club": "Tottenham Hotspur", "issue": "Knee", "out_until": "Doubt", "severity": "medium" },
+    { "player": "Carlos Baleba", "club": "Brighton", "issue": "Ankle", "out_until": "~23 Aug", "severity": "short" },
+    { "player": "Jack Butland", "club": "Hull City", "issue": "Arm", "out_until": "Doubt", "severity": "medium" }
+  ],
+
+  "transfers_in": [
+    { "player": "Morgan Rogers", "from": "Aston Villa", "to": "Chelsea", "fee": "£117m", "pos": "MID", "fit": "Hybrid winger/10 in Alonso's 3-4-2-1, alongside Palmer." },
+    { "player": "Elliot Anderson", "from": "Nottingham Forest", "to": "Manchester City", "fee": "£116m", "pos": "MID", "fit": "Deep-lying passer and a genuine set-piece and free-kick taker." },
+    { "player": "Sandro Tonali", "from": "Newcastle United", "to": "Tottenham Hotspur", "fee": "£92.5–100m", "pos": "MID", "fit": "Holding midfielder in De Zerbi's 4-3-3; on free-kicks and corners." },
+    { "player": "Mateus Fernandes", "from": "West Ham United", "to": "Tottenham Hotspur", "fee": "£85m", "pos": "MID", "fit": "Box-to-box eight." },
+    { "player": "Bruno Guimarães", "from": "Newcastle United", "to": "Arsenal", "fee": "£75m", "pos": "MID", "fit": "Into the Rice/Zubimendi engine room; listed on penalties, free-kicks and corners." },
+    { "player": "Jeremy Jacquet", "from": "Rennes", "to": "Liverpool", "fee": "£55–60m", "pos": "DEF", "fit": "Centre-back." },
+    { "player": "Jan Paul van Hecke", "from": "Brighton", "to": "Tottenham Hotspur", "fee": "£52m", "pos": "DEF", "fit": "Ball-playing centre-back, the base of De Zerbi's build-up." },
+    { "player": "Maxence Lacroix", "from": "Crystal Palace", "to": "Chelsea", "fee": "£51–52m", "pos": "DEF", "fit": "Right-sided centre-back in the three." },
+    { "player": "Johan Manzambi", "from": "Freiburg", "to": "Aston Villa", "fee": "£50–59.5m", "pos": "MID" },
+    { "player": "Andrey Santos", "from": "Chelsea", "to": "Manchester United", "fee": "£48–50m", "pos": "MID" },
+    { "player": "Luka Vušković", "from": "Tottenham Hotspur", "to": "Brighton", "fee": "£46–50m", "pos": "DEF" },
+    { "player": "Marco Palestra", "from": "Atalanta", "to": "Chelsea", "fee": "£43–49m", "pos": "DEF", "fit": "Described as tailor-made for Alonso's wing-back role. New attacking-defender asset." },
+    { "player": "Geovany Quenda", "from": "Sporting", "to": "Chelsea", "fee": "£43.5–44m", "pos": "DEF", "fit": "The other wing-back the 3-4-3 was built around." },
+    { "player": "James Trafford", "from": "Manchester City", "to": "Leeds United", "fee": "£40m", "pos": "GKP", "fit": "Unchallenged number one — Meslier and Darlow both left." },
+    { "player": "Bazoumana Touré", "from": "Hoffenheim", "to": "Newcastle United", "fee": "£40–42m", "pos": "MID", "fit": "9 Bundesliga assists last season." },
+    { "player": "João Gomes", "from": "Wolves", "to": "Aston Villa", "fee": "£38m", "pos": "MID" },
+    { "player": "Mamadou Sangaré", "from": "Lens", "to": "Brentford", "fee": "£38.5–39m", "pos": "MID" },
+    { "player": "Youri Tielemans", "from": "Aston Villa", "to": "Manchester United", "fee": "£35m", "pos": "MID", "fit": "Backup penalty taker, on corners and free-kicks." },
+    { "player": "Piero Hincapié", "from": "Bayer Leverkusen", "to": "Arsenal", "fee": "£34.5m", "pos": "DEF", "fit": "Immediately important with Saliba out for an extended period." },
+    { "player": "Christos Tzolis", "from": "Club Brugge", "to": "Arsenal", "fee": "£34m", "pos": "MID", "fit": "Wide forward, on the free-kick and corner list." },
+    { "player": "Gonzalo García", "from": "Real Madrid", "to": "Fulham", "fee": "£34m", "pos": "FWD", "fit": "New striker and first-choice penalty taker." },
+    { "player": "Ousmane Diomandé", "from": "Sporting", "to": "Nottingham Forest", "fee": "£34.3m", "pos": "DEF" },
+    { "player": "Tarik Muharemović", "from": "Sassuolo", "to": "Leeds United", "fee": "£34m", "pos": "DEF" },
+    { "player": "Valentin Barco", "from": "—", "to": "Chelsea", "fee": "£34m", "pos": "DEF", "fit": "Listed on corners." },
+    { "player": "Aladji Bamba", "from": "Monaco", "to": "Newcastle United", "fee": "£30–35.5m", "pos": "DEF" },
+    { "player": "Shea Charles", "from": "Southampton", "to": "Fulham", "fee": "£26–30m", "pos": "MID" },
+    { "player": "Emersonn", "from": "—", "to": "Ipswich Town", "fee": "£26.5m", "pos": "FWD" },
+    { "player": "Lukas Horníček", "from": "Braga", "to": "Newcastle United", "fee": "£25.7m", "pos": "GKP", "fit": "One of two keepers signed — the number one spot is open." },
+    { "player": "Caleb Yirenkyi", "from": "—", "to": "Coventry City", "fee": "£23–26m", "pos": "MID" },
+    { "player": "Antonio Silva", "from": "Benfica", "to": "Bournemouth", "fee": "£21.4–25.7m", "pos": "DEF" },
+    { "player": "Emmanuel Emegha", "from": "Strasbourg", "to": "Chelsea", "fee": "£21.4m", "pos": "FWD", "fit": "The new striker profile, pre-agreed." },
+    { "player": "Álvaro Rodríguez", "from": "Elche", "to": "Bournemouth", "fee": "£21m", "pos": "FWD" },
+    { "player": "Anan Khalaili", "from": "—", "to": "Crystal Palace", "fee": "£21m", "pos": "MID" },
+    { "player": "Zadok Yohanna", "from": "AIK", "to": "Brighton", "fee": "£21.5–24m", "pos": "FWD" },
+    { "player": "Konstantinos Tzolakis", "from": "—", "to": "Hull City", "fee": "£20m", "pos": "GKP" },
+    { "player": "Abdul Fatawu", "from": "—", "to": "Ipswich Town", "fee": "£20–23m", "pos": "MID" },
+    { "player": "Pascal Struijk", "from": "Leeds United", "to": "Brighton", "fee": "£18–20m", "pos": "DEF" },
+    { "player": "Tyrique George", "from": "Chelsea", "to": "Everton", "fee": "£18–24m", "pos": "MID" },
+    { "player": "Antoine Semenyo", "from": "Bournemouth", "to": "Manchester City", "fee": "£64m (Jan 2026)", "pos": "MID", "fit": "Pre-season standout and a backup penalty taker; the 1v1 isolation winger Maresca's system is built for." }
+  ],
+
+  "transfers_out": [
+    { "player": "Mohamed Salah", "from": "Liverpool", "to": "Trabzonspor", "fee": "Free", "why_it_matters": "The defining exit of the window. Liverpool lose their primary right-sided goal source and have not replaced him. Szoboszlai and Isak inherit set pieces and penalties." },
+    { "player": "Bruno Guimarães", "from": "Newcastle United", "to": "Arsenal", "fee": "£75m", "why_it_matters": "Part of a four-man leadership exodus that strips Newcastle of penalties, corners, free-kicks and the captaincy." },
+    { "player": "Anthony Gordon", "from": "Newcastle United", "to": "Barcelona", "fee": "£69m", "why_it_matters": "Newcastle's best attacking outlet gone." },
+    { "player": "Morgan Rogers", "from": "Aston Villa", "to": "Chelsea", "fee": "£117m", "why_it_matters": "Villa's creative hub. Combined with Tielemans and Digne leaving, Buendía inherits every set-piece duty." },
+    { "player": "Rasmus Højlund", "from": "Manchester United", "to": "Napoli", "fee": "£38m", "why_it_matters": "Clears the number nine spot entirely for Šeško." },
+    { "player": "Marc Cucurella", "from": "Chelsea", "to": "Real Madrid", "fee": "£47.5–51.8m", "why_it_matters": "Vacates left wing-back for Chavarría, Barco or Palestra." },
+    { "player": "Marcos Senesi", "from": "Bournemouth", "to": "Tottenham Hotspur", "fee": "Free", "why_it_matters": "Bournemouth lose their left centre-back on top of losing Semenyo." },
+    { "player": "Harry Wilson", "from": "Fulham", "to": "Leeds United", "fee": "Free", "why_it_matters": "Fulham's set-piece duty passes to Antonee Robinson and Iwobi." },
+    { "player": "Illan Meslier", "from": "Leeds United", "to": "Arsenal", "fee": "Free", "why_it_matters": "Leaves Trafford unchallenged as Leeds' number one." },
+    { "player": "Cristian Romero", "from": "Tottenham Hotspur", "to": "—", "fee": "£34.2m", "why_it_matters": "De Zerbi has rebuilt the entire back line." },
+    { "player": "Elliot Anderson", "from": "Nottingham Forest", "to": "Manchester City", "fee": "£116m", "why_it_matters": "Forest lose their deep-lying passer; Schlager and Sá signed to fill it." }
+  ],
+
+  "rumours": [
+    { "player": "Bradley Barcola", "from": "PSG", "to": "Liverpool", "status": "Talks held, opening offer prepared; PSG want £128.5–145m. Arsenal also interested.", "impact": "This is the Salah replacement. Would immediately be a premium midfield or forward asset." },
+    { "player": "Cody Gakpo", "from": "Liverpool", "to": "Tottenham Hotspur", "status": "Reported agreement in principle, around €70m.", "impact": "Would further thin Liverpool's wide options and add to De Zerbi's front three." },
+    { "player": "Jack Grealish", "from": "Manchester City", "to": "Everton", "status": "Everton reported favourites after his 2025/26 loan.", "impact": "Would be Moyes' marquee creator." },
+    { "player": "Enzo Fernández", "from": "Chelsea", "to": "Manchester City", "status": "Talks reported not dead.", "impact": "Would remove Chelsea's backup penalty taker and a primary corner taker." },
+    { "player": "Lewis Hall", "from": "Newcastle United", "to": "Manchester United", "status": "United testing Newcastle's resolve at left-back.", "impact": "Hall is Newcastle's main corner and free-kick taker — doubly significant if he goes." },
+    { "player": "Vinícius Júnior", "from": "Real Madrid", "to": "Arsenal", "status": "DEAD — signed a new Real Madrid contract.", "impact": "Arsenal have pivoted toward Barcola, Julián Álvarez or a centre-back (Ezri Konsa, ~£60m)." }
+  ],
+
+  "watchlist": [
+    "Liverpool are a different team — Salah gone, Ekitiké out until 2027, no winger signed, and Iraola trades control for chaos. More chances, worse clean-sheet security.",
+    "Alonso's Chelsea wing-backs (Quenda, Palestra) are two brand-new attacking-defender assets if he commits to the back three.",
+    "Buendía is the biggest quiet role upgrade in the league — he inherits penalties, corners and free-kicks at Villa.",
+    "Newcastle are a fade until proven otherwise: four senior leaders sold, two weeks of preparation, two keepers competing.",
+    "Glasner at Forest and Sage at Palace both mean wing-backs. Neco Williams, Ola Aina, Muñoz and Mitchell are the systemic beneficiaries.",
+    "The BPS rebalance quietly downgrades stationary centre-backs and upgrades attacking full-backs and shot-stopping keepers."
+  ]
+}

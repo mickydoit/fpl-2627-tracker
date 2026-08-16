@@ -1,0 +1,59 @@
+name: Refresh FPL data
+
+on:
+  schedule:
+    # Every 30 minutes. GitHub's scheduler is best-effort and can run late under
+    # load, which is fine — the FPL API edge-caches for ~5 minutes anyway.
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      deep:
+        description: 'Also fetch per-player match logs (slower)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch FPL and ESPN data
+        env:
+          # Repository variable, not a secret — your entry id is public anyway.
+          FPL_ENTRY_ID: ${{ vars.FPL_ENTRY_ID }}
+          FPL_LEAGUE_IDS: ${{ vars.FPL_LEAGUE_IDS }}
+          DEEP: ${{ inputs.deep && '1' || '0' }}
+        run: node scripts/fetch-all.mjs
+
+      - name: Rebuild projections
+        run: node scripts/derive.mjs
+
+      - name: Commit if anything changed
+        run: |
+          git config user.name  "fpl-bot"
+          git config user.email "actions@github.com"
+          git add data
+          if git diff --staged --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git commit -m "data: refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
+          # The scheduled job and a manual run can race; rebase rather than fail.
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && exit 0
+            sleep 5
+          done
+          echo "Push failed after 3 attempts" >&2
+          exit 1

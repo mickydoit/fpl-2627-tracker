@@ -1,0 +1,16 @@
+{
+  "name": "fpl-2627-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fantasy Premier League 2026/27 tracker, squad optimiser and transfer suggester. Static site + GitHub Actions data pipeline.",
+  "type": "module",
+  "scripts": {
+    "fetch": "node scripts/fetch-all.mjs",
+    "derive": "node scripts/derive.mjs",
+    "refresh": "node scripts/fetch-all.mjs && node scripts/derive.mjs",
+    "seed": "node scripts/make-sample.mjs",
+    "test": "node scripts/make-sample.mjs && node scripts/test.mjs",
+    "serve": "python3 -m http.server 8080"
+  },
+  "engines": { "node": ">=20" }
+}
