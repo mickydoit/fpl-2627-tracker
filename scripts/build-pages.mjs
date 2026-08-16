@@ -10,6 +10,7 @@ import { writeFile } from 'node:fs/promises';
 const PAGES = [
   { slug: 'index',     title: 'Dashboard',         accent: 'lime',   icon: 'nav-stats',    nav: 'Dashboard' },
   { slug: 'squad',     title: 'Squad Optimiser',   accent: 'cyan',   icon: 'nav-teams',    nav: 'Squad' },
+  { slug: 'draft',     title: 'Draft Board',       accent: 'cyan',   icon: 'nav-bracket',  nav: 'Draft' },
   { slug: 'transfers', title: 'Transfers',         accent: 'yellow', icon: 'nav-bracket',  nav: 'Transfers' },
   { slug: 'players',   title: 'Players',           accent: 'lime',   icon: 'nav-ladder',   nav: 'Players' },
   { slug: 'market',    title: 'Market',            accent: 'cyan',   icon: 'nav-fixtures', nav: 'Market' },

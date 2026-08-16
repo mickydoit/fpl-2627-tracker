@@ -40,6 +40,17 @@ export async function loadAll() {
   return { meta, boot, fixtures, live, entry, leagues, scoreboard, standings, news, notes, prices, setPieces };
 }
 
+/** Read one snapshot by name, e.g. 'draft/bootstrap'. */
+export async function readSnapshot(name, fallback = null) {
+  try {
+    const res = await fetch(`data/${name}.json`, { cache: 'no-store' });
+    if (!res.ok) return fallback;
+    return await res.json();
+  } catch {
+    return fallback;
+  }
+}
+
 /* ------------------------------------------------------------------ *
  * local state — your squad, saved in the browser
  * ------------------------------------------------------------------ */
