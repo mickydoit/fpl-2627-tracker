@@ -38,6 +38,7 @@ export const DEFAULTS = {
   benchWeight: 0.12,   // how much a bench slot is worth when optimising
   priorBlendMinutes: 900, // minutes of evidence before we fully trust the data
   riskAversion: 0,     // 0..1, penalises players with injury/rotation doubt
+  prior: null,          // (player) => pts/appearance; defaults to pricePrior
 };
 
 /* ------------------------------------------------------------------ *
@@ -235,7 +236,7 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
 
   /* blend against a price prior until there is enough evidence */
   const w = clamp(mins / o.priorBlendMinutes, 0, 1);
-  const prior = pricePrior(p) * attMult;
+  const prior = (o.prior || pricePrior)(p) * attMult;
   const blended = w * modelled + (1 - w) * prior;
 
   const riskMult = 1 - o.riskAversion * (1 - avail);

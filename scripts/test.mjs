@@ -6,8 +6,9 @@
 import { readJSON } from './lib/io.mjs';
 import {
   projectAll, poissonAtLeast, availability, inferGamesPlayed,
-  teamDefence, upcomingByTeam, SQUAD_RULES,
+  teamDefence, upcomingByTeam, SQUAD_RULES, projectFixture,
 } from '../js/model.js';
+import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
 
 let failures = 0;
@@ -263,6 +264,44 @@ console.log('\nManual substitutions');
   ok('splitXI rejects a starter set that is not 11', splitXI(sq, [sq[0].id]) === null);
   ok('splitXI rejects an illegal starter set',
     splitXI(sq, sq.filter((p) => p.element_type !== 1).slice(0, 11).map((p) => p.id)) === null);
+}
+
+/* ------------------------------------------------------------------ *
+ * Draft adapter
+ * ------------------------------------------------------------------ */
+console.log('\nDraft adapter');
+{
+  const el = {
+    id: 1, element_type: 3, team: 1, minutes: 1800, status: 'a',
+    expected_goals: '10.0', expected_assists: '5.0', expected_goals_conceded: '20.0',
+    saves: 0, defensive_contribution: 40, draft_rank: 1, points_per_game: '6.0',
+    bps: 600, yellow_cards: 2, web_name: 'Tester',
+  };
+  const [row] = adaptDraftElements({ elements: [el] });
+
+  ok('xG per 90 derives from totals', near(row.expected_goals_per_90, 0.5, 1e-9),
+    `got ${row.expected_goals_per_90}`);
+  ok('xA per 90 derives from totals', near(row.expected_assists_per_90, 0.25, 1e-9));
+  ok('xGC per 90 derives from totals', near(row.expected_goals_conceded_per_90, 1.0, 1e-9));
+  ok('defensive contribution per 90 derives from totals',
+    near(row.defensive_contribution_per_90, 2.0, 1e-9));
+  ok('original fields survive the adapter', row.web_name === 'Tester' && row.draft_rank === 1);
+
+  const zero = adaptDraftElements({ elements: [{ ...el, minutes: 0 }] })[0];
+  ok('a player with no minutes gets no per-90s', zero.expected_goals_per_90 === 0);
+
+  ok('the draft prior is highest at rank 1',
+    draftPrior({ element_type: 3, draft_rank: 1 }) > draftPrior({ element_type: 3, draft_rank: 200 }));
+  ok('the draft prior stays positive deep down the board',
+    draftPrior({ element_type: 3, draft_rank: 500 }) > 0);
+  ok('the draft prior needs no price', Number.isFinite(draftPrior({ element_type: 2, draft_rank: 40 })));
+
+  // v01 must be untouched: the default prior is still the price prior.
+  const withPrice = { element_type: 3, now_cost: 100, minutes: 0, status: 'a', team: 1 };
+  const a = projectFixture(withPrice, { difficulty: 3, home: true }, { games: 38, defence: {} }, {});
+  const b = projectFixture(withPrice, { difficulty: 3, home: true }, { games: 38, defence: {} },
+    { prior: () => 999 });
+  ok('the prior is injectable', b.total > a.total, 'injected prior had no effect');
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);
