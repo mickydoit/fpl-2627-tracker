@@ -9,7 +9,7 @@ import {
   teamDefence, upcomingByTeam, SQUAD_RULES, projectFixture,
 } from '../js/model.js';
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
-import { snakePicks, replacementRank, buildBoard } from '../js/draft/board.js';
+import { snakePicks, replacementRank, buildBoard, assignTiers } from '../js/draft/board.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
 
 let failures = 0;
@@ -348,6 +348,37 @@ console.log('\nDraft board');
   ok('every row carries a VORP', rows.every((r) => Number.isFinite(r.vorp)));
   ok('the replacement player himself has zero VORP', rows.some((r) => near(r.vorp, 0, 1e-9)));
   ok('players below replacement have negative VORP', rows.some((r) => r.vorp < 0));
+}
+
+/* ------------------------------------------------------------------ *
+ * Draft tiers
+ * ------------------------------------------------------------------ */
+console.log('\nDraft tiers');
+{
+  // Two obvious clusters at one position: 100/99/98, then a cliff, then 50/49/48.
+  const rows = [100, 99, 98, 50, 49, 48].map((proj, i) => ({
+    id: i + 1, element_type: 3, proj, vorp: proj,
+  }));
+  const tiered = assignTiers(rows, 1.0);
+  const tierOf = (p) => tiered.find((r) => r.proj === p).tier;
+
+  ok('every player lands in a tier', tiered.every((r) => Number.isInteger(r.tier) && r.tier >= 1));
+  ok('the top cluster shares a tier', tierOf(100) === tierOf(99) && tierOf(99) === tierOf(98));
+  ok('a cliff starts a new tier', tierOf(50) > tierOf(98));
+  ok('the second cluster shares a tier', tierOf(50) === tierOf(48));
+  ok('tiers start at one', Math.min(...tiered.map((r) => r.tier)) === 1);
+
+  // An evenly spaced position has no cliffs, so it should not fragment.
+  const even = Array.from({ length: 10 }, (_, i) => ({
+    id: 100 + i, element_type: 2, proj: 100 - i, vorp: 100 - i,
+  }));
+  const evenTiers = assignTiers(even, 1.0);
+  ok('an evenly spaced position does not fragment',
+    new Set(evenTiers.map((r) => r.tier)).size <= 2,
+    `got ${new Set(evenTiers.map((r) => r.tier)).size} tiers`);
+
+  ok('tiers are numbered per position', assignTiers([...rows, ...even], 1.0)
+    .filter((r) => r.element_type === 2).some((r) => r.tier === 1));
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);

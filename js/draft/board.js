@@ -45,3 +45,32 @@ export function buildBoard(rows, leagueSize) {
     .sort((a, b) => b.vorp - a.vorp);
   return { rows: out, replacement };
 }
+
+/**
+ * Group each position's players into tiers, split where the gap to the next
+ * player is unusually large. A tier boundary means "the drop after this one is
+ * real" — the cue to take a player now rather than wait a round.
+ */
+export function assignTiers(rows, sdThreshold = 1.0) {
+  const out = [];
+  for (const type of [1, 2, 3, 4]) {
+    const atPos = rows
+      .filter((r) => r.element_type === type)
+      .sort((a, b) => b.vorp - a.vorp);
+    if (!atPos.length) continue;
+
+    const gaps = [];
+    for (let i = 1; i < atPos.length; i++) gaps.push(atPos[i - 1].vorp - atPos[i].vorp);
+    const mean = gaps.reduce((s, g) => s + g, 0) / (gaps.length || 1);
+    const variance = gaps.reduce((s, g) => s + (g - mean) ** 2, 0) / (gaps.length || 1);
+    const sd = Math.sqrt(variance);
+    const cut = mean + sdThreshold * sd;
+
+    let tier = 1;
+    atPos.forEach((row, i) => {
+      if (i > 0 && gaps[i - 1] > cut) tier++;
+      out.push({ ...row, tier });
+    });
+  }
+  return out;
+}
