@@ -13,6 +13,7 @@ import { snakePicks, replacementRank, buildBoard, assignTiers } from '../js/draf
 import { ownershipFrom, availableRows, deriveSlot, myRoster, positionsNeeded } from '../js/draft/live.js';
 import { makeRng, picksBetween, survival } from '../js/draft/simulate.js';
 import { recommend } from '../js/draft/advise.js';
+import { runDraft, STRATEGIES } from '../js/draft/compete.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
 
 let failures = 0;
@@ -520,5 +521,43 @@ console.log('\nDraft recommendation');
     recommend(pool, { myPicks: [3, 10], currentPick: 3, roster: [], trials: 300 })[0].id === rec[0].id);
 }
 
+console.log('\nDraft baselines');
+{
+  // A synthetic pool of linear ramps cannot test VORP: opponents picking in
+  // rank order deplete every position proportionally, so no positional
+  // scarcity ever arises and three different replacement baselines produce
+  // identical squads. This is the real pool's value distribution instead.
+  const { pool } = await readJSON('scripts/fixtures/draft-pool.json');
+  const SEEDS = [99, 7, 12345, 2026, 555, 8080, 31337, 4242];
+  const totals = { vorp: 0, rank: 0, best: 0 };
+  let vorpWins = 0;
+  let sample = null;
+  for (const seed of SEEDS) {
+    const r = {
+      vorp: runDraft(pool, { leagueSize: 6, mySlot: 3, strategy: STRATEGIES.vorp, seed }),
+      rank: runDraft(pool, { leagueSize: 6, mySlot: 3, strategy: STRATEGIES.draftRank, seed }),
+      best: runDraft(pool, { leagueSize: 6, mySlot: 3, strategy: STRATEGIES.bestAvailable, seed }),
+    };
+    totals.vorp += r.vorp.total; totals.rank += r.rank.total; totals.best += r.best.total;
+    if (r.vorp.total >= r.rank.total && r.vorp.total >= r.best.total) vorpWins++;
+    sample = sample || r.vorp;
+  }
+  const mean = (k) => totals[k] / SEEDS.length;
+
+  ok('a full squad is drafted', sample.roster.length === 15);
+  ok('the squad satisfies the position quotas',
+    [1, 2, 3, 4].every((t) => sample.roster.filter((r) => r.element_type === t).length
+      === { 1: 2, 2: 5, 3: 5, 4: 3 }[t]));
+  ok('no player is drafted twice', new Set(sample.roster.map((r) => r.id)).size === 15);
+  ok('the VORP board beats drafting by the game ranking',
+    mean('vorp') > mean('rank'), `${mean('vorp').toFixed(1)} vs ${mean('rank').toFixed(1)}`);
+  ok('the VORP board beats best-available',
+    mean('vorp') > mean('best'), `${mean('vorp').toFixed(1)} vs ${mean('best').toFixed(1)}`);
+  ok('the VORP board wins the clear majority of drafts',
+    vorpWins >= 7, `${vorpWins}/${SEEDS.length}`);
+  ok('a draft is reproducible',
+    runDraft(pool, { leagueSize: 6, mySlot: 3, strategy: STRATEGIES.vorp, seed: 99 }).total
+      === runDraft(pool, { leagueSize: 6, mySlot: 3, strategy: STRATEGIES.vorp, seed: 99 }).total);
+}
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);
 process.exit(failures === 0 ? 0 : 1);
