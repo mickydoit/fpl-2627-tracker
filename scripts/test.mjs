@@ -402,14 +402,18 @@ console.log('\nDraft live state');
   ok('owned players drop out of the pool', avail.map((r) => r.id).join(',') === '1,4');
   ok('a player absent from the map counts as available', avail.some((r) => r.id === 4));
 
-  // Six managers; entry 77 picked third, so slot 3.
+  // Six managers. `pick` is per-round (1..6), with `round` separate — so a
+  // manager's round-1 pick number is their slot.
   const choices = [
-    { pick: 1, entry: 11 }, { pick: 2, entry: 22 }, { pick: 3, entry: 77 },
-    { pick: 4, entry: 44 },
+    { pick: 1, round: 1, entry: 11 }, { pick: 2, round: 1, entry: 22 },
+    { pick: 3, round: 1, entry: 77 }, { pick: 4, round: 1, entry: 44 },
+    // Round 2 reverses, and pick numbers restart from 1.
+    { pick: 3, round: 2, entry: 44 }, { pick: 4, round: 2, entry: 77 },
   ];
-  ok('the slot derives from the first-round pick', deriveSlot(choices, 77, 6) === 3);
-  ok('an unknown entry gives no slot', deriveSlot(choices, 999, 6) === null);
-  ok('an empty draft gives no slot', deriveSlot([], 77, 6) === null);
+  ok('the slot derives from the round-one pick', deriveSlot(choices, 77) === 3);
+  ok('a later round never overrides the slot', deriveSlot(choices, 44) === 4);
+  ok('an unknown entry gives no slot', deriveSlot(choices, 999) === null);
+  ok('an empty draft gives no slot', deriveSlot([], 77) === null);
 
   const roster = myRoster(
     [{ id: 2, element_type: 1 }, { id: 3, element_type: 3 }], own, 77);

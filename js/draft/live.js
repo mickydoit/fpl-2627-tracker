@@ -19,13 +19,12 @@ export function availableRows(rows, ownership) {
 }
 
 /**
- * Which slot is mine? The first round runs 1..N in pick order, so the entry's
- * first-round pick number is its slot. Returns null until that pick lands.
+ * Which slot is mine? A snake draft's first round runs in slot order, so the
+ * entry's round-1 pick number IS its slot. `pick` is per-round, not global —
+ * hence the explicit round check rather than a pick-number comparison.
  */
-export function deriveSlot(choices, myEntryId, leagueSize) {
-  const mine = (choices || [])
-    .filter((c) => c.entry === myEntryId && c.pick <= leagueSize)
-    .sort((a, b) => a.pick - b.pick)[0];
+export function deriveSlot(choices, myEntryId) {
+  const mine = (choices || []).find((c) => c.entry === myEntryId && c.round === 1);
   return mine ? mine.pick : null;
 }
 
