@@ -14,8 +14,9 @@ for (const [type, count] of Object.entries(QUOTA_POOL)) {
   for (let i = 0; i < count; i++) {
     const quality = Math.max(0.05, 1 - i / count);
     const minutes = Math.round(quality * 3200 * (0.6 + rand() * 0.4));
+    const pid = id++;
     elements.push({
-      id: id++, element_type: +type, team: (id % 20) + 1, status: 'a',
+      id: pid, element_type: +type, team: (pid % 20) + 1, status: 'a',
       web_name: `D${type}-${i}`, first_name: 'Draft', second_name: `Player ${id}`,
       minutes,
       expected_goals: (quality * (type === 4 ? 18 : type === 3 ? 10 : 2)).toFixed(2),

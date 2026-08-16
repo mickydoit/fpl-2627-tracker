@@ -14,6 +14,7 @@ import { mkdir } from 'node:fs/promises';
 const API = 'https://draft.premierleague.com/api';
 const LEAGUE = process.env.DRAFT_LEAGUE_ID || process.argv[2];
 const EVERY_MS = 5000;
+const TERMINAL_STATUS = new Set(['post']);
 
 if (!LEAGUE) {
   console.error('Set DRAFT_LEAGUE_ID (the number in your league URL), e.g.');
@@ -43,8 +44,14 @@ for (;;) {
     if (details) {
       await writeJSONIfChanged('data/draft/league.json', details);
       const status = details.league?.draft_status;
-      if (status && status !== 'live' && status !== 'pre') {
-        console.log(`Draft status is "${status}" — stopping.`);
+      // Only a KNOWN-terminal status stops the poller. Any unrecognised value
+      // keeps it running: `pre` and `post` are the only values ever observed
+      // in the wild, and an in-progress draft has never been sampled. Stopping
+      // on "a value I don't recognise" would risk quitting on the first poll
+      // of a real draft, which is the failure this script exists to prevent.
+      // Running too long is recoverable with Ctrl-C; stopping early is not.
+      if (status && TERMINAL_STATUS.has(status)) {
+        console.log(`Draft status is "${status}" — draft complete, stopping.`);
         break;
       }
     }
