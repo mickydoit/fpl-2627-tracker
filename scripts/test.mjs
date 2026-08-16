@@ -9,6 +9,7 @@ import {
   teamDefence, upcomingByTeam, SQUAD_RULES, projectFixture,
 } from '../js/model.js';
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
+import { snakePicks, replacementRank, buildBoard } from '../js/draft/board.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
 
 let failures = 0;
@@ -302,6 +303,51 @@ console.log('\nDraft adapter');
   const b = projectFixture(withPrice, { difficulty: 3, home: true }, { games: 38, defence: {} },
     { prior: () => 999 });
   ok('the prior is injectable', b.total > a.total, 'injected prior had no effect');
+}
+
+/* ------------------------------------------------------------------ *
+ * Draft board — snake order, replacement level, VORP
+ * ------------------------------------------------------------------ */
+console.log('\nDraft board');
+{
+  ok('slot 1 of 6 opens the draft', snakePicks(6, 1)[0] === 1);
+  ok('slot 6 of 6 picks back-to-back at the turn',
+    snakePicks(6, 6)[0] === 6 && snakePicks(6, 6)[1] === 7);
+  ok('slot 1 of 6 waits eleven picks',
+    snakePicks(6, 1)[1] - snakePicks(6, 1)[0] === 11);
+  ok('a draft runs fifteen rounds', snakePicks(6, 3).length === 15);
+  ok('slot 3 of 6 matches the published sequence',
+    snakePicks(6, 3).join(',') === '3,10,15,22,27,34,39,46,51,58,63,70,75,82,87');
+
+  // Across all slots, the first two rounds must use every pick exactly once.
+  const firstTwo = [];
+  for (let s = 1; s <= 6; s++) firstTwo.push(...snakePicks(6, s).slice(0, 2));
+  firstTwo.sort((a, b) => a - b);
+  ok('every pick in rounds one and two is used exactly once',
+    firstTwo.join(',') === Array.from({ length: 12 }, (_, i) => i + 1).join(','));
+
+  ok('six managers draft twelve keepers, so replacement is the 13th',
+    replacementRank(6, 1) === 13);
+  ok('six managers draft thirty defenders, so replacement is the 31st',
+    replacementRank(6, 2) === 31);
+  ok('six managers draft eighteen forwards, so replacement is the 19th',
+    replacementRank(6, 4) === 19);
+  ok('a bigger league pushes replacement deeper', replacementRank(12, 4) > replacementRank(6, 4));
+
+  // Build a synthetic pool: 40 per position, projections descending from 200.
+  const pool = [];
+  let pid = 1;
+  for (const type of [1, 2, 3, 4]) {
+    for (let i = 0; i < 40; i++) pool.push({ id: pid++, element_type: type, proj: 200 - i * 3 });
+  }
+  const { rows, replacement } = buildBoard(pool, 6);
+  ok('replacement level is the projection at the replacement rank',
+    near(replacement[4], 200 - (19 - 1) * 3, 1e-9), `got ${replacement[4]}`);
+  ok('VORP is projection minus replacement', near(
+    rows.find((r) => r.element_type === 4).vorp, 200 - replacement[4], 1e-9));
+  ok('every row carries a VORP', rows.every((r) => Number.isFinite(r.vorp)));
+  ok('the replacement player himself has zero VORP', rows.some((r) => near(r.vorp, 0, 1e-9)));
+  ok('players below replacement have negative VORP', rows.some((r) => r.vorp < 0));
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);
