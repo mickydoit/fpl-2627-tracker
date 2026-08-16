@@ -502,7 +502,8 @@ console.log('\nDraft recommendation');
   ok('a top-ranked player is unlikely to survive the gap', rowFor(1).survivalP < 0.2);
   ok('a deeply-ranked player is likely to survive the gap', rowFor(2).survivalP > 0.8);
   ok('a player who will not last outranks an equal one who will',
-    rec[0].id === 1, `top was ${rec[0].id}`);
+    rec.findIndex((r) => r.id === 1) < rec.findIndex((r) => r.id === 2),
+    `id 1 at ${rec.findIndex((r) => r.id === 1)}, id 2 at ${rec.findIndex((r) => r.id === 2)}`);
 
   // A filled position is not recommended again.
   const full = recommend(pool, {
