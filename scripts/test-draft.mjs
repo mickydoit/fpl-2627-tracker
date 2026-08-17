@@ -346,6 +346,21 @@ ok('scarcity reports cliff count', sc[4].beforeCliff === 3);
 ok('exhausted position (empty pool, demand > 0) is HIGH',
   scarcityByPosition([], { 4: 5 }, { leagueSize: 8 })[4].label === 'HIGH');
 
+// Regression test: best player detection does NOT depend on input order.
+// Construct pool with best player deliberately LAST in input order.
+const unorderedPool = [
+  { element_type: 4, proj: 60, vorp: -13, id: 4003 },  // worst
+  { element_type: 4, proj: 70, vorp: -3, id: 4002 },   // middle
+  { element_type: 4, proj: 95, vorp: 22, id: 4001 },   // BEST but LAST in input
+  { element_type: 2, proj: 42, vorp: 0, id: 2002 },    // worst
+  { element_type: 2, proj: 50, vorp: 8, id: 2001 },    // best but last
+];
+const scUnordered = scarcityByPosition(unorderedPool, { 4: 5, 2: 10 }, { leagueSize: 8 });
+ok('gap detection is input-order-invariant (FWD best last in array)', scUnordered[4].label === 'HIGH',
+  `got ${scUnordered[4].label}`);
+ok('gap detection is input-order-invariant (DEF best last in array)', scUnordered[2].label === 'MEDIUM',
+  `got ${scUnordered[2].label}`);
+
 console.log('\nHard roster constraints');
 ok('early on, every position is allowed',
   allowedPositions({ 1: 2, 2: 5, 3: 5, 4: 3 }, 15).sort().join() === '1,2,3,4');

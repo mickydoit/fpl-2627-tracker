@@ -57,16 +57,22 @@ export function scarcityByPosition(rows, demand, { leagueSize = LEAGUE_SIZE_DEFA
         // Exhausted position (no supply but demand remains) is maximally urgent
         gap = Infinity;
       } else {
-        const best = pool[0]; // Sorted by proj descending by playersBeforeCliff
-        // Use vorp if available, else calculate from replacement or pool bounds
-        if (best.vorp !== undefined) {
-          gap = best.vorp;
+        // Use vorp if available, else calculate from replacement or pool bounds.
+        // Always sort a copy — pool preserves caller's input order, not value order.
+        if (pool[0].vorp !== undefined) {
+          // VORP provided: find player with max VORP in this position
+          const sorted = [...pool].sort((a, b) => (b.vorp ?? 0) - (a.vorp ?? 0));
+          gap = sorted[0].vorp;
         } else if (replacement && replacement[t] !== undefined) {
-          gap = best.proj - replacement[t];
+          // Replacement baseline provided: find player with max (proj - replacement)
+          const sorted = [...pool].sort((a, b) => b.proj - a.proj);
+          gap = sorted[0].proj - replacement[t];
         } else if (pool.length > 1) {
-          gap = best.proj - pool[pool.length - 1].proj;
+          // No replacement: gap = (best - worst) within position
+          const sorted = [...pool].sort((a, b) => b.proj - a.proj);
+          gap = sorted[0].proj - sorted[sorted.length - 1].proj;
         } else {
-          gap = best.proj;
+          gap = pool[0].proj;
         }
       }
       gapped.push({ type: t, gap, available: pool.length, need, ratio, beforeCliff });
