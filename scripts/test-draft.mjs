@@ -4,6 +4,8 @@
  * suite stays untouched and its regression guarantee stays legible.
  */
 import { readJSON } from './lib/io.mjs';
+import { DRAFT_CONFIG, QUOTA, STARTER_QUOTA, ROUNDS,
+  LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX } from '../js/draft/config.js';
 
 let failures = 0;
 let checks = 0;
@@ -63,6 +65,21 @@ if (board) {
     board.players.reduce((s, p) => s + p.prior.minutes, 0) === 602348);
   ok('availability comes from live data', board.players.every((p) => typeof p.status === 'string'));
 }
+
+console.log('\nDraft configuration');
+ok('the squad is 2/5/5/3', QUOTA[1] === 2 && QUOTA[2] === 5 && QUOTA[3] === 5 && QUOTA[4] === 3);
+ok('the quotas total fifteen', Object.values(QUOTA).reduce((a, b) => a + b, 0) === 15);
+ok('a starting eleven is 1/4/4/2', Object.values(STARTER_QUOTA).reduce((a, b) => a + b, 0) === 11);
+ok('fifteen rounds', ROUNDS === 15);
+ok('eight managers by default', LEAGUE_SIZE_DEFAULT === 8);
+ok('league size spans two to sixteen', LEAGUE_SIZE_MIN === 2 && LEAGUE_SIZE_MAX === 16);
+ok('the near-term horizon is configurable', DRAFT_CONFIG.nearTermHorizon === 5);
+ok('every weight is a finite number',
+  ['rosWeight', 'nearTermWeight', 'vorpWeight', 'scarcityWeight', 'urgencyWeight',
+    'rosterNeedWeight', 'riskWeight'].every((k) => Number.isFinite(DRAFT_CONFIG[k])));
+ok('replacement is measured against outstanding demand by default',
+  DRAFT_CONFIG.replacementBasis === 'demand');
+ok('the survival model is deterministic by default', Number.isFinite(DRAFT_CONFIG.survivalSeed));
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
 process.exit(failures ? 1 : 0);
