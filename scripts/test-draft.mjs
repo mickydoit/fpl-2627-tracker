@@ -266,6 +266,29 @@ const early = replacementLevel(fwds, { 4: 8 }, { basis: 'demand' })[4];
 const late = replacementLevel(fwds.slice(3), { 4: 4 }, { basis: 'demand' })[4];
 ok('a thinning pool lowers the baseline', late < early || late === 55, `early ${early} late ${late}`);
 
+console.log('\nReplacement basis — starters vs demand');
+// Use a large pool (30 forwards) so league-size changes select genuinely different players.
+const bigPool = mkRows(4, Array.from({ length: 30 }, (_, i) => 95 - i * 2));
+// At league size 4, 12 FWD slots needed (4 managers × 3 per roster).
+// At league size 8, 24 FWD slots needed.
+// Starters basis: league size 4 wants 8 (4 managers × 2 starters), league size 8 wants 16.
+const demandSmall4 = outstandingDemand(new Map(), 4, new Map());
+const demandBig8 = outstandingDemand(new Map(), 8, new Map());
+const repDemandSmall = replacementLevel(bigPool, demandSmall4, { basis: 'demand' })[4];
+const repDemandBig = replacementLevel(bigPool, demandBig8, { basis: 'demand' })[4];
+ok('demand basis: larger league has deeper replacement (lower proj points)',
+  repDemandBig < repDemandSmall, `small=${repDemandSmall} big=${repDemandBig}`);
+
+const repStartersSmall = replacementLevel(bigPool, demandSmall4, { basis: 'starters', leagueSize: 4 })[4];
+const repStartersBig = replacementLevel(bigPool, demandBig8, { basis: 'starters', leagueSize: 8 })[4];
+ok('starters basis: larger league has deeper replacement',
+  repStartersBig < repStartersSmall, `small=${repStartersSmall} big=${repStartersBig}`);
+
+const repDemand4 = replacementLevel(bigPool, demandSmall4, { basis: 'demand' })[4];
+const repStarters4 = replacementLevel(bigPool, demandSmall4, { basis: 'starters', leagueSize: 4 })[4];
+ok('starters basis is shallower than demand basis (fewer slots to fill)',
+  repStarters4 > repDemand4, `demand=${repDemand4} starters=${repStarters4}`);
+
 console.log('\nVORP');
 const withVorp = attachVorp(fwds, { 4: 69 });
 ok('VORP is measured against replacement', withVorp[0].vorp === 92 - 69);
@@ -273,11 +296,14 @@ ok('the replacement player scores zero VORP',
   withVorp.find((r) => r.proj === 69).vorp === 0);
 ok('below-replacement players score negative VORP',
   withVorp.find((r) => r.proj === 55).vorp < 0);
-ok('VORP responds to league size', (() => {
-  const small = replacementLevel(fwds, outstandingDemand(new Map(), 4, new Map()), { basis: 'demand' })[4];
-  const big = replacementLevel(fwds, outstandingDemand(new Map(), 8, new Map()), { basis: 'demand' })[4];
-  return small >= big;
-})(), 'a smaller league should not have a deeper replacement level');
+
+console.log('\nVORP responds to league size');
+// Use the large pool (30 forwards) and actual demand computations.
+// This ensures league size 4 and 8 genuinely pick different replacement players.
+const repSmall = replacementLevel(bigPool, demandSmall4, { basis: 'demand' })[4];
+const repBig = replacementLevel(bigPool, demandBig8, { basis: 'demand' })[4];
+ok('VORP baseline deepens in larger leagues (more slots to fill)',
+  repBig < repSmall, `small=${repSmall} big=${repBig}`);
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
 process.exit(failures ? 1 : 0);

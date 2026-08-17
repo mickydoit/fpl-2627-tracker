@@ -5,13 +5,13 @@
  * the worst in the database — it is the player sitting at the edge of what the
  * league still has to fill at that position. In an eight-manager league there
  * are 24 forward slots; once 16 forwards are gone and 8 slots remain
- * outstanding, the eighth-best forward left is roughly the last one who will be
- * taken, and everyone beyond him is free. That is the baseline.
+ * outstanding, the ninth-best forward left (the first one nobody needs) is
+ * the baseline. Everyone beyond that point is free.
  *
  * It has to be recomputed after every pick. A baseline fixed before the draft
  * makes VORP meaningless by the second round.
  */
-import { QUOTA, STARTER_QUOTA, DRAFT_CONFIG } from './config.js';
+import { QUOTA, STARTER_QUOTA, DRAFT_CONFIG, LEAGUE_SIZE_DEFAULT } from './config.js';
 
 const TYPES = [1, 2, 3, 4];
 
@@ -41,7 +41,7 @@ export function outstandingDemand(rosters, leagueSize, types) {
  * starting slots only, which stops bench positions earning early picks; it is
  * kept for comparison in the diagnostics.
  */
-export function replacementLevel(rows, demand, { basis = DRAFT_CONFIG.replacementBasis, leagueSize = 8 } = {}) {
+export function replacementLevel(rows, demand, { basis = DRAFT_CONFIG.replacementBasis, leagueSize = LEAGUE_SIZE_DEFAULT } = {}) {
   const out = {};
   for (const t of TYPES) {
     const pool = rows
