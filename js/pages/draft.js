@@ -179,7 +179,7 @@ function render() {
     el('div', { class: 'card headline' },
       el('h2', {}, d.picksUntilMyTurn === 0 ? 'Your pick — take this' : 'Best available now'),
       best
-        ? el('div', {},
+        ? el('div', { class: 'pick' },
             el('div', { class: 'pickname' }, playerLine(best)),
             el('div', { class: 'pickstats' },
               el('span', {}, `Draft value ${fmt.pts(best.draftValue)}`),

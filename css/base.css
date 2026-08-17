@@ -79,6 +79,16 @@
   --radius: 12px;
   --pill: 18.5px;
 
+  /* Spacing scale. Every gap in the app should come from this ladder rather
+     than a one-off value — that is what makes the rhythm read as deliberate
+     instead of arbitrary. Steps are roughly 1.6x apart so adjacent sizes are
+     visibly different. */
+  --s-xs: 0.35rem;   /* inside a control: icon to label */
+  --s-sm: 0.6rem;    /* between tightly related lines */
+  --s-md: 1rem;      /* between elements in a group */
+  --s-lg: 1.6rem;    /* between groups inside a card */
+  --s-xl: 2.4rem;    /* between cards / major sections */
+
   --font-display: 'Anton', 'Archivo Black', 'Haettenschweiler', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
@@ -206,9 +216,13 @@ p:last-child { margin-bottom: 0; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1rem 1.1rem;
-  margin-bottom: 1rem;
+  padding: var(--s-lg) var(--s-lg) var(--s-lg);
+  margin-bottom: var(--s-md);
 }
+/* A card's heading owns the space beneath it, so no child has to add its own
+   top margin and risk doubling up. */
+.card > h2 { margin: 0 0 var(--s-md); }
+.card > h2 + * { margin-top: 0; }
 
 /* ---------- buttons ---------- */
 button, .btn {

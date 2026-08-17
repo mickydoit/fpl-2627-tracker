@@ -456,38 +456,63 @@ table.players .proj { color: var(--accent); font-weight: 900; }
 }
 
 /* --- draft assistant ------------------------------------------------ */
-.setup label { display: block; margin: 0.75rem 0; font: inherit; }
-.setup .input { display: block; width: 100%; margin-top: 0.25rem; }
-.search { width: 100%; margin-bottom: 0.5rem; }
-.headline .pickname { font-family: var(--font-display); font-size: 2rem; line-height: 1.1; }
-.headline .pickstats { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.5rem 0; opacity: 0.85; }
-.why { margin: 0.5rem 0 1.25rem; padding-left: 1.1rem; }
-/* The Taken/Mine pair and the Alternatives heading were colliding — the actions
-   need room below them, and the heading needs its own space above. */
-.headline .actions { margin: 0.25rem 0 0.5rem; }
-.alts { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--border-soft); }
-.alts h3 { margin: 0 0 0.6rem; }
-.why li { margin: 0.2rem 0; }
+/* The recommendation card is read top to bottom under a pick clock, so it is
+   laid out as a flex column with one gap between groups rather than a pile of
+   per-element margins that collapse unpredictably against each other. */
+.setup label { display: block; margin: var(--s-md) 0; font: inherit; }
+.setup .input { display: block; width: 100%; margin-top: var(--s-xs); }
+.search { width: 100%; margin-bottom: var(--s-sm); }
+
+.headline { display: flex; flex-direction: column; gap: var(--s-md); }
+/* The recommendation itself: name, stats, reasons, actions. One gap governs the
+   whole stack, so nothing depends on margins collapsing against each other. */
+.pick { display: flex; flex-direction: column; gap: var(--s-md); }
+.headline .pickname { font-family: var(--font-display); font-size: 2rem; line-height: 1.1; margin: 0; }
+.headline .pickstats { display: flex; flex-wrap: wrap; gap: var(--s-sm) var(--s-md); margin: 0; opacity: 0.85; }
+/* Deliberately NOT a flex column: making a <ul> a flex container drops the list
+   markers on wrapped items, so the reasons space themselves with margins. */
+.why { margin: 0; padding-left: 1.1rem; }
+.why li + li { margin-top: var(--s-sm); }
 .why li.constraint, .why li.risk { color: var(--yellow); }
-.result {
-  display: flex; align-items: center; gap: 0.75rem;
-  padding: 0.5rem 0; border-top: 1px solid var(--border-soft);
+/* Taken/Mine is the card's primary action — it gets clear air below it so it
+   never reads as belonging to the Alternatives list underneath. */
+.pick > .actions { margin-top: var(--s-xs); }
+
+.alts {
+  margin-top: var(--s-lg); padding-top: var(--s-lg);
+  border-top: 1px solid var(--border-soft);
+  display: flex; flex-direction: column; gap: var(--s-xs);
 }
+.alts h3 { margin: 0 0 var(--s-sm); }
+
+.result {
+  display: flex; align-items: center; gap: var(--s-md);
+  padding: var(--s-md) 0; border-top: 1px solid var(--border-soft);
+}
+.alts .result:first-of-type { border-top: 0; padding-top: 0; }
 .result .who { flex: 1; }
-.actions { display: flex; gap: 0.4rem; }
-.posfilter { display: flex; gap: 0.4rem; margin: 0.5rem 0; flex-wrap: wrap; }
+.actions { display: flex; gap: var(--s-sm); }
+.posfilter { display: flex; gap: var(--s-sm); margin: var(--s-md) 0; flex-wrap: wrap; }
 .pill {
   background: transparent; color: var(--text); border: 1px solid var(--border);
   border-radius: var(--pill); padding: 0.3rem 0.8rem; cursor: pointer;
   font-family: var(--font-display); font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase;
 }
 .pill.active { background: var(--accent); color: var(--ink); border-color: var(--accent); }
-.scarcity .srow { display: flex; gap: 0.75rem; align-items: baseline; padding: 0.4rem 0; }
+/* Element-qualified on purpose: a reason in the recommendation list is also
+   `class="scarcity"`, and a bare .scarcity rule turns that <li> into a flex
+   container, which silently drops its list marker. */
+div.scarcity { display: flex; flex-direction: column; }
+.scarcity .srow {
+  display: flex; gap: var(--s-md); align-items: baseline;
+  padding: var(--s-sm) 0; border-top: 1px solid var(--border-soft);
+}
+.scarcity .srow:first-child { border-top: 0; padding-top: 0; }
 .scarcity .srow .v { font-weight: 700; }
 .scarcity .high .v { color: var(--red); }
 .scarcity .medium .v { color: var(--yellow); }
 .scarcity .low .v { color: var(--lime); }
-.logactions { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+.logactions { display: flex; gap: var(--s-sm); margin-bottom: var(--s-md); flex-wrap: wrap; }
 tr.mine { background: rgba(159, 237, 0, 0.08); }
 
 /* Small screens: recommendation, entry, roster, then everything else. Cards
