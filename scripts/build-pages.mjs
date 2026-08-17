@@ -8,13 +8,16 @@
 import { writeFile } from 'node:fs/promises';
 
 const PAGES = [
-  { slug: 'index',     title: 'Dashboard',         accent: 'lime',   icon: 'nav-stats',    nav: 'Dashboard' },
-  { slug: 'squad',     title: 'Squad Optimiser',   accent: 'cyan',   icon: 'nav-teams',    nav: 'Squad' },
-  { slug: 'draft',     title: 'Draft Board',       accent: 'cyan',   icon: 'nav-bracket',  nav: 'Draft' },
-  { slug: 'transfers', title: 'Transfers',         accent: 'yellow', icon: 'nav-bracket',  nav: 'Transfers' },
-  { slug: 'players',   title: 'Players',           accent: 'lime',   icon: 'nav-ladder',   nav: 'Players' },
-  { slug: 'market',    title: 'Market',            accent: 'cyan',   icon: 'nav-fixtures', nav: 'Market' },
-  { slug: 'rules',     title: 'Rules',             accent: 'yellow', icon: 'nav-admin',    nav: 'Rules' },
+  // Icons are the WC Draft file's own Menu Bar frame (node 229:55), one per page
+  // in the order they sit on the canvas. Each is a single #F4FF7B glyph on a
+  // transparent ground, which is what the bottom nav's grey-out filter expects.
+  { slug: 'index',     title: 'Dashboard',         accent: 'lime',   icon: 'nav-dashboard', nav: 'Dashboard' },
+  { slug: 'squad',     title: 'Squad Optimiser',   accent: 'cyan',   icon: 'nav-squad',     nav: 'Squad' },
+  { slug: 'draft',     title: 'Draft Board',       accent: 'cyan',   icon: 'nav-draft',     nav: 'Draft' },
+  { slug: 'transfers', title: 'Transfers',         accent: 'yellow', icon: 'nav-transfers', nav: 'Transfers' },
+  { slug: 'players',   title: 'Players',           accent: 'lime',   icon: 'nav-players',   nav: 'Players' },
+  { slug: 'market',    title: 'Market',            accent: 'cyan',   icon: 'nav-market',    nav: 'Market' },
+  { slug: 'rules',     title: 'Rules',             accent: 'yellow', icon: 'nav-rules',     nav: 'Rules' },
 ];
 
 const href = (p) => `${p.slug}.html`;
@@ -26,8 +29,12 @@ const page = (p) => `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#202123" />
 <title>${p.title} · LBH FPL 26/27</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg" />
-<link rel="apple-touch-icon" href="img/lbh-app-icon.svg" />
+<link rel="icon" type="image/svg+xml" href="img/logo-fpl.svg" />
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
+<link rel="manifest" href="manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="FPL Tracker" />
 <link rel="preload" href="fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="stylesheet" href="css/base.css" />
@@ -36,7 +43,7 @@ const page = (p) => `<!DOCTYPE html>
 <body data-accent="${p.accent}" data-page="${p.slug}">
 <header class="topbar">
   <a class="brand" href="index.html">
-    <img class="brand-logo" src="img/logo-black.svg" alt="LBH Draft" />
+    <img class="brand-logo" src="img/logo-fpl.svg" alt="FPL Tracker" />
     <span class="brand-text">FPL<br />26/27</span>
   </a>
   <nav>
