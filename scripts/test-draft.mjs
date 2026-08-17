@@ -14,7 +14,8 @@ import { outstandingDemand, replacementLevel, attachVorp } from '../js/draft/rep
 import { playersBeforeCliff, scarcityByPosition, allowedPositions } from '../js/draft/scarcity.js';
 import { survival } from '../js/draft/simulate.js';
 import { evaluate } from '../js/draft/value.js';
-import { projectBoard } from '../js/draft/project.js';
+import { projectBoard, toModelRow } from '../js/draft/project.js';
+import { teamDefence } from '../js/model.js';
 
 let failures = 0;
 let checks = 0;
@@ -481,7 +482,7 @@ console.log('\nBoard projection');
 const boardFile = await readJSON('data/draft/players.json');
 const fixturesFile = await readJSON('data/fixtures.json', []);
 if (boardFile) {
-  const projected = projectBoard(boardFile.players, fixturesFile);
+  const projected = projectBoard(boardFile.players, fixturesFile, boardFile.teams);
   ok('every player is projected', projected.length === boardFile.players.length);
   ok('rest-of-season value is present', projected.every((r) => Number.isFinite(r.rosValue)));
   ok('near-term value is present', projected.every((r) => Number.isFinite(r.nearTermValue)));
@@ -496,6 +497,32 @@ if (boardFile) {
   ok('the top twenty are not all keepers',
     top.filter((r) => r.element_type === 1).length < 5,
     `${top.filter((r) => r.element_type === 1).length} keepers in the top 20`);
+}
+
+console.log('\nTeam defensive strength is genuinely differentiated');
+// Regression guard for a specific failure mode: projectBoard building a
+// synthetic `teams` array of bare `{id}` rows, which silently defeats
+// teamDefence()'s strength-rating fallback for under-informed clubs (newly
+// promoted sides) and collapses every one of them to the identical
+// league-average xGC. Reads only data/draft/players.json — never
+// data/bootstrap.json, which is synthetic seed data regenerated on every
+// `npm test` run and must not leak into these assertions.
+if (boardFile) {
+  ok('the committed board dataset carries real team strength ratings',
+    Array.isArray(boardFile.teams) && boardFile.teams.length === 20,
+    `got ${boardFile.teams?.length ?? 0} teams`);
+  const rows = boardFile.players.map(toModelRow);
+  const defence = teamDefence(rows, boardFile.teams);
+  const distinct = new Set(Object.values(defence).map((v) => v.toFixed(3)));
+  ok('clubs do not all collapse to a single defensive rating',
+    distinct.size > 1, `only ${distinct.size} distinct xGC value(s) across ${boardFile.teams.length} clubs`);
+  const strength = (t) => t.strength_overall_home + t.strength_overall_away;
+  const byStrength = [...boardFile.teams].sort((a, b) => strength(b) - strength(a));
+  const strongest = byStrength[0];
+  const weakest = byStrength[byStrength.length - 1];
+  ok('a club known to be weak rates worse defensively than a club known to be strong',
+    defence[weakest.id] > defence[strongest.id],
+    `${weakest.name} xGC=${defence[weakest.id]?.toFixed(3)} vs ${strongest.name} xGC=${defence[strongest.id]?.toFixed(3)}`);
 }
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);

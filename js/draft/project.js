@@ -23,7 +23,7 @@ const per90 = (total, minutes) => (minutes > 0 ? (num(total) / minutes) * 90 : 0
  * Reshape a board row into what js/model.js expects: per-90 rates derived from
  * the frozen season totals, with live availability from the current payload.
  */
-function toModelRow(p) {
+export function toModelRow(p) {
   const prior = p.prior || {};
   const mins = num(prior.minutes);
   return {
@@ -48,10 +48,17 @@ function toModelRow(p) {
   };
 }
 
-export function projectBoard(boardPlayers, fixtures, opts = {}) {
+export function projectBoard(boardPlayers, fixtures, teams, opts = {}) {
   const rows = boardPlayers.map(toModelRow);
-  const teams = [...new Set(rows.map((r) => r.team))].map((id) => ({ id }));
-  const boot = { elements: rows, teams, events: [{ id: 1, is_next: true }] };
+  // Real strength ratings from the committed dataset feed js/model.js's
+  // teamDefence() fallback for clubs with too little prior-season data (newly
+  // promoted sides). Without them every under-informed club collapses to the
+  // identical league-average xGC — synthesize bare `{id}` rows only for a
+  // dataset built before teams were carried through.
+  const teamRows = Array.isArray(teams) && teams.length
+    ? teams
+    : [...new Set(rows.map((r) => r.team))].map((id) => ({ id }));
+  const boot = { elements: rows, teams: teamRows, events: [{ id: 1, is_next: true }] };
 
   const ros = projectAll(boot, fixtures, {
     horizon: DRAFT_CONFIG.rosHorizon, prior: draftPrior, ...opts,
