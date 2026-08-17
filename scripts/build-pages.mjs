@@ -33,7 +33,7 @@ const page = (p) => `<!DOCTYPE html>
 <link rel="stylesheet" href="css/base.css" />
 <link rel="stylesheet" href="css/app.css" />
 </head>
-<body data-accent="${p.accent}">
+<body data-accent="${p.accent}" data-page="${p.slug}">
 <header class="topbar">
   <a class="brand" href="index.html">
     <img class="brand-logo" src="img/logo-black.svg" alt="LBH Draft" />

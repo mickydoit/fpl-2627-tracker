@@ -68,7 +68,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.tile .s { font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile .s { font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
 
 /* The hero tile borrows the gold "+10" treatment from the stats screen. */
 .tile.accent {
@@ -478,10 +478,17 @@ tr.mine { background: rgba(159, 237, 0, 0.08); }
   .headline .pickname { font-size: 1.5rem; }
   .result { flex-wrap: wrap; }
   .result .who { flex-basis: 100%; }
-  /* The two-column tile grid leaves each sub-label ~138px to work with —
-     narrower than "Round 1 · slot 1 on the clock" or the four-position quota
-     line at the base 0.72rem, so nowrap's ellipsis was cutting real content
-     (the quota tile lost its MID count and all of FWD). 0.6rem is already
-     used elsewhere in this file for secondary tile/badge text. */
-  .tile .s { font-size: 0.6rem; }
+  /* .tile .s is shared by every page (dashboard, squad, transfers...), and
+     on Squad "randomised greedy + local search" needs to keep wrapping —
+     truncating it there would be a regression, not a fix. So this stays
+     scoped to the draft page via body[data-page], set by
+     scripts/build-pages.mjs, rather than touching the base .tile .s rule.
+     The two-column tile grid on Draft leaves each sub-label ~138px to work
+     with — narrower than "Round 1 · slot 1 on the clock" or the
+     four-position quota line at the base 0.72rem, so nowrap's ellipsis was
+     cutting real content (the quota tile lost its MID count and all of
+     FWD). 0.6rem is already used elsewhere in this file for secondary
+     tile/badge text; going smaller trades a lost quota count — shown in
+     full elsewhere on the page — for barely-readable type, which is worse. */
+  body[data-page="draft"] .tile .s { white-space: nowrap; font-size: 0.6rem; }
 }
