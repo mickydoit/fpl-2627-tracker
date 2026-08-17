@@ -6,6 +6,10 @@
 import { readJSON } from './lib/io.mjs';
 import { DRAFT_CONFIG, QUOTA, STARTER_QUOTA, ROUNDS,
   LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX } from '../js/draft/config.js';
+import {
+  SCHEMA_VERSION, createDraft, addPick, undoLastPick, editPick, derive, needsFor,
+  slotForPick, roundForPick, finishDraft, finalPools, save, load, clear, migrateLegacy,
+} from '../js/draft/state.js';
 
 let failures = 0;
 let checks = 0;
@@ -80,6 +84,119 @@ ok('every weight is a finite number',
 ok('replacement is measured against outstanding demand by default',
   DRAFT_CONFIG.replacementBasis === 'demand');
 ok('the survival model is deterministic by default', Number.isFinite(DRAFT_CONFIG.survivalSeed));
+
+console.log('\nDraft state — snake order');
+ok('round one runs in slot order',
+  [1, 2, 3, 4].every((n) => slotForPick(n, 4) === n));
+ok('round two reverses',
+  slotForPick(5, 4) === 4 && slotForPick(6, 4) === 3
+  && slotForPick(7, 4) === 2 && slotForPick(8, 4) === 1);
+ok('round three runs forwards again', slotForPick(9, 4) === 1 && slotForPick(12, 4) === 4);
+ok('rounds are one-indexed', roundForPick(1, 4) === 1 && roundForPick(4, 4) === 1);
+ok('the round advances on the boundary', roundForPick(5, 4) === 2 && roundForPick(9, 4) === 3);
+ok('slot one picks first and last in a two-round window',
+  slotForPick(1, 8) === 1 && slotForPick(16, 8) === 1);
+
+console.log('\nDraft state — the log is the source of truth');
+let s = createDraft({ leagueSize: 8, mySlot: 5 });
+ok('a fresh draft carries the schema version', s.version === SCHEMA_VERSION);
+ok('a fresh draft starts at pick one', derive(s).currentPick === 1);
+const TYPES = new Map([[101, 2], [102, 3], [103, 3], [104, 4], [105, 3], [999, 2]]);
+ok('a fresh draft needs the full quota',
+  JSON.stringify(needsFor([], TYPES)) === JSON.stringify({ 1: 2, 2: 5, 3: 5, 4: 3 }));
+ok('a fresh draft has fifteen picks remaining', derive(s).picksRemaining === 15);
+ok('slot five picks fifth', derive(s).myNextPick === 5);
+ok('four picks happen before my first turn', derive(s).picksUntilMyTurn === 4);
+
+s = addPick(s, { elementId: 101, mine: false });
+ok('a pick advances the board', derive(s).currentPick === 2);
+ok('a taken player is off the board', derive(s).taken.has(101));
+ok('the first pick belongs to slot one', derive(s).rosters.get(1).includes(101));
+ok('a taken player is not mine', !derive(s).myRoster.includes(101));
+
+s = addPick(s, { elementId: 102, mine: false });
+s = addPick(s, { elementId: 103, mine: false });
+s = addPick(s, { elementId: 104, mine: false });
+ok('my turn arrives after four picks', derive(s).picksUntilMyTurn === 0);
+ok('I am on the clock', derive(s).onClockSlot === 5);
+
+s = addPick(s, { elementId: 105, mine: true });
+ok('my pick lands in my roster', derive(s).myRoster.includes(105));
+ok('my pick is also attributed to my slot', derive(s).rosters.get(5).includes(105));
+ok('my next turn is the snake turn', derive(s).myNextPick === 12);
+ok('six opponents pick before my next turn', derive(s).opponentPicksBeforeMyNext === 6);
+
+console.log('\nDraft state — undo and correction');
+const beforeUndo = derive(s).currentPick;
+s = undoLastPick(s);
+ok('undo steps the board back', derive(s).currentPick === beforeUndo - 1);
+ok('undo removes the player from the pool', !derive(s).taken.has(105));
+ok('undo empties my roster again', derive(s).myRoster.length === 0);
+
+s = addPick(s, { elementId: 105, mine: true });
+s = editPick(s, 0, { elementId: 999, mine: false });
+ok('an edited pick replaces the player', derive(s).taken.has(999) && !derive(s).taken.has(101));
+ok('an edit keeps the board position', derive(s).currentPick === 6);
+ok('an edit re-attributes to the right slot', derive(s).rosters.get(1).includes(999));
+
+s = editPick(s, 1, { elementId: 102, mine: true });
+ok('an edit can transfer ownership to me', derive(s).myRoster.includes(102));
+ok('an edit recomputes my remaining needs',
+  Object.values(needsFor(derive(s).myRoster, TYPES)).reduce((a, b) => a + b, 0) === 13);
+
+console.log('\nDraft state — undo on an empty log');
+const empty = undoLastPick(createDraft({ leagueSize: 8, mySlot: 5 }));
+ok('undoing nothing is safe', derive(empty).currentPick === 1);
+
+console.log('\nFinish draft hands Phase 2 its foundation');
+let done = createDraft({ leagueSize: 4, mySlot: 2 });
+[201, 202, 203, 204, 205, 206].forEach((id, i) => {
+  done = addPick(done, { elementId: id, mine: i === 1 });
+});
+done = finishDraft(done);
+const pools = finalPools(done, [201, 202, 203, 204, 205, 206, 207, 208], new Map());
+ok('the draft is marked finished', done.finished === true);
+ok('the log survives finishing', done.log.length === 6);
+ok('my players are kept', pools.mine.join() === '202');
+ok('every opponent roster is kept', Object.keys(pools.bySlot).length === 4);
+ok('every drafted player is recorded', pools.drafted.length === 6);
+ok('undrafted players become the free-agent pool', pools.undrafted.join() === '207,208');
+
+console.log('\nDraft state — persistence');
+// Node has no localStorage. state.js only touches it inside function bodies,
+// so a minimal in-memory shim installed before these calls is enough to
+// exercise the real save/load/clear/migrateLegacy code paths.
+globalThis.localStorage = {
+  _d: new Map(),
+  getItem(k) { return this._d.has(k) ? this._d.get(k) : null; },
+  setItem(k, v) { this._d.set(k, String(v)); },
+  removeItem(k) { this._d.delete(k); },
+};
+
+const STORAGE_KEY = 'draftState.v1';
+let toPersist = createDraft({ leagueSize: 6, mySlot: 3 });
+toPersist = addPick(toPersist, { elementId: 501, mine: true });
+toPersist = addPick(toPersist, { elementId: 502, mine: false });
+save(toPersist);
+const reloaded = load();
+ok('a saved draft reloads identically', JSON.stringify(reloaded) === JSON.stringify(toPersist));
+
+localStorage.setItem(STORAGE_KEY, '{not valid json');
+ok('load() returns null for a corrupt payload', load() === null);
+
+localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...toPersist, version: 999 }));
+ok('load() returns null for a wrong schema version', load() === null);
+
+save(toPersist);
+clear();
+ok('clear() removes the saved draft', load() === null);
+
+localStorage.setItem('draftTaken', JSON.stringify([1, 2, 3]));
+localStorage.setItem('draftEntry', JSON.stringify({}));
+ok('migrateLegacy finds and removes the old keys', migrateLegacy() === true);
+ok('migrateLegacy leaves no trace of the legacy keys',
+  localStorage.getItem('draftTaken') === null && localStorage.getItem('draftEntry') === null);
+ok('migrateLegacy reports false once there is nothing left to migrate', migrateLegacy() === false);
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
 process.exit(failures ? 1 : 0);
