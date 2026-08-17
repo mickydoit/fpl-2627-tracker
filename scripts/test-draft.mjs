@@ -162,6 +162,26 @@ ok('every opponent roster is kept', Object.keys(pools.bySlot).length === 4);
 ok('every drafted player is recorded', pools.drafted.length === 6);
 ok('undrafted players become the free-agent pool', pools.undrafted.join() === '207,208');
 
+console.log('\nDraft state — derive() needs with types supplied');
+// needsFor() alone was covered above, but derive(s, TYPES).needs — the field
+// Task 9's recommendation engine reads — was never exercised or asserted.
+let needsState = createDraft({ leagueSize: 8, mySlot: 1 });
+const NEEDS_TYPES = new Map([[301, 1], [302, 2], [303, 2], [304, 2], [305, 2], [306, 2]]);
+ok('derive() starts at the full quota once types are supplied',
+  JSON.stringify(derive(needsState, NEEDS_TYPES).needs) === JSON.stringify(QUOTA));
+
+needsState = addPick(needsState, { elementId: 301, mine: true }); // a keeper
+ok('drafting a keeper decrements only the GK need',
+  derive(needsState, NEEDS_TYPES).needs[1] === 1 && derive(needsState, NEEDS_TYPES).needs[2] === 5);
+
+[302, 303, 304, 305, 306].forEach((id) => { // five defenders
+  needsState = addPick(needsState, { elementId: id, mine: true });
+});
+ok('needs keeps decrementing as each defender is drafted', derive(needsState, NEEDS_TYPES).needs[2] === 0);
+ok('a filled position reports zero, not negative',
+  Object.values(derive(needsState, NEEDS_TYPES).needs).every((n) => n >= 0));
+ok('an untouched position still reports its full quota', derive(needsState, NEEDS_TYPES).needs[3] === 5);
+
 console.log('\nDraft state — persistence');
 // Node has no localStorage. state.js only touches it inside function bodies,
 // so a minimal in-memory shim installed before these calls is enough to
@@ -190,6 +210,21 @@ ok('load() returns null for a wrong schema version', load() === null);
 save(toPersist);
 clear();
 ok('clear() removes the saved draft', load() === null);
+
+localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...toPersist, mySlot: 999 }));
+ok('load() clamps a mySlot above range down to the league size',
+  load().mySlot === toPersist.leagueSize);
+
+const noSlot = { ...toPersist };
+delete noSlot.mySlot;
+localStorage.setItem(STORAGE_KEY, JSON.stringify(noSlot));
+ok('load() defaults a missing mySlot to slot one', load().mySlot === 1);
+
+localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...toPersist, mySlot: 0 }));
+ok('load() clamps a zero mySlot up to slot one', load().mySlot === 1);
+
+localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...toPersist, mySlot: -5 }));
+ok('load() clamps a negative mySlot up to slot one', load().mySlot === 1);
 
 localStorage.setItem('draftTaken', JSON.stringify([1, 2, 3]));
 localStorage.setItem('draftEntry', JSON.stringify({}));

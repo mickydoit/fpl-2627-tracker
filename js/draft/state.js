@@ -192,9 +192,15 @@ export function load() {
     const raw = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (!raw || raw.version !== SCHEMA_VERSION) return null;
     if (!Array.isArray(raw.log)) return null;
+    const leagueSize = clampSize(raw.leagueSize);
+    // mySlot needs the same clamp createDraft() applies — an out-of-range or
+    // missing slot doesn't throw, but it silently wrecks onClockSlot/
+    // myNextPick/picksUntilMyTurn downstream, which a live pick clock relies on.
+    const mySlot = Math.max(1, Math.min(leagueSize, Math.round(raw.mySlot) || 1));
     return {
       ...raw,
-      leagueSize: clampSize(raw.leagueSize),
+      leagueSize,
+      mySlot,
       log: raw.log.filter((p) => p && Number.isFinite(p.elementId)),
     };
   } catch {
