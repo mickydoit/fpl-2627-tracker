@@ -88,7 +88,7 @@ export function evaluate(available, ctx) {
       const altVorp = blendHorizons(alt, round) - (replacement[alt.element_type] ?? 0);
       expectedNext += carried * ps * altVorp;
       carried *= 1 - ps;
-      if (carried < 1e-6) break;
+      if (carried < DRAFT_CONFIG.urgencyCarriedCutoff) break;
     }
     const urgency = Math.max(0, vorp - (survivalP * vorp + (1 - survivalP) * expectedNext));
 
@@ -96,7 +96,7 @@ export function evaluate(available, ctx) {
 
     const avail = row.availability ?? 1;
     const unproven = Math.max(0, 1 - (row.minutes ?? 0) / DRAFT_CONFIG.minutesConfidence);
-    const risk = (1 - avail) * DRAFT_CONFIG.availabilityPenalty + unproven * 0.5;
+    const risk = (1 - avail) * DRAFT_CONFIG.availabilityPenalty + unproven * DRAFT_CONFIG.unprovenWeight;
 
     const draftValue =
       vorp * DRAFT_CONFIG.vorpWeight
@@ -128,8 +128,18 @@ function buildReasons({ row, vorp, sc, survivalP, urgency, risk, needs, forced, 
 
   out.push({ kind: 'value', text: `+${vorp.toFixed(0)} ROS points above ${pos} replacement` });
 
+  // `sc.beforeCliff` (from playersBeforeCliff) is not used here: it degenerates
+  // on large pools — one outsized gap at the top dominates the standard
+  // deviation and can return a tiny count almost regardless of real depth. It
+  // stays available as a diagnostic on `sc`, just not asserted as a fact to
+  // the user. Only the relative label and the demand/survival numbers we
+  // trust drive this copy.
   if (sc.label === 'HIGH') {
-    out.push({ kind: 'scarcity', text: `${pos} is scarce — ${sc.beforeCliff} left before a real drop, ${sc.demand} slots still needed league-wide` });
+    let text = `${pos} is currently high scarcity — ${sc.demand} ${pos} slots are still required league-wide`;
+    if (survivalP < DRAFT_CONFIG.scarcitySurvivalReasonThreshold) {
+      text += ', and comparable options are less likely to remain until your next pick';
+    }
+    out.push({ kind: 'scarcity', text });
   } else if (sc.label === 'LOW') {
     out.push({ kind: 'scarcity', text: `${pos} is deep — ${sc.available} comparable options remain` });
   }
@@ -141,7 +151,7 @@ function buildReasons({ row, vorp, sc, survivalP, urgency, risk, needs, forced, 
     });
   }
 
-  if (urgency > 0.5) {
+  if (urgency > DRAFT_CONFIG.urgencyReasonThreshold) {
     out.push({ kind: 'urgency', text: `passing costs about ${urgency.toFixed(0)} points against the best likely alternative` });
   }
 
@@ -151,7 +161,7 @@ function buildReasons({ row, vorp, sc, survivalP, urgency, risk, needs, forced, 
     out.push({ kind: 'need', text: `you still need ${needs[row.element_type]} ${pos}` });
   }
 
-  if (risk > 0.3) {
+  if (risk > DRAFT_CONFIG.riskReasonThreshold) {
     out.push({ kind: 'risk', text: row.news ? `availability risk — ${row.news}` : 'availability or minutes risk' });
   }
 

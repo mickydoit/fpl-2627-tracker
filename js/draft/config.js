@@ -46,6 +46,17 @@ export const DRAFT_CONFIG = {
   urgencyWeight: 0.9,
   rosterNeedWeight: 0.25,
   riskWeight: 0.5,
+  /** Below this, the survival-weighted opportunity-cost accumulation over
+   *  remaining alternatives is negligible and further ones are skipped. */
+  urgencyCarriedCutoff: 1e-6,
+  /** Minimum urgency score before a reason cites the cost of passing. */
+  urgencyReasonThreshold: 0.5,
+  /**
+   * Below this survival probability, a scarcity reason may additionally say
+   * comparable options are unlikely to remain until the next pick. Above it,
+   * that clause is omitted rather than asserted without support.
+   */
+  scarcitySurvivalReasonThreshold: 0.5,
 
   /* --- replacement level --- */
   /**
@@ -86,6 +97,10 @@ export const DRAFT_CONFIG = {
   availabilityPenalty: 1.0,
   /** Minutes of evidence below which a player is treated as unproven. */
   minutesConfidence: 900,
+  /** Weight on the "unproven" component of risk (thin first-team evidence). */
+  unprovenWeight: 0.5,
+  /** Minimum risk score before a reason surfaces an availability/minutes warning. */
+  riskReasonThreshold: 0.3,
 
   /* --- Phase 2 --- */
   /** Minimum projected gain before a waiver swap is worth recommending. */

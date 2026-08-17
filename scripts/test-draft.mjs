@@ -419,9 +419,38 @@ ok('the decision score is not just the projection',
   ranked[0].draftValue !== ranked[0].projectedPoints);
 
 console.log('\nScarcity outranks a marginally better projection');
-// Two forwards above a cliff, four interchangeable defenders below it.
-const scarceCtx = { ...baseCtx, demand: { 1: 16, 2: 40, 3: 40, 4: 24 }, opponentPicksBeforeMyNext: 12 };
-const scarceRanked = evaluate(cand, scarceCtx);
+// Deliberately the INVERSE of a "scarcity is obviously right" fixture: the
+// defender leads on raw VORP (20 vs 18), so if the scarcity term did nothing
+// — or were inverted, or a constant — the defender would win. `ctx.scarcity`
+// is supplied explicitly (bypassing scarcityByPosition, which cannot see a
+// meaningful label from a two-row candidate slice) so the label is under the
+// test's control: FWD is HIGH, DEF is LOW. `opponentPicksBeforeMyNext: 0`
+// collapses survival to 1 for everyone, zeroing the urgency term, and equal
+// `needs` values zero out any rosterNeed differential — isolating scarcity
+// as the only thing that can flip the raw-VORP order.
+const scarceCand = [
+  { id: 21, element_type: 4, proj: 88, rosValue: 88, nearTermValue: 11, draft_rank: 1, availability: 1, minutes: 3000 },
+  { id: 22, element_type: 2, proj: 90, rosValue: 90, nearTermValue: 11, draft_rank: 2, availability: 1, minutes: 3000 },
+];
+const scarceCtx = {
+  replacement: { 1: 0, 2: 70, 3: 0, 4: 70 },
+  demand: { 1: 16, 2: 40, 3: 40, 4: 24 },
+  needs: { 1: 2, 2: 5, 3: 5, 4: 5 }, // equal to DEF's need — rosterNeed cancels out
+  picksRemaining: 17,
+  opponentPicksBeforeMyNext: 0,
+  round: 1,
+  leagueSize: 8,
+  scarcity: {
+    1: { available: 0, demand: 16, ratio: 0, beforeCliff: 0, label: 'LOW' },
+    2: { available: 40, demand: 40, ratio: 1, beforeCliff: 40, label: 'LOW' },
+    3: { available: 0, demand: 40, ratio: 0, beforeCliff: 0, label: 'LOW' },
+    4: { available: 3, demand: 24, ratio: 0.125, beforeCliff: 3, label: 'HIGH' },
+  },
+};
+const scarceRanked = evaluate(scarceCand, scarceCtx);
+ok('the defender actually leads on raw VORP alone (so the win must come from scarcity)',
+  scarceRanked.find((r) => r.element_type === 2).vorp > scarceRanked.find((r) => r.element_type === 4).vorp,
+  `DEF vorp ${scarceRanked.find((r) => r.element_type === 2).vorp} FWD vorp ${scarceRanked.find((r) => r.element_type === 4).vorp}`);
 ok('a scarce forward can beat a similar defender',
   scarceRanked[0].element_type === 4, `top was type ${scarceRanked[0].element_type}`);
 
