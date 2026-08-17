@@ -10,8 +10,8 @@ import { $, el, fmt, setKids } from '../ui.js';
 import { readSnapshot } from '../data.js';
 import { projectBoard } from '../draft/project.js';
 import {
-  createDraft, addPick, undoLastPick, editPick, removePick, derive,
-  needsFor, save, load, clear, migrateLegacy, finishDraft, finalPools,
+  createDraft, addPick, undoLastPick, editPick, derive,
+  save, load, clear, migrateLegacy, finishDraft, finalPools,
 } from '../draft/state.js';
 import { outstandingDemand, replacementLevel, attachVorp } from '../draft/replacement.js';
 import { scarcityByPosition } from '../draft/scarcity.js';

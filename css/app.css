@@ -68,7 +68,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.tile .s { font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.tile .s { font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* The hero tile borrows the gold "+10" treatment from the stats screen. */
 .tile.accent {
@@ -468,11 +468,20 @@ table.players .proj { color: var(--accent); font-weight: 900; }
 tr.mine { background: rgba(159, 237, 0, 0.08); }
 
 /* Small screens: recommendation, entry, roster, then everything else. Cards
-   already stack in document order, so this only tunes density; the actual
-   priority order (recommendation, entry, roster, on-clock, best-available)
-   comes from the order the cards are written in render(). */
+   stack in document order at every width; on narrow viewports #app becomes
+   a flex column purely so the headline recommendation can be promoted with
+   `order` — the DOM itself is untouched, so nothing that binds to it
+   (renderResults' closures, action-button handlers) is disturbed. */
 @media (max-width: 640px) {
+  #app { display: flex; flex-direction: column; }
+  .headline { order: -1; }
   .headline .pickname { font-size: 1.5rem; }
   .result { flex-wrap: wrap; }
   .result .who { flex-basis: 100%; }
+  /* The two-column tile grid leaves each sub-label ~138px to work with —
+     narrower than "Round 1 · slot 1 on the clock" or the four-position quota
+     line at the base 0.72rem, so nowrap's ellipsis was cutting real content
+     (the quota tile lost its MID count and all of FWD). 0.6rem is already
+     used elsewhere in this file for secondary tile/badge text. */
+  .tile .s { font-size: 0.6rem; }
 }
