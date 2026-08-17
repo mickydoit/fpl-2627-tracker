@@ -59,7 +59,7 @@ The projection model reads evidence from this frozen prior blended with live-sea
 
 **`scripts/fetch-draft.mjs`** — loses the league requirement entirely; writes the three files above. Runs in Actions on the existing cadence.
 
-**`scripts/draft-live.mjs`** — the local poller. Removed from the production flow. It is the exact thing the user has ruled out.
+**`scripts/draft-live.mjs`** — the local poller, retained but **quarantined as dev/experimental**. It must have zero dependency from the production Draft page, the production workflow, the README's user-facing instructions, or any test required for deployment. The Pages app must remain completely usable without it ever running. It is clearly labelled experimental in-file, and its npm script is marked as such.
 
 ### 2. `js/draft/scoring.js` — 2026/27 scoring and BPS estimation
 
@@ -67,7 +67,11 @@ Scoring constants are read from `config.json`, not hardcoded.
 
 BPS is reconstructed from published season components under the 2026/27 table: CBI at 1 per 3 (was 1 per 2), the tackled-penalty event removed, and the restructured keeper save tiers. Available inputs are minutes, starts, goals, assists, clean sheets, saves, CBI, tackles, recoveries, cards, own goals, penalties.
 
-**What this can and cannot claim.** Expected bonus depends on a player's BPS *relative to the other twenty-one players in that specific match*. Match-level Opta event data is not public, so exact expected bonus is unreconstructable. This module therefore produces an estimated BPS/90, maps it to expected bonus, flags the result `approximate: true`, and surfaces that caveat in the UI. The bonus component is bounded so an imperfect estimate cannot dominate the overall projection — validated by the §21 diagnostics before the model is trusted.
+**What this can and cannot claim.** Expected bonus depends on a player's BPS *relative to the other twenty-one players in that specific match*. Match-level Opta event data is not public, so exact expected bonus is unreconstructable. This module therefore produces an estimated BPS/90, maps it to expected bonus, flags the result `approximate: true`, and surfaces that caveat in the UI.
+
+**Protection by shrinkage, not by ceiling.** Reconstructed 2026/27 BPS is treated as *lower-confidence evidence* rather than truth, and the bonus estimate is shrunk toward a position-and-minutes baseline in proportion to that uncertainty. A hard cap is explicitly rejected: it would flatten genuinely strong bonus earners — exactly the attacking full-backs and shot-stopping keepers the 2026/27 rebalance is supposed to reward — which is the error the rework exists to fix. Confidence rises where the underlying components are well evidenced (high minutes, consistent starts) and falls where they are thin, so shrinkage does the work a ceiling would have done, without truncating the top of the distribution.
+
+Sanity checks accompany it: the bonus component's share of total projection is asserted to stay within a plausible band per position, and any player whose projection is bonus-dominated is surfaced in the §21 diagnostics for inspection rather than silently ranked.
 
 ### 3. `js/model.js` — one surgical change
 
@@ -156,6 +160,14 @@ TDD throughout, extending the existing suite (149 checks currently passing).
 **Regression:** the classic squad optimiser, its tests and its output are unchanged.
 
 ---
+
+## Draft Night MVP milestone
+
+Because the draft falls before 21 August, Phase 1 is sequenced around an explicit **Draft Night MVP**: a genuinely usable, deployed assistant takes priority over completing every model sophistication.
+
+The MVP must include: GitHub Pages deployment · league size and my draft slot · the current player pool · `Taken` / `Drafted by me` · snake-order attribution · an editable draft log · undo · versioned localStorage persistence · 2/5/5/3 roster tracking · picks until my next turn · dynamic replacement level and VORP · positional supply, demand and scarcity · hard late-draft roster constraints · a best recommendation with alternatives · and a human-readable explanation of why that player and position should be taken now.
+
+Advanced BPS calibration, survival-model tuning and coefficient refinement continue *after* the milestone and must not change the architecture. The plan is structured so that reaching the MVP leaves a deployable, usable app even if every later tuning task remains unfinished.
 
 ## Definition of done
 
