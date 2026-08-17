@@ -577,6 +577,27 @@ ok('shrinkage pulls up as well as down',
   bonusFromBps90(2, 0.1) > bonusFromBps90(2, 1));
 ok('the model returns a per-appearance number', Number.isFinite(draftBonusModel(bigDefender)));
 
+console.log('\nShrinkage targets a position-specific baseline, not a flat one');
+// Regression guard: BASELINE_BPS90 is documented as "the shrinkage target" but a
+// zero-minute player has confidence 0, which zeroes out their own bps90 entirely
+// in the blend — if the baseline itself doesn't vary by position, every unproven
+// player of any position collapses to the identical shrunk bonus.
+const zeroKeeper = { element_type: 1, minutes: 0 };
+const zeroForward = { element_type: 4, minutes: 0 };
+ok('a zero-minute keeper and a zero-minute forward shrink to different bonuses',
+  Math.abs(draftBonusModel(zeroKeeper) - draftBonusModel(zeroForward)) > 0.05,
+  `keeper ${draftBonusModel(zeroKeeper).toFixed(3)} vs forward ${draftBonusModel(zeroForward).toFixed(3)}`);
+ok('a thin-evidence player shrinks toward THEIR OWN position baseline, not a shared one', (() => {
+  const thinKeeper = bonusFromBps90(50, 0.05, 1);
+  const thinForward = bonusFromBps90(50, 0.05, 4);
+  return Math.abs(thinKeeper - thinForward) > 0.05;
+})());
+ok('a well-evidenced player still tracks their own estimate regardless of position baseline', (() => {
+  const keeperFull = bonusFromBps90(50, 1, 1);
+  const forwardFull = bonusFromBps90(50, 1, 4);
+  return Math.abs(keeperFull - forwardFull) < 0.01;
+})());
+
 console.log('\nBonus does not dominate');
 if (boardFile) {
   const projected2 = projectBoard(boardFile.players, fixturesFile);

@@ -79,14 +79,17 @@ export function estimateBps90(p) {
  * Expected bonus points per appearance from an estimated BPS/90.
  *
  * The logistic maps BPS/90 onto the 0–3 bonus range. Shrinkage blends the
- * player's own estimate with a league-average expectation in proportion to
- * confidence, so an unproven player regresses toward the middle instead of
- * inheriting a wild rate from 200 minutes of football.
+ * player's own estimate with a *position-specific* baseline expectation
+ * (`BASELINE_BPS90`) in proportion to confidence, so an unproven player
+ * regresses toward what's plausible for a keeper, defender, midfielder or
+ * forward — not toward a single shared number — instead of inheriting a
+ * wild rate from 200 minutes of football. `pos` is optional so this stays
+ * callable without one; omitting it falls back to a generic mid-table value.
  */
-export function bonusFromBps90(bps90, confidence = 1) {
+export function bonusFromBps90(bps90, confidence = 1, pos = null) {
   const curve = (x) => 3 / (1 + Math.exp(-(x - 30) / 8));
   const own = curve(bps90);
-  const baseline = curve(20);
+  const baseline = curve(BASELINE_BPS90[pos] ?? 20);
   const c = clamp(confidence, 0, 1);
   return clamp(own * c + baseline * (1 - c), 0, 3);
 }
@@ -94,5 +97,5 @@ export function bonusFromBps90(bps90, confidence = 1) {
 /** Drop-in replacement for the model's internal bonus term. */
 export function draftBonusModel(p) {
   const { bps90, confidence } = estimateBps90(p);
-  return bonusFromBps90(bps90, confidence);
+  return bonusFromBps90(bps90, confidence, p.element_type);
 }
