@@ -789,8 +789,14 @@ export function derive(state, types) {
   const mine = picksForSlot(leagueSize, mySlot);
   const myNextPick = mine.find((p) => p >= currentPick) ?? null;
   const picksUntilMyTurn = myNextPick === null ? null : myNextPick - currentPick;
+  // When I am on the clock, currentPick is mine and must not be counted as an
+  // opponent's. When an opponent holds it, it must be. Getting this wrong
+  // understates the gap by one pick and biases every survival probability.
+  const onClockNow = onClockSlot === mySlot;
   const afterThis = mine.find((p) => p > currentPick) ?? null;
-  const opponentPicksBeforeMyNext = afterThis === null ? Infinity : afterThis - currentPick - 1;
+  const opponentPicksBeforeMyNext = afterThis === null
+    ? Infinity
+    : afterThis - currentPick - (onClockNow ? 1 : 0);
 
   return {
     taken,
@@ -863,9 +869,14 @@ export function load() {
     const raw = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (!raw || raw.version !== SCHEMA_VERSION) return null;
     if (!Array.isArray(raw.log)) return null;
+    // Clamp BOTH dimensions. An out-of-range mySlot does not throw, so it would
+    // otherwise sail through and quietly produce nonsense turn tracking — the
+    // worst failure mode when there is a pick clock running.
+    const leagueSize = clampSize(raw.leagueSize);
     return {
       ...raw,
-      leagueSize: clampSize(raw.leagueSize),
+      leagueSize,
+      mySlot: Math.max(1, Math.min(leagueSize, Math.round(raw.mySlot) || 1)),
       log: raw.log.filter((p) => p && Number.isFinite(p.elementId)),
     };
   } catch {
