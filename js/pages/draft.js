@@ -14,7 +14,6 @@ import { ownershipFrom, availableRows, myRoster, positionsNeeded, deriveSlot } f
 import { recommend } from '../draft/advise.js';
 
 const app = $('#app');
-const LEAGUE_SIZE = 6;
 
 const boot = await readSnapshot('draft/bootstrap');
 const fixtures = await readSnapshot('fixtures', []);
@@ -23,8 +22,25 @@ if (!boot?.elements?.length) {
   throw new Error('no draft data');
 }
 
+const league = await readSnapshot('draft/league', null);
+// The real league size drives replacement level, snake order and survival.
+// Fall back to six only when no league snapshot exists yet.
+const LEAGUE_SIZE = league?.league_entries?.length
+  || league?.league?.max_entries
+  || 6;
+
 let choices = await readSnapshot('draft/choices', { choices: [], element_status: [] });
-let manual = new Set(JSON.parse(localStorage.getItem('draftTaken') || '[]'));
+
+/** A corrupted entry must never blank the page mid-draft — start clean instead. */
+function readTaken() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('draftTaken') || '[]');
+    return new Set(Array.isArray(raw) ? raw.filter((n) => Number.isFinite(n)) : []);
+  } catch {
+    return new Set();
+  }
+}
+let manual = readTaken();
 let myEntry = +(localStorage.getItem('draftEntry') || 0) || null;
 let mySlot = null;
 let currentPick = 1;
@@ -70,7 +86,7 @@ function render() {
         el('span', { class: 's' }, mySlot ? `you are slot ${mySlot}` : 'slot not set')),
       el('div', { class: 'tile' },
         el('span', { class: 'k' }, 'On the board'), el('span', { class: 'v' }, `${available.length}`),
-        el('span', { class: 's' }, `${roster.length}/15 drafted`)),
+        el('span', { class: 's' }, `${roster.length}/15 drafted · ${LEAGUE_SIZE} managers · 15 rounds`)),
       el('div', { class: 'tile' },
         el('span', { class: 'k' }, 'Still needed'),
         el('span', { class: 'v' }, [1, 2, 3, 4].filter((t) => need[t]).map((t) => POS[t]).join(' ')),
@@ -78,20 +94,22 @@ function render() {
     ),
     el('div', { class: 'card' },
       el('h2', {}, mySlot && myPicks.includes(currentPick) ? 'Your pick — take one of these' : 'Best available'),
-      el('div', { class: 'tablewrap' },
-        el('table', { class: 'players' },
-          el('thead', {}, el('tr', {},
-            ...['Player', 'Pos', 'Tier', 'Proj', 'VORP', 'Survives', 'Net', ''].map((h) => el('th', {}, h)))),
-          el('tbody', {}, advice.map((p) => el('tr', {},
-            el('td', {}, p.web_name),
-            el('td', {}, POS[p.element_type]),
-            el('td', { class: 'num' }, `T${p.tier}`),
-            el('td', { class: 'num' }, fmt.pts(p.proj)),
-            el('td', { class: 'num' }, fmt.pts(p.vorp)),
-            el('td', { class: 'num' }, `${Math.round(p.survivalP * 100)}%`),
-            el('td', { class: 'num' }, fmt.pts(p.netValue)),
-            el('td', {}, el('button', { class: 'ghost', onClick: () => take(p) }, 'Taken')),
-          ))))),
+      advice.length
+        ? el('div', { class: 'tablewrap' },
+            el('table', { class: 'players' },
+              el('thead', {}, el('tr', {},
+                ...['Player', 'Pos', 'Tier', 'Proj', 'VORP', 'Survives', 'Net', ''].map((h) => el('th', {}, h)))),
+              el('tbody', {}, advice.map((p) => el('tr', {},
+                el('td', {}, p.web_name),
+                el('td', {}, POS[p.element_type]),
+                el('td', { class: 'num' }, `T${p.tier}`),
+                el('td', { class: 'num' }, fmt.pts(p.proj)),
+                el('td', { class: 'num' }, fmt.pts(p.vorp)),
+                el('td', { class: 'num' }, `${Math.round(p.survivalP * 100)}%`),
+                el('td', { class: 'num' }, fmt.pts(p.netValue)),
+                el('td', {}, el('button', { class: 'ghost', onClick: () => take(p) }, 'Taken')),
+              )))))
+        : el('p', { class: 'empty' }, 'Nothing left to recommend — every position you still need is drafted out.'),
       el('p', { class: 'hint' },
         'Survives = chance he is still there at your next pick. Net = what passing costs you.'),
     ),
