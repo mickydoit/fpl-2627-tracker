@@ -12,6 +12,8 @@ import {
 } from '../js/draft/state.js';
 import { outstandingDemand, replacementLevel, attachVorp } from '../js/draft/replacement.js';
 import { playersBeforeCliff, scarcityByPosition, allowedPositions } from '../js/draft/scarcity.js';
+import { survival } from '../js/draft/simulate.js';
+import { evaluate } from '../js/draft/value.js';
 
 let failures = 0;
 let checks = 0;
@@ -373,6 +375,77 @@ ok('with slack, an unneeded position is still allowed',
 ok('one pick and one need forces that position',
   allowedPositions({ 1: 1, 2: 0, 3: 0, 4: 0 }, 1).join() === '1');
 ok('a complete roster allows nothing', allowedPositions({ 1: 0, 2: 0, 3: 0, 4: 0 }, 0).length === 0);
+
+console.log('\nSurvival without the Draft API');
+const noRank = [
+  { id: 11, element_type: 4, proj: 92 },
+  { id: 12, element_type: 4, proj: 60 },
+];
+const survNoRank = survival(noRank, 1, { seed: 1, trials: 200 });
+ok('the best player is still least likely to survive',
+  survNoRank.get(11) < survNoRank.get(12),
+  'without draft_rank the model must fall back to projection');
+
+console.log('\nDecision score');
+const cand = [
+  { id: 1, element_type: 4, proj: 92, rosValue: 92, nearTermValue: 12, draft_rank: 1, availability: 1, minutes: 3000 },
+  { id: 2, element_type: 4, proj: 89, rosValue: 89, nearTermValue: 11, draft_rank: 4, availability: 1, minutes: 3000 },
+  { id: 3, element_type: 2, proj: 88, rosValue: 88, nearTermValue: 11, draft_rank: 2, availability: 1, minutes: 3000 },
+  { id: 4, element_type: 2, proj: 87, rosValue: 87, nearTermValue: 11, draft_rank: 3, availability: 1, minutes: 3000 },
+  { id: 5, element_type: 2, proj: 86, rosValue: 86, nearTermValue: 11, draft_rank: 5, availability: 1, minutes: 3000 },
+  { id: 6, element_type: 2, proj: 85, rosValue: 85, nearTermValue: 11, draft_rank: 6, availability: 1, minutes: 3000 },
+];
+const baseCtx = {
+  replacement: { 1: 0, 2: 70, 3: 0, 4: 70 },
+  demand: { 1: 16, 2: 40, 3: 40, 4: 24 },
+  needs: { 1: 2, 2: 5, 3: 5, 4: 3 },
+  picksRemaining: 15,
+  opponentPicksBeforeMyNext: 6,
+  round: 1,
+  leagueSize: 8,
+};
+const ranked = evaluate(cand, baseCtx);
+
+ok('every candidate is scored', ranked.length === cand.length);
+ok('the seven components are all exposed separately',
+  ['projectedPoints', 'rosValue', 'vorp', 'scarcity', 'survival', 'rosterNeed', 'risk', 'draftValue']
+    .every((k) => Number.isFinite(ranked[0][k])));
+ok('the list is sorted by decision score',
+  ranked.every((r, i) => i === 0 || ranked[i - 1].draftValue >= r.draftValue));
+ok('every candidate carries reasons', ranked.every((r) => Array.isArray(r.reasons) && r.reasons.length > 0));
+ok('reasons are structured, not prose blobs',
+  ranked[0].reasons.every((x) => typeof x.kind === 'string' && typeof x.text === 'string'));
+ok('the decision score is not just the projection',
+  ranked[0].draftValue !== ranked[0].projectedPoints);
+
+console.log('\nScarcity outranks a marginally better projection');
+// Two forwards above a cliff, four interchangeable defenders below it.
+const scarceCtx = { ...baseCtx, demand: { 1: 16, 2: 40, 3: 40, 4: 24 }, opponentPicksBeforeMyNext: 12 };
+const scarceRanked = evaluate(cand, scarceCtx);
+ok('a scarce forward can beat a similar defender',
+  scarceRanked[0].element_type === 4, `top was type ${scarceRanked[0].element_type}`);
+
+console.log('\nRoster need and hard constraints in scoring');
+const filledFwd = evaluate(cand, { ...baseCtx, needs: { 1: 2, 2: 5, 3: 5, 4: 0 }, picksRemaining: 12 });
+ok('a filled position is not recommended', filledFwd.every((r) => r.element_type !== 4));
+const forced = evaluate(cand, { ...baseCtx, needs: { 1: 0, 2: 1, 3: 0, 4: 0 }, picksRemaining: 1 });
+ok('the last mandatory slot forces its position', forced.every((r) => r.element_type === 2));
+ok('a forced pick says why', forced[0].reasons.some((x) => x.kind === 'constraint'));
+
+console.log('\nRisk');
+const risky = evaluate([
+  { id: 7, element_type: 4, proj: 92, rosValue: 92, nearTermValue: 12, draft_rank: 1, availability: 0.25, minutes: 3000 },
+  { id: 8, element_type: 4, proj: 90, rosValue: 90, nearTermValue: 12, draft_rank: 2, availability: 1, minutes: 3000 },
+], baseCtx);
+ok('a doubtful player is penalised', risky[0].id === 8, `top was ${risky[0].id}`);
+ok('the penalty is visible as risk', risky.find((r) => r.id === 7).risk > 0);
+ok('an injury warning appears in the reasons',
+  risky.find((r) => r.id === 7).reasons.some((x) => x.kind === 'risk'));
+
+console.log('\nDeterminism');
+ok('the same board scores the same twice',
+  JSON.stringify(evaluate(cand, baseCtx).map((r) => r.id))
+  === JSON.stringify(evaluate(cand, baseCtx).map((r) => r.id)));
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
 process.exit(failures ? 1 : 0);

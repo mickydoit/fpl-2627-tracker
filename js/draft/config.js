@@ -63,6 +63,17 @@ export const DRAFT_CONFIG = {
   /** Supply:demand at or below this marks a position HIGH scarcity. */
   scarcityHighRatio: 1.0,
   scarcityMediumRatio: 2.0,
+  /**
+   * How the scarcity LABEL (not the raw ratio) feeds the decision score.
+   * `scarcityByPosition` ranks positions by their VORP gap and labels exactly
+   * one HIGH, one MEDIUM, the rest LOW (zero-demand positions are always LOW).
+   * Its `ratio` field (supply ÷ demand) is retained only as displayed detail —
+   * on real data it spans just ~2.9-6.5 across all four positions at draft
+   * start, so 1/(1+ratio) barely discriminates between them. The label is the
+   * meaningful signal, so the decision score is built from these three fixed
+   * points rather than from the ratio.
+   */
+  scarcityLabelWeights: { HIGH: 1.0, MEDIUM: 0.5, LOW: 0.15 },
 
   /* --- survival simulation --- */
   survivalTrials: 300,

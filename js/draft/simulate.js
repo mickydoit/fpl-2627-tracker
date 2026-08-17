@@ -38,8 +38,13 @@ export function survival(available, opponentPicks, { seed = 12345, trials = 400,
     for (const r of available) out.set(r.id, 1);
     return out;
   }
-  const ranked = [...available].sort(
-    (a, b) => (a.draft_rank || 9999) - (b.draft_rank || 9999));
+  // Opponents draft off the game's own rankings where we have them. Without the
+  // Draft API there is no draft_rank, so fall back to our projection — a board
+  // ordered by nothing at all would make every survival probability noise.
+  const hasRank = available.some((r) => Number.isFinite(r.draft_rank));
+  const ranked = [...available].sort((a, b) => (hasRank
+    ? (a.draft_rank || 9999) - (b.draft_rank || 9999)
+    : (b.proj ?? 0) - (a.proj ?? 0)));
   const rng = makeRng(seed);
 
   for (let t = 0; t < trials; t++) {
