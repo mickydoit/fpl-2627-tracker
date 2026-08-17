@@ -34,5 +34,35 @@ if (prior) {
     players.filter((p) => Number.isFinite(p.draft_rank)).length > 500);
 }
 
+console.log('\nNormalised board dataset');
+const cfg = await readJSON('data/draft/config.json');
+ok('the config file exists', !!cfg, 'run `npm run refresh:draft`');
+if (cfg) {
+  ok('goals are worth 10/6/5/4', cfg.scoring.goals_scored_GKP === 10
+    && cfg.scoring.goals_scored_DEF === 6
+    && cfg.scoring.goals_scored_MID === 5
+    && cfg.scoring.goals_scored_FWD === 4);
+  ok('defensive contribution needs 10 for defenders', cfg.scoring.defensive_contribution_limit_DEF === 10);
+  ok('defensive contribution needs 12 for midfielders', cfg.scoring.defensive_contribution_limit_MID === 12);
+  ok('captains are disabled in Draft', cfg.squad.captains_disabled === true);
+  ok('the squad is 2/5/5/3', cfg.squad.select_GKP === 2 && cfg.squad.select_DEF === 5
+    && cfg.squad.select_MID === 5 && cfg.squad.select_FWD === 3);
+  ok('there is no budget in Draft', cfg.squad.total_spend === undefined && cfg.squad.budget === undefined);
+  ok('there is no per-club limit in Draft', cfg.squad.team_limit === undefined);
+  ok('the default league is eight managers', cfg.league.default_entries === 8);
+}
+
+const board = await readJSON('data/draft/players.json');
+ok('the board dataset exists', !!board);
+if (board) {
+  ok('every player is on the board', board.players.length === 587, `got ${board.players.length}`);
+  ok('every row carries a code', board.players.every((p) => Number.isFinite(p.code)));
+  ok('codes are unique', new Set(board.players.map((p) => p.code)).size === board.players.length);
+  ok('the frozen prior is merged in', board.players.every((p) => p.prior && Number.isFinite(p.prior.minutes)));
+  ok('prior evidence actually survived the merge',
+    board.players.reduce((s, p) => s + p.prior.minutes, 0) === 602348);
+  ok('availability comes from live data', board.players.every((p) => typeof p.status === 'string'));
+}
+
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
 process.exit(failures ? 1 : 0);

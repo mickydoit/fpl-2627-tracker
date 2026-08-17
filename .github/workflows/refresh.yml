@@ -39,8 +39,6 @@ jobs:
 
       - name: Fetch Draft data
         run: node scripts/fetch-draft.mjs
-        env:
-          DRAFT_LEAGUE_ID: ${{ vars.DRAFT_LEAGUE_ID }}
         continue-on-error: true
 
       - name: Rebuild projections

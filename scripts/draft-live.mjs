@@ -1,11 +1,13 @@
 /**
- * Live draft poller. Run on draft night:
+ * EXPERIMENTAL — NOT PART OF THE PRODUCT.
  *
- *   DRAFT_LEAGUE_ID=12345 npm run draft-live
+ * A local poller that watches a Draft league and writes choices to disk. It
+ * requires a process running on your machine, which the deployed GitHub Pages
+ * app deliberately does not. Nothing in the production page, the refresh
+ * workflow, the README's user instructions, or any deployment test may depend
+ * on this file.
  *
- * The Draft API sends no CORS headers so the page cannot poll it directly, and
- * the scheduled Action runs every 30 minutes against a 60-second pick clock.
- * This bridges the gap: Node polls, the page reads the file same-origin.
+ * Kept only for experimentation. If you are drafting, use the web app.
  */
 import { getJSON } from './lib/http.mjs';
 import { writeJSONIfChanged } from './lib/io.mjs';
