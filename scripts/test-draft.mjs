@@ -11,6 +11,7 @@ import {
   slotForPick, roundForPick, finishDraft, finalPools, save, load, clear, migrateLegacy,
 } from '../js/draft/state.js';
 import { outstandingDemand, replacementLevel, attachVorp } from '../js/draft/replacement.js';
+import { playersBeforeCliff, scarcityByPosition, allowedPositions } from '../js/draft/scarcity.js';
 
 let failures = 0;
 let checks = 0;
@@ -304,6 +305,36 @@ const repSmall = replacementLevel(bigPool, demandSmall4, { basis: 'demand' })[4]
 const repBig = replacementLevel(bigPool, demandBig8, { basis: 'demand' })[4];
 ok('VORP baseline deepens in larger leagues (more slots to fill)',
   repBig < repSmall, `small=${repSmall} big=${repBig}`);
+
+console.log('\nScarcity is about cliffs, not counts');
+const cliffy = mkRows(4, [92, 89, 87, 69, 67, 65]);
+const flat = mkRows(2, [88, 87, 86, 85, 84, 83]);
+ok('a cliff is found where the drop is real', playersBeforeCliff(cliffy, 4) === 3,
+  `got ${playersBeforeCliff(cliffy, 4)}`);
+ok('an even position has no early cliff', playersBeforeCliff(flat, 2) > 3,
+  `got ${playersBeforeCliff(flat, 2)}`);
+
+const sc = scarcityByPosition([...cliffy, ...flat], { 4: 3, 2: 20 }, { leagueSize: 8 });
+ok('a position with demand at its cliff is scarce', sc[4].label === 'HIGH', `got ${sc[4].label}`);
+ok('a deep position with slack supply is not', sc[2].label === 'LOW', `got ${sc[2].label}`);
+ok('scarcity reports how many remain before the drop', sc[4].beforeCliff === 3);
+ok('scarcity reports the raw supply too', sc[4].available === 6);
+ok('scarcity reports outstanding demand', sc[4].demand === 3);
+ok('an exhausted position is not reported as plentiful',
+  scarcityByPosition([], { 4: 5 }, { leagueSize: 8 })[4].label === 'HIGH');
+
+console.log('\nHard roster constraints');
+ok('early on, every position is allowed',
+  allowedPositions({ 1: 2, 2: 5, 3: 5, 4: 3 }, 15).sort().join() === '1,2,3,4');
+ok('a filled position drops out',
+  !allowedPositions({ 1: 0, 2: 3, 3: 2, 4: 1 }, 8).includes(1));
+ok('with exactly enough picks left, only needed positions are allowed',
+  allowedPositions({ 1: 1, 2: 1, 3: 0, 4: 0 }, 2).sort().join() === '1,2');
+ok('with slack, an unneeded position is still allowed',
+  allowedPositions({ 1: 1, 2: 1, 3: 0, 4: 0 }, 5).includes(3));
+ok('one pick and one need forces that position',
+  allowedPositions({ 1: 1, 2: 0, 3: 0, 4: 0 }, 1).join() === '1');
+ok('a complete roster allows nothing', allowedPositions({ 1: 0, 2: 0, 3: 0, 4: 0 }, 0).length === 0);
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
 process.exit(failures ? 1 : 0);
