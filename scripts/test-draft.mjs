@@ -14,6 +14,7 @@ import { outstandingDemand, replacementLevel, attachVorp } from '../js/draft/rep
 import { playersBeforeCliff, scarcityByPosition, allowedPositions } from '../js/draft/scarcity.js';
 import { survival } from '../js/draft/simulate.js';
 import { evaluate } from '../js/draft/value.js';
+import { projectBoard } from '../js/draft/project.js';
 
 let failures = 0;
 let checks = 0;
@@ -475,6 +476,27 @@ console.log('\nDeterminism');
 ok('the same board scores the same twice',
   JSON.stringify(evaluate(cand, baseCtx).map((r) => r.id))
   === JSON.stringify(evaluate(cand, baseCtx).map((r) => r.id)));
+
+console.log('\nBoard projection');
+const boardFile = await readJSON('data/draft/players.json');
+const fixturesFile = await readJSON('data/fixtures.json', []);
+if (boardFile) {
+  const projected = projectBoard(boardFile.players, fixturesFile);
+  ok('every player is projected', projected.length === boardFile.players.length);
+  ok('rest-of-season value is present', projected.every((r) => Number.isFinite(r.rosValue)));
+  ok('near-term value is present', projected.every((r) => Number.isFinite(r.nearTermValue)));
+  ok('rest-of-season exceeds near-term for regular starters',
+    projected.filter((r) => r.minutes > 2000).every((r) => r.rosValue >= r.nearTermValue));
+  ok('projections are non-negative', projected.every((r) => r.rosValue >= 0));
+  ok('the code survives projection', projected.every((r) => Number.isFinite(r.code)));
+  ok('availability is carried through', projected.every((r) => Number.isFinite(r.availability)));
+  ok('price is carried but never ranked on',
+    projected.every((r) => Number.isFinite(r.now_cost)));
+  const top = [...projected].sort((a, b) => b.rosValue - a.rosValue).slice(0, 20);
+  ok('the top twenty are not all keepers',
+    top.filter((r) => r.element_type === 1).length < 5,
+    `${top.filter((r) => r.element_type === 1).length} keepers in the top 20`);
+}
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
 process.exit(failures ? 1 : 0);
