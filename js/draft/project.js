@@ -11,6 +11,7 @@
  */
 import { projectAll, availability } from '../model.js';
 import { draftPrior } from './adapt.js';
+import { draftBonusModel } from './scoring.js';
 import { DRAFT_CONFIG } from './config.js';
 
 const num = (v) => {
@@ -61,10 +62,10 @@ export function projectBoard(boardPlayers, fixtures, teams, opts = {}) {
   const boot = { elements: rows, teams: teamRows, events: [{ id: 1, is_next: true }] };
 
   const ros = projectAll(boot, fixtures, {
-    horizon: DRAFT_CONFIG.rosHorizon, prior: draftPrior, ...opts,
+    horizon: DRAFT_CONFIG.rosHorizon, prior: draftPrior, bonusModel: draftBonusModel, ...opts,
   });
   const near = projectAll(boot, fixtures, {
-    horizon: DRAFT_CONFIG.nearTermHorizon, prior: draftPrior, ...opts,
+    horizon: DRAFT_CONFIG.nearTermHorizon, prior: draftPrior, bonusModel: draftBonusModel, ...opts,
   });
   const nearById = new Map(near.rows.map((r) => [r.id, r.proj]));
 

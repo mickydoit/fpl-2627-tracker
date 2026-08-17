@@ -39,6 +39,7 @@ export const DEFAULTS = {
   priorBlendMinutes: 900, // minutes of evidence before we fully trust the data
   riskAversion: 0,     // 0..1, penalises players with injury/rotation doubt
   prior: null,          // (player) => pts/appearance; defaults to pricePrior
+  bonusModel: null,     // (player) => expected bonus per appearance; defaults to the BPS logistic
 };
 
 /* ------------------------------------------------------------------ *
@@ -225,9 +226,16 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
     }
   }
 
-  /* bonus — logistic map from bps per 90 */
-  const bps90 = mins > 0 ? (num(p.bps) / mins) * 90 : 0;
-  const bonus = (1.9 / (1 + Math.exp(-(bps90 - o.bonusCentre) / o.bonusSpread))) * minsFactor;
+  /* bonus — the injected model where one is supplied, otherwise the historic
+     logistic map from bps per 90. The draft engine supplies a 2026/27
+     reconstruction; the classic pages deliberately keep the old behaviour. */
+  let bonus;
+  if (o.bonusModel) {
+    bonus = o.bonusModel(p) * minsFactor;
+  } else {
+    const bps90 = mins > 0 ? (num(p.bps) / mins) * 90 : 0;
+    bonus = (1.9 / (1 + Math.exp(-(bps90 - o.bonusCentre) / o.bonusSpread))) * minsFactor;
+  }
 
   /* cards */
   const cards = mins > 0 ? -((num(p.yellow_cards) / mins) * 90 * minsFactor) : 0;

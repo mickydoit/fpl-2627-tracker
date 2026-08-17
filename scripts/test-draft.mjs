@@ -16,6 +16,7 @@ import { survival } from '../js/draft/simulate.js';
 import { evaluate } from '../js/draft/value.js';
 import { projectBoard, toModelRow } from '../js/draft/project.js';
 import { teamDefence } from '../js/model.js';
+import { estimateBps90, bonusFromBps90, draftBonusModel } from '../js/draft/scoring.js';
 
 let failures = 0;
 let checks = 0;
@@ -523,6 +524,71 @@ if (boardFile) {
   ok('a club known to be weak rates worse defensively than a club known to be strong',
     defence[weakest.id] > defence[strongest.id],
     `${weakest.name} xGC=${defence[weakest.id]?.toFixed(3)} vs ${strongest.name} xGC=${defence[strongest.id]?.toFixed(3)}`);
+}
+
+console.log('\n2026/27 BPS reconstruction');
+const bigDefender = { element_type: 2, minutes: 3000, clearances_blocks_interceptions: 600,
+  tackles: 90, recoveries: 150, clean_sheets: 14, goals_scored: 3, assists: 2,
+  saves: 0, yellow_cards: 4, red_cards: 0, own_goals: 0, starts: 34, bps: 700 };
+const shotStopper = { element_type: 1, minutes: 3420, saves: 140, clean_sheets: 13,
+  penalties_saved: 2, clearances_blocks_interceptions: 40, tackles: 2, recoveries: 30,
+  goals_scored: 0, assists: 0, yellow_cards: 1, red_cards: 0, own_goals: 0, starts: 38, bps: 616 };
+const unproven = { element_type: 3, minutes: 120, clearances_blocks_interceptions: 5,
+  tackles: 4, recoveries: 12, clean_sheets: 1, goals_scored: 1, assists: 0,
+  saves: 0, yellow_cards: 0, red_cards: 0, own_goals: 0, starts: 1, bps: 40 };
+
+ok('BPS is estimated per 90', estimateBps90(bigDefender).bps90 > 0);
+ok('the estimate is flagged approximate', estimateBps90(bigDefender).approximate === true);
+ok('a well-evidenced player is high confidence', estimateBps90(bigDefender).confidence > 0.9);
+ok('an unproven player is low confidence', estimateBps90(unproven).confidence < 0.3);
+ok('CBI now counts one per three, not one per two', (() => {
+  const half = estimateBps90({ ...bigDefender, clearances_blocks_interceptions: 300 });
+  const full = estimateBps90(bigDefender);
+  return full.bps90 > half.bps90;
+})());
+ok('a shot-stopping keeper earns materially more BPS than a low-save keeper', (() => {
+  const lowSaves = estimateBps90({ ...shotStopper, saves: 0 }).bps90;
+  const highSaves = estimateBps90(shotStopper).bps90;
+  return highSaves - lowSaves > 1;
+})());
+ok('the reconstruction recovers a substantial share of observed old-rules BPS without exceeding it', (() => {
+  // Published season aggregates omit a large share of real BPS events (passes,
+  // key passes, tackles won, saves inside the box, big chances). Recovering a
+  // healthy fraction of the observed old-rules total — but never exceeding it,
+  // which would mean double-counting — is the honest result of reconstructing
+  // from the visible subset. This is NOT calibrated to match the old total
+  // exactly: the whole point of the 2026/27 rebalance is that the two figures
+  // legitimately differ.
+  const observedBps90 = (shotStopper.bps / shotStopper.minutes) * 90;
+  const reconstructed = estimateBps90(shotStopper).bps90;
+  return reconstructed > observedBps90 * 0.5 && reconstructed <= observedBps90;
+})());
+
+console.log('\nBonus is shrunk, not capped');
+const strong = bonusFromBps90(45, 1);
+const weak = bonusFromBps90(12, 1);
+ok('a high-BPS player earns more bonus', strong > weak);
+ok('bonus stays inside the possible range', strong <= 3 && weak >= 0);
+ok('the top of the distribution is not truncated', bonusFromBps90(60, 1) > bonusFromBps90(45, 1),
+  'a hard cap would flatten these two together');
+ok('low confidence shrinks toward the baseline',
+  bonusFromBps90(60, 0.1) < bonusFromBps90(60, 1));
+ok('shrinkage pulls up as well as down',
+  bonusFromBps90(2, 0.1) > bonusFromBps90(2, 1));
+ok('the model returns a per-appearance number', Number.isFinite(draftBonusModel(bigDefender)));
+
+console.log('\nBonus does not dominate');
+if (boardFile) {
+  const projected2 = projectBoard(boardFile.players, fixturesFile);
+  const shares = projected2
+    .filter((r) => r.minutes > 1500 && r.parts && r.rosValue > 0)
+    .map((r) => (r.parts.bonus * 38) / r.rosValue);
+  const worst = Math.max(...shares);
+  ok('no regular starter is bonus-dominated', worst < 0.35, `worst share ${worst.toFixed(2)}`);
+  const top20 = [...projected2].sort((a, b) => b.rosValue - a.rosValue).slice(0, 20);
+  ok('keepers do not take over the first round',
+    top20.filter((r) => r.element_type === 1).length < 5,
+    `${top20.filter((r) => r.element_type === 1).length} keepers in the top 20`);
 }
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
