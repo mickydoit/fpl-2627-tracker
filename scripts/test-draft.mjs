@@ -83,14 +83,17 @@ ok('the squad is 2/5/5/3', QUOTA[1] === 2 && QUOTA[2] === 5 && QUOTA[3] === 5 &&
 ok('the quotas total fifteen', Object.values(QUOTA).reduce((a, b) => a + b, 0) === 15);
 ok('a starting eleven is 1/4/4/2', Object.values(STARTER_QUOTA).reduce((a, b) => a + b, 0) === 11);
 ok('fifteen rounds', ROUNDS === 15);
-ok('eight managers by default', LEAGUE_SIZE_DEFAULT === 8);
+ok('six managers by default — the owner\'s league', LEAGUE_SIZE_DEFAULT === 6);
+ok('the default is a selectable size', LEAGUE_SIZE_DEFAULT >= LEAGUE_SIZE_MIN && LEAGUE_SIZE_DEFAULT <= LEAGUE_SIZE_MAX);
 ok('league size spans two to sixteen', LEAGUE_SIZE_MIN === 2 && LEAGUE_SIZE_MAX === 16);
 ok('the near-term horizon is configurable', DRAFT_CONFIG.nearTermHorizon === 5);
 ok('every weight is a finite number',
   ['rosWeight', 'nearTermWeight', 'vorpWeight', 'scarcityWeight', 'urgencyWeight',
     'rosterNeedWeight', 'riskWeight'].every((k) => Number.isFinite(DRAFT_CONFIG[k])));
-ok('replacement is measured against outstanding demand by default',
-  DRAFT_CONFIG.replacementBasis === 'demand');
+// The basis is chosen by evidence, not preference — the head-to-head simulation
+// later in this suite asserts the configured value matches what actually wins.
+ok('the replacement basis is one of the two supported values',
+  ['demand', 'starters'].includes(DRAFT_CONFIG.replacementBasis));
 ok('the survival model is deterministic by default', Number.isFinite(DRAFT_CONFIG.survivalSeed));
 
 console.log('\nDraft state — snake order');

@@ -231,6 +231,24 @@ table.players .proj { color: var(--accent); font-weight: 900; }
 }
 .shirt:hover { filter: brightness(1.1); }
 .shirt .nm { font-size: 0.7rem; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Which club a player turns out for is the first thing you check when reading a
+   squad — it was previously only in the hover title, which touch never sees. */
+.shirt .cl {
+  font-size: 0.56rem; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; opacity: 0.66; line-height: 1;
+}
+.bench-strip .shirt .cl { opacity: 0.8; }
+
+/* The shirt being carried. Follows the pointer so the gesture reads as
+   picking a player up and putting him down on someone. */
+.drag-ghost {
+  position: fixed; z-index: 9999; pointer-events: none; margin: 0;
+  opacity: 0.92; transform-origin: center;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+  transition: none;
+}
+.shirt.dragging { opacity: 0.32; }
+.shirt.drop-hot { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .shirt .pr { font-size: 0.62rem; font-weight: 700; opacity: 0.78; font-variant-numeric: tabular-nums; }
 .shirt .pt {
   font-family: var(--font-display);
@@ -443,7 +461,12 @@ table.players .proj { color: var(--accent); font-weight: 900; }
 .search { width: 100%; margin-bottom: 0.5rem; }
 .headline .pickname { font-family: var(--font-display); font-size: 2rem; line-height: 1.1; }
 .headline .pickstats { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.5rem 0; opacity: 0.85; }
-.why { margin: 0.5rem 0 1rem; padding-left: 1.1rem; }
+.why { margin: 0.5rem 0 1.25rem; padding-left: 1.1rem; }
+/* The Taken/Mine pair and the Alternatives heading were colliding — the actions
+   need room below them, and the heading needs its own space above. */
+.headline .actions { margin: 0.25rem 0 0.5rem; }
+.alts { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--border-soft); }
+.alts h3 { margin: 0 0 0.6rem; }
 .why li { margin: 0.2rem 0; }
 .why li.constraint, .why li.risk { color: var(--yellow); }
 .result {

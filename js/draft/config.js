@@ -19,7 +19,12 @@ export const QUOTA = { 1: 2, 2: 5, 3: 5, 4: 3 };
 export const STARTER_QUOTA = { 1: 1, 2: 4, 3: 4, 4: 2 };
 
 export const ROUNDS = 15;
-export const LEAGUE_SIZE_DEFAULT = 8;  // the Draft API's own settings.league.default_entries
+/**
+ * The owner's league is six managers. The Draft API's own
+ * `settings.league.default_entries` is 8, but defaulting to the league actually
+ * being drafted saves a step on the night; any size from 2 to 16 stays selectable.
+ */
+export const LEAGUE_SIZE_DEFAULT = 6;
 export const LEAGUE_SIZE_MIN = 2;
 export const LEAGUE_SIZE_MAX = 16;
 
@@ -66,7 +71,7 @@ export const DRAFT_CONFIG = {
    * 'starters' — replacement is measured against starting slots only.
    * The two are compared in scripts/draft-diagnostics.mjs.
    */
-  replacementBasis: 'demand',
+  replacementBasis: 'starters',
 
   /* --- tiers and scarcity --- */
   /** Standard deviations above the mean gap that constitute a cliff. */

@@ -146,10 +146,33 @@ function makeDraggable(node, player) {
     const x0 = ev.clientX, y0 = ev.clientY;
     let dragging = false, hold = null, lastTarget = null;
 
+    // A shirt that stays put while the pointer moves gives no sense of having
+    // picked anything up. A ghost — a clone that tracks the pointer — makes the
+    // gesture legible: you can see who you are carrying and where they will land.
+    let ghost = null;
+    const placeGhost = (x, y) => {
+      if (ghost) ghost.style.transform = `translate3d(${x - ghost._ox}px, ${y - ghost._oy}px, 0)`;
+    };
+
     const start = () => {
       if (dragging) return;
       dragging = true;
       node.classList.add('dragging');
+
+      const r = node.getBoundingClientRect();
+      ghost = node.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      ghost.classList.remove('dragging');
+      ghost.style.width = `${r.width}px`;
+      ghost.style.height = `${r.height}px`;
+      ghost.style.left = '0';
+      ghost.style.top = '0';
+      // Carry the shirt from the point it was grabbed, not from its corner.
+      ghost._ox = x0 - r.left;
+      ghost._oy = y0 - r.top;
+      document.body.appendChild(ghost);
+      placeGhost(x0, y0);
+
       markTargets(player);
     };
 
@@ -171,6 +194,7 @@ function makeDraggable(node, player) {
         if (!touch && (dx > MOVE_PX || dy > MOVE_PX)) start();
         if (!dragging) return;
       }
+      placeGhost(e.clientX, e.clientY);
       const t = shirtUnder(e.clientX, e.clientY);
       if (t !== lastTarget) {
         lastTarget?.classList.remove('drop-hot');
@@ -198,6 +222,8 @@ function makeDraggable(node, player) {
       clearTimeout(hold);
       dragging = false;
       node.classList.remove('dragging');
+      ghost?.remove();
+      ghost = null;
       lastTarget?.classList.remove('drop-hot');
       clearTargets();
       document.removeEventListener('pointermove', move);
@@ -247,6 +273,7 @@ function renderResult(ms) {
     slot ? el('span', { class: 'slot' }, slot) : null,
     isCap ? el('span', { class: 'arm' }, 'C') : isVice ? el('span', { class: 'arm vice' }, 'V') : null,
     el('span', { class: 'nm' }, p.web_name),
+    el('span', { class: 'cl' }, teams[p.team]?.short_name || ''),
     el('span', { class: 'pr' }, fmt.price(p.now_cost)),
     el('span', { class: 'pt' }, fmt.pts(p.proj)),
     );
