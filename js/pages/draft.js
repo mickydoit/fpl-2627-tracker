@@ -1,136 +1,302 @@
 /**
- * Draft board — the view used live on draft night.
+ * The live draft assistant.
  *
- * Three sections over one state: the big board, my turn, and the roster.
- * Ownership comes from data/draft/choices.json when the poller is running, and
- * from hand-marking otherwise; the board cannot tell the difference.
+ * Manual entry is the authoritative state: there is no league id, no poller and
+ * no request per pick. The board dataset is downloaded once, the pick log lives
+ * in localStorage, and every number on screen is recomputed in-browser the
+ * instant a pick is entered.
  */
 import { $, el, fmt, setKids } from '../ui.js';
 import { readSnapshot } from '../data.js';
-import { projectAll } from '../model.js';
-import { adaptDraftElements, draftPrior } from '../draft/adapt.js';
-import { buildBoard, assignTiers, snakePicks } from '../draft/board.js';
-import { ownershipFrom, availableRows, myRoster, positionsNeeded, deriveSlot } from '../draft/live.js';
-import { recommend } from '../draft/advise.js';
+import { projectBoard } from '../draft/project.js';
+import {
+  createDraft, addPick, undoLastPick, editPick, removePick, derive,
+  needsFor, save, load, clear, migrateLegacy, finishDraft, finalPools,
+} from '../draft/state.js';
+import { outstandingDemand, replacementLevel, attachVorp } from '../draft/replacement.js';
+import { scarcityByPosition } from '../draft/scarcity.js';
+import { evaluate } from '../draft/value.js';
+import { LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX, QUOTA } from '../draft/config.js';
 
 const app = $('#app');
+const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
-const boot = await readSnapshot('draft/bootstrap');
+migrateLegacy();
+
+const board = await readSnapshot('draft/players');
 const fixtures = await readSnapshot('fixtures', []);
-if (!boot?.elements?.length) {
-  setKids(app, el('p', { class: 'empty' }, 'No draft data yet — run `npm run refresh:draft`.'));
-  throw new Error('no draft data');
+if (!board?.players?.length) {
+  setKids(app, el('p', { class: 'empty' },
+    'Player data has not been published yet. It arrives with the next scheduled refresh.'));
+  throw new Error('no board data');
 }
 
-const league = await readSnapshot('draft/league', null);
-// The real league size drives replacement level, snake order and survival.
-// Fall back to six only when no league snapshot exists yet.
-const LEAGUE_SIZE = league?.league_entries?.length
-  || league?.league?.max_entries
-  || 6;
+// Team short-names come from the players dataset's own `teams` array, not
+// from data/bootstrap.json — that file is regenerated as synthetic seed data
+// by the test harness and carries fabricated strength ratings that must never
+// reach a live draft.
+const teams = new Map((board.teams || []).map((t) => [t.id, t.short_name]));
 
-let choices = await readSnapshot('draft/choices', { choices: [], element_status: [] });
+const projected = projectBoard(board.players, fixtures, board.teams || []);
+const byId = new Map(projected.map((r) => [r.id, r]));
+const typeOf = new Map(projected.map((r) => [r.id, r.element_type]));
 
-/** A corrupted entry must never blank the page mid-draft — start clean instead. */
-function readTaken() {
-  try {
-    const raw = JSON.parse(localStorage.getItem('draftTaken') || '[]');
-    return new Set(Array.isArray(raw) ? raw.filter((n) => Number.isFinite(n)) : []);
-  } catch {
-    return new Set();
-  }
-}
-let manual = readTaken();
-let myEntry = +(localStorage.getItem('draftEntry') || 0) || null;
-let mySlot = null;
-let currentPick = 1;
+let state = load();
+let query = '';
+let posFilter = 0;
 
-/* Project every player over the whole season, using the draft prior. */
-const adapted = adaptDraftElements(boot);
-const { rows: projected } = projectAll(
-  { ...boot, elements: adapted }, fixtures, { horizon: 38, prior: draftPrior });
+/* ------------------------------------------------------------------ *
+ * setup
+ * ------------------------------------------------------------------ */
+function renderSetup() {
+  let size = LEAGUE_SIZE_DEFAULT;
+  let slot = 1;
 
-function state() {
-  const own = ownershipFrom(choices.element_status);
-  for (const id of manual) own.set(id, own.get(id) || -1);
-  const pool = availableRows(projected, own);
-  const { rows, replacement } = buildBoard(projected, LEAGUE_SIZE);
-  const tiered = assignTiers(rows);
-  const byId = new Map(tiered.map((r) => [r.id, r]));
-  const available = pool.map((r) => byId.get(r.id)).filter(Boolean);
-  const roster = myEntry ? myRoster(projected, own, myEntry) : [];
-  mySlot = deriveSlot(choices.choices, myEntry) || mySlot;
-  currentPick = (choices.choices?.length || manual.size) + 1;
-  return { own, available, roster, replacement, tiered };
-}
-
-function render() {
-  const { available, roster, replacement } = state();
-  const myPicks = mySlot ? snakePicks(LEAGUE_SIZE, mySlot) : [];
-  const advice = recommend(available, {
-    myPicks, currentPick, roster, trials: 300,
-  }).slice(0, 12);
-  const need = positionsNeeded(roster);
-  const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
-
-  const take = (p) => {
-    manual.add(p.id);
-    localStorage.setItem('draftTaken', JSON.stringify([...manual]));
-    render();
+  const slotSelect = el('select', { class: 'input' });
+  const fillSlots = () => {
+    setKids(slotSelect, ...Array.from({ length: size },
+      (_, i) => el('option', { value: String(i + 1) }, `Pick ${i + 1} of ${size}`)));
+    slotSelect.value = String(Math.min(slot, size));
   };
 
-  setKids(app,
-    el('div', { class: 'tiles' },
-      el('div', { class: 'tile accent' },
-        el('span', { class: 'k' }, 'Pick'), el('span', { class: 'v' }, `#${currentPick}`),
-        el('span', { class: 's' }, mySlot ? `you are slot ${mySlot}` : 'slot not set')),
-      el('div', { class: 'tile' },
-        el('span', { class: 'k' }, 'On the board'), el('span', { class: 'v' }, `${available.length}`),
-        el('span', { class: 's' }, `${roster.length}/15 drafted · ${LEAGUE_SIZE} managers · 15 rounds`)),
-      el('div', { class: 'tile' },
-        el('span', { class: 'k' }, 'Still needed'),
-        el('span', { class: 'v' }, [1, 2, 3, 4].filter((t) => need[t]).map((t) => POS[t]).join(' ')),
-        el('span', { class: 's' }, [1, 2, 3, 4].map((t) => `${need[t]}${POS[t][0]}`).join(' '))),
-    ),
-    el('div', { class: 'card' },
-      el('h2', {}, mySlot && myPicks.includes(currentPick) ? 'Your pick — take one of these' : 'Best available'),
-      advice.length
-        ? el('div', { class: 'tablewrap' },
-            el('table', { class: 'players' },
-              el('thead', {}, el('tr', {},
-                ...['Player', 'Pos', 'Tier', 'Proj', 'VORP', 'Survives', 'Net', ''].map((h) => el('th', {}, h)))),
-              el('tbody', {}, advice.map((p) => el('tr', {},
-                el('td', {}, p.web_name),
-                el('td', {}, POS[p.element_type]),
-                el('td', { class: 'num' }, `T${p.tier}`),
-                el('td', { class: 'num' }, fmt.pts(p.proj)),
-                el('td', { class: 'num' }, fmt.pts(p.vorp)),
-                el('td', { class: 'num' }, `${Math.round(p.survivalP * 100)}%`),
-                el('td', { class: 'num' }, fmt.pts(p.netValue)),
-                el('td', {}, el('button', { class: 'ghost', onClick: () => take(p) }, 'Taken')),
-              )))))
-        : el('p', { class: 'empty' }, 'Nothing left to recommend — every position you still need is drafted out.'),
-      el('p', { class: 'hint' },
-        'Survives = chance he is still there at your next pick. Net = what passing costs you.'),
-    ),
-    el('div', { class: 'card' },
-      el('h2', {}, 'Your squad'),
-      roster.length
-        ? el('ul', { class: 'mover-list' }, roster.map((p) => el('li', {}, `${POS[p.element_type]} ${p.web_name}`)))
-        : el('p', { class: 'empty' }, 'Nothing drafted yet.'),
-      el('p', { class: 'hint' }, `Replacement level — ${[1, 2, 3, 4]
-        .map((t) => `${POS[t]} ${fmt.pts(replacement[t])}`).join(' · ')}`),
-    ),
+  const sizeSelect = el('select', {
+    class: 'input',
+    onChange: (e) => { size = +e.target.value; fillSlots(); },
+  }, ...Array.from({ length: LEAGUE_SIZE_MAX - LEAGUE_SIZE_MIN + 1 },
+    (_, i) => el('option', { value: String(i + LEAGUE_SIZE_MIN) }, `${i + LEAGUE_SIZE_MIN} managers`)));
+  sizeSelect.value = String(LEAGUE_SIZE_DEFAULT);
+  fillSlots();
+
+  setKids(app, el('div', { class: 'card setup' },
+    el('h2', {}, 'Start a draft'),
+    el('p', { class: 'hint' }, 'No league id needed. Everything runs in this browser.'),
+    el('label', {}, 'League size', sizeSelect),
+    el('label', {}, 'Your draft position', slotSelect),
+    el('button', {
+      class: 'primary',
+      onClick: () => {
+        state = save(createDraft({ leagueSize: size, mySlot: +slotSelect.value }));
+        render();
+      },
+    }, 'Start draft'),
+  ));
+}
+
+/* ------------------------------------------------------------------ *
+ * the board
+ * ------------------------------------------------------------------ */
+function compute() {
+  const d = derive(state, typeOf);
+  const needs = d.needs;
+  const available = projected.filter((r) => !d.taken.has(r.id));
+  const demand = outstandingDemand(d.rosters, state.leagueSize, typeOf);
+  const replacement = replacementLevel(available, demand, { leagueSize: state.leagueSize });
+  const withVorp = attachVorp(available, replacement);
+  const scarcity = scarcityByPosition(withVorp, demand, { leagueSize: state.leagueSize });
+  const ranked = evaluate(withVorp, {
+    replacement, demand, scarcity, needs,
+    picksRemaining: d.picksRemaining,
+    opponentPicksBeforeMyNext: d.opponentPicksBeforeMyNext,
+    round: d.round,
+    leagueSize: state.leagueSize,
+  });
+  return { d, needs, available: withVorp, demand, replacement, scarcity, ranked };
+}
+
+function pick(id, mine) {
+  state = save(addPick(state, { elementId: id, mine }));
+  query = '';
+  render();
+}
+
+function playerLine(r) {
+  return `${r.web_name} · ${POS[r.element_type]}${teams.get(r.team) ? ` · ${teams.get(r.team)}` : ''}`;
+}
+
+function actionButtons(r) {
+  return el('span', { class: 'actions' },
+    el('button', { class: 'ghost', onClick: () => pick(r.id, false) }, 'Taken'),
+    el('button', { class: 'primary', onClick: () => pick(r.id, true) }, 'Mine'),
   );
 }
 
-/* Re-read the poller's file while the draft runs. */
-setInterval(async () => {
-  const fresh = await readSnapshot('draft/choices', null);
-  if (fresh && JSON.stringify(fresh) !== JSON.stringify(choices)) {
-    choices = fresh;
-    render();
+function render() {
+  if (!state) return renderSetup();
+  const { d, needs, available, demand, scarcity, ranked } = compute();
+  const best = ranked[0];
+  const alternatives = ranked.slice(1, 6);
+
+  const searchBox = el('input', {
+    class: 'input search',
+    type: 'search',
+    placeholder: 'Search a surname, then Taken or Mine',
+    value: query,
+    onInput: (e) => { query = e.target.value; renderResults(); },
+    onKeyDown: (e) => {
+      if (e.key === 'Enter' && matches().length) {
+        pick(matches()[0].id, e.shiftKey);
+      }
+    },
+  });
+
+  const matches = () => {
+    const q = query.trim().toLowerCase();
+    let pool = available;
+    if (posFilter) pool = pool.filter((r) => r.element_type === posFilter);
+    if (q) pool = pool.filter((r) => r.web_name.toLowerCase().includes(q));
+    return [...pool].sort((a, b) => b.draftValue - a.draftValue || b.vorp - a.vorp).slice(0, 30);
+  };
+
+  const results = el('div', { class: 'results' });
+  function renderResults() {
+    setKids(results, ...matches().map((r) => el('div', { class: 'result' },
+      el('span', { class: 'who' }, playerLine(r)),
+      el('span', { class: 'num' }, fmt.pts(r.rosValue)),
+      actionButtons(r),
+    )));
   }
-}, 4000);
+  renderResults();
+
+  setKids(app,
+    /* E — pick status */
+    el('div', { class: 'tiles' },
+      el('div', { class: 'tile accent' },
+        el('span', { class: 'k' }, 'Pick'),
+        el('span', { class: 'v' }, `#${d.currentPick}`),
+        el('span', { class: 's' }, `Round ${d.round} · slot ${d.onClockSlot} on the clock`)),
+      el('div', { class: 'tile' },
+        el('span', { class: 'k' }, d.picksUntilMyTurn === 0 ? 'You are up' : 'Until your turn'),
+        el('span', { class: 'v' }, d.picksUntilMyTurn === null ? '—' : `${d.picksUntilMyTurn}`),
+        el('span', { class: 's' }, `you are slot ${state.mySlot} of ${state.leagueSize}`)),
+      el('div', { class: 'tile' },
+        el('span', { class: 'k' }, 'Squad'),
+        el('span', { class: 'v' }, `${d.myRoster.length}/15`),
+        el('span', { class: 's' }, [1, 2, 3, 4]
+          .map((t) => `${POS[t]} ${QUOTA[t] - needs[t]}/${QUOTA[t]}`).join(' · '))),
+    ),
+
+    /* A — your next pick */
+    el('div', { class: 'card headline' },
+      el('h2', {}, d.picksUntilMyTurn === 0 ? 'Your pick — take this' : 'Best available now'),
+      best
+        ? el('div', {},
+            el('div', { class: 'pickname' }, playerLine(best)),
+            el('div', { class: 'pickstats' },
+              el('span', {}, `Draft value ${fmt.pts(best.draftValue)}`),
+              el('span', {}, `ROS ${fmt.pts(best.rosValue)}`),
+              el('span', {}, `Next 5 ${fmt.pts(best.nearTermValue)}`),
+              el('span', {}, `VORP ${fmt.pts(best.vorp)}`),
+              el('span', {}, `Survives ${Math.round(best.survival * 100)}%`)),
+            el('ul', { class: 'why' }, best.reasons.map((r) => el('li', { class: r.kind }, r.text))),
+            actionButtons(best))
+        : el('p', { class: 'empty' }, 'Your squad is complete.'),
+      alternatives.length
+        ? el('div', { class: 'alts' },
+            el('h3', {}, 'Alternatives'),
+            ...alternatives.map((r) => el('div', { class: 'result' },
+              el('span', { class: 'who' }, playerLine(r)),
+              el('span', { class: 'num' }, fmt.pts(r.draftValue)),
+              actionButtons(r))))
+        : null,
+    ),
+
+    /* B — search and best available */
+    el('div', { class: 'card' },
+      el('h2', {}, 'Enter a pick'),
+      searchBox,
+      el('div', { class: 'posfilter' }, ...[0, 1, 2, 3, 4].map((t) => el('button', {
+        class: posFilter === t ? 'pill active' : 'pill',
+        onClick: () => { posFilter = t; render(); },
+      }, t ? POS[t] : 'All'))),
+      results,
+      el('p', { class: 'hint' }, 'Enter takes the top match as Taken. Shift+Enter takes it as yours.'),
+    ),
+
+    /* D — scarcity */
+    el('div', { class: 'card' },
+      el('h2', {}, 'Positional scarcity'),
+      el('div', { class: 'scarcity' }, ...[1, 2, 3, 4].map((t) => el('div', { class: `srow ${scarcity[t].label.toLowerCase()}` },
+        el('span', { class: 'k' }, POS[t]),
+        el('span', { class: 'v' }, scarcity[t].label),
+        el('span', { class: 's' },
+          `${scarcity[t].available} left · ${demand[t]} slots needed · ${scarcity[t].beforeCliff} before the drop`)))),
+    ),
+
+    /* C — my squad */
+    el('div', { class: 'card' },
+      el('h2', {}, 'My squad'),
+      d.myRoster.length
+        ? el('ul', { class: 'mover-list' }, d.myRoster.map((id) => {
+            const r = byId.get(id);
+            return el('li', {}, r ? playerLine(r) : `#${id}`);
+          }))
+        : el('p', { class: 'empty' }, 'Nothing drafted yet.'),
+      d.myRoster.length === 15 && !state.finished
+        ? el('button', {
+            class: 'primary',
+            onClick: () => { state = save(finishDraft(state)); render(); },
+          }, 'Finish draft')
+        : null,
+      state.finished
+        ? el('p', { class: 'hint' },
+            `Draft complete. ${finalPools(state, projected.map((r) => r.id), typeOf).undrafted.length} `
+            + 'players went undrafted and become your free-agent pool.')
+        : null,
+    ),
+
+    /* F — the draft log */
+    el('div', { class: 'card' },
+      el('h2', {}, 'Draft log'),
+      el('div', { class: 'logactions' },
+        el('button', { class: 'ghost', onClick: () => { state = save(undoLastPick(state)); render(); } }, 'Undo last pick'),
+        el('button', {
+          class: 'ghost danger',
+          onClick: () => {
+            if (confirm('Reset the draft? Everything entered will be lost.')) {
+              clear(); state = null; render();
+            }
+          },
+        }, 'Reset draft'),
+      ),
+      state.log.length
+        ? el('div', { class: 'tablewrap' }, el('table', { class: 'players' },
+            el('thead', {}, el('tr', {}, ...['#', 'Rd', 'Manager', 'Player', 'Pos', ''].map((h) => el('th', {}, h)))),
+            el('tbody', {}, state.log.map((p, i) => {
+              const overall = i + 1;
+              const r = byId.get(p.elementId);
+              return el('tr', { class: p.mine ? 'mine' : '' },
+                el('td', {}, `${overall}`),
+                el('td', {}, `${Math.floor(i / state.leagueSize) + 1}`),
+                el('td', {}, p.mine ? 'You' : `Slot ${slotLabel(overall)}`),
+                el('td', {}, r ? r.web_name : `#${p.elementId}`),
+                el('td', {}, r ? POS[r.element_type] : '—'),
+                el('td', {}, el('button', {
+                  class: 'ghost',
+                  onClick: () => {
+                    const name = prompt('Correct this pick — type a surname:', r ? r.web_name : '');
+                    if (!name) return;
+                    const found = projected.find((x) => x.web_name.toLowerCase().includes(name.trim().toLowerCase()));
+                    if (!found) { alert('No player matched that name.'); return; }
+                    state = save(editPick(state, i, { elementId: found.id }));
+                    render();
+                  },
+                }, 'Edit')),
+              );
+            }))))
+        : el('p', { class: 'empty' }, 'No picks entered yet.'),
+    ),
+  );
+
+  // preventScroll: focus must not fight the user's scroll position — a pick
+  // made from the headline card should leave the just-updated recommendation
+  // in view, not jump the page down to the search box.
+  requestAnimationFrame(() => searchBox.focus({ preventScroll: true }));
+}
+
+function slotLabel(overall) {
+  const round = Math.floor((overall - 1) / state.leagueSize) + 1;
+  const idx = overall - (round - 1) * state.leagueSize;
+  return String(round % 2 === 1 ? idx : state.leagueSize - idx + 1);
+}
 
 render();

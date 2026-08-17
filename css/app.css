@@ -436,3 +436,43 @@ table.players .proj { color: var(--accent); font-weight: 900; }
 @media (min-width: 760px) {
   .split { display: grid; grid-template-columns: 1fr 340px; gap: 1rem; align-items: start; }
 }
+
+/* --- draft assistant ------------------------------------------------ */
+.setup label { display: block; margin: 0.75rem 0; font: inherit; }
+.setup .input { display: block; width: 100%; margin-top: 0.25rem; }
+.search { width: 100%; margin-bottom: 0.5rem; }
+.headline .pickname { font-family: var(--font-display); font-size: 2rem; line-height: 1.1; }
+.headline .pickstats { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.5rem 0; opacity: 0.85; }
+.why { margin: 0.5rem 0 1rem; padding-left: 1.1rem; }
+.why li { margin: 0.2rem 0; }
+.why li.constraint, .why li.risk { color: var(--yellow); }
+.result {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.5rem 0; border-top: 1px solid var(--border-soft);
+}
+.result .who { flex: 1; }
+.actions { display: flex; gap: 0.4rem; }
+.posfilter { display: flex; gap: 0.4rem; margin: 0.5rem 0; flex-wrap: wrap; }
+.pill {
+  background: transparent; color: var(--text); border: 1px solid var(--border);
+  border-radius: var(--pill); padding: 0.3rem 0.8rem; cursor: pointer;
+  font-family: var(--font-display); font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase;
+}
+.pill.active { background: var(--accent); color: var(--ink); border-color: var(--accent); }
+.scarcity .srow { display: flex; gap: 0.75rem; align-items: baseline; padding: 0.4rem 0; }
+.scarcity .srow .v { font-weight: 700; }
+.scarcity .high .v { color: var(--red); }
+.scarcity .medium .v { color: var(--yellow); }
+.scarcity .low .v { color: var(--lime); }
+.logactions { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+tr.mine { background: rgba(159, 237, 0, 0.08); }
+
+/* Small screens: recommendation, entry, roster, then everything else. Cards
+   already stack in document order, so this only tunes density; the actual
+   priority order (recommendation, entry, roster, on-clock, best-available)
+   comes from the order the cards are written in render(). */
+@media (max-width: 640px) {
+  .headline .pickname { font-size: 1.5rem; }
+  .result { flex-wrap: wrap; }
+  .result .who { flex-basis: 100%; }
+}
