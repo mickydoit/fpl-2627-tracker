@@ -306,21 +306,44 @@ const repBig = replacementLevel(bigPool, demandBig8, { basis: 'demand' })[4];
 ok('VORP baseline deepens in larger leagues (more slots to fill)',
   repBig < repSmall, `small=${repSmall} big=${repBig}`);
 
-console.log('\nScarcity is about cliffs, not counts');
+console.log('\nScarcity is about VORP gaps, not supply counts');
+// Verify playersBeforeCliff still works correctly
 const cliffy = mkRows(4, [92, 89, 87, 69, 67, 65]);
 const flat = mkRows(2, [88, 87, 86, 85, 84, 83]);
-ok('a cliff is found where the drop is real', playersBeforeCliff(cliffy, 4) === 3,
+ok('cliff detection: cliffy yields 3 before cliff', playersBeforeCliff(cliffy, 4) === 3,
   `got ${playersBeforeCliff(cliffy, 4)}`);
-ok('an even position has no early cliff', playersBeforeCliff(flat, 2) > 3,
+ok('cliff detection: flat yields 6 (no cliff)', playersBeforeCliff(flat, 2) === 6,
   `got ${playersBeforeCliff(flat, 2)}`);
 
-const sc = scarcityByPosition([...cliffy, ...flat], { 4: 3, 2: 20 }, { leagueSize: 8 });
-ok('a position with demand at its cliff is scarce', sc[4].label === 'HIGH', `got ${sc[4].label}`);
-ok('a deep position with slack supply is not', sc[2].label === 'LOW', `got ${sc[2].label}`);
-ok('scarcity reports how many remain before the drop', sc[4].beforeCliff === 3);
-ok('scarcity reports the raw supply too', sc[4].available === 6);
-ok('scarcity reports outstanding demand', sc[4].demand === 3);
-ok('an exhausted position is not reported as plentiful',
+// New scarcity model: label comes from VORP gap ranking
+// Create four positions with different gaps: FWD (large), DEF (medium), MID (small), GK (zero demand = always LOW)
+const gappedPool = [
+  // Position 4 (FWD): best player has huge VORP — should be HIGH
+  { element_type: 4, proj: 95, vorp: 22, id: 4001 },
+  { element_type: 4, proj: 70, vorp: -3, id: 4002 },
+  { element_type: 4, proj: 60, vorp: -13, id: 4003 },
+  // Position 2 (DEF): best player has modest VORP — should be MEDIUM
+  { element_type: 2, proj: 50, vorp: 8, id: 2001 },
+  { element_type: 2, proj: 42, vorp: 0, id: 2002 },
+  // Position 3 (MID): best player close to replacement — should be LOW
+  { element_type: 3, proj: 80, vorp: 3, id: 3001 },
+  { element_type: 3, proj: 77, vorp: 0, id: 3002 },
+  // Position 1 (GK): zero demand — should be LOW regardless of gap
+  { element_type: 1, proj: 30, vorp: 15, id: 1001 },
+];
+
+const sc = scarcityByPosition(gappedPool, { 4: 5, 2: 10, 3: 15, 1: 0 }, { leagueSize: 8 });
+ok('largest gap (FWD vorp=22) is HIGH', sc[4].label === 'HIGH', `got ${sc[4].label}`);
+ok('second-largest gap (DEF vorp=8) is MEDIUM', sc[2].label === 'MEDIUM', `got ${sc[2].label}`);
+ok('smaller gap (MID vorp=3) is LOW', sc[3].label === 'LOW', `got ${sc[3].label}`);
+ok('zero demand (GK) is always LOW', sc[1].label === 'LOW', `got ${sc[1].label}`);
+ok('scarcity reports available supply', sc[4].available === 3);
+ok('scarcity reports outstanding demand', sc[4].demand === 5);
+ok('scarcity reports supply-per-slot ratio', sc[4].ratio === 3 / 5);
+ok('scarcity reports cliff count', sc[4].beforeCliff === 3);
+
+// Verify: empty pool with demand is HIGH (exhausted)
+ok('exhausted position (empty pool, demand > 0) is HIGH',
   scarcityByPosition([], { 4: 5 }, { leagueSize: 8 })[4].label === 'HIGH');
 
 console.log('\nHard roster constraints');

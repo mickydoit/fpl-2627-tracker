@@ -34,30 +34,53 @@ export function playersBeforeCliff(rows, type, threshold = DRAFT_CONFIG.tierGapT
 /**
  * Supply, demand and an urgency label per position.
  *
- * The label comes from the ratio of useful supply to outstanding demand, and
- * is pulled up to HIGH when the cliff is close enough that the league's
- * remaining demand will eat through the good players before it is satisfied.
+ * The label is determined by the urgency gap — how much value you lose by
+ * ignoring this position right now, measured as (best available) − (replacement).
+ * Positions are ranked by their gap; the scarcest (largest gap, most value at risk)
+ * is HIGH, second is MEDIUM, the rest are LOW. Positions with zero outstanding
+ * demand are always LOW (nobody needs them, so nothing about them is urgent).
  */
-export function scarcityByPosition(rows, demand, { leagueSize = LEAGUE_SIZE_DEFAULT } = {}) {
+export function scarcityByPosition(rows, demand, { leagueSize = LEAGUE_SIZE_DEFAULT, replacement } = {}) {
   const out = {};
+
+  // Calculate gap for each position and store positions with demand for ranking.
+  const gapped = [];
   for (const t of TYPES) {
     const pool = rows.filter((r) => r.element_type === t);
     const need = demand?.[t] ?? 0;
     const beforeCliff = playersBeforeCliff(rows, t);
     const ratio = need > 0 ? pool.length / need : Infinity;
 
-    let label;
-    if (pool.length === 0 && need > 0) label = 'HIGH';
-    else if (ratio >= DRAFT_CONFIG.scarcityHighRatio) label = 'HIGH';
-    else if (ratio >= DRAFT_CONFIG.scarcityMediumRatio) label = 'MEDIUM';
-    else label = 'LOW';
+    let gap = 0;
+    if (need > 0) {
+      if (pool.length === 0) {
+        // Exhausted position (no supply but demand remains) is maximally urgent
+        gap = Infinity;
+      } else {
+        const best = pool[0]; // Sorted by proj descending by playersBeforeCliff
+        // Use vorp if available, else calculate from replacement or pool bounds
+        if (best.vorp !== undefined) {
+          gap = best.vorp;
+        } else if (replacement && replacement[t] !== undefined) {
+          gap = best.proj - replacement[t];
+        } else if (pool.length > 1) {
+          gap = best.proj - pool[pool.length - 1].proj;
+        } else {
+          gap = best.proj;
+        }
+      }
+      gapped.push({ type: t, gap, available: pool.length, need, ratio, beforeCliff });
+    }
 
-    // A cliff the league will chew straight through is urgent regardless of
-    // how many bodies sit below it.
-    if (beforeCliff < pool.length && need >= beforeCliff) label = 'HIGH';
-
-    out[t] = { available: pool.length, demand: need, ratio, beforeCliff, label };
+    // Positions with zero demand are always LOW
+    out[t] = { available: pool.length, demand: need, ratio, beforeCliff, label: 'LOW' };
   }
+
+  // Rank positions with demand by gap descending; assign labels
+  gapped.sort((a, b) => b.gap - a.gap);
+  if (gapped.length > 0) out[gapped[0].type].label = 'HIGH';
+  if (gapped.length > 1) out[gapped[1].type].label = 'MEDIUM';
+
   return out;
 }
 
