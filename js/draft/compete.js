@@ -8,7 +8,11 @@
 import { snakePicks, buildBoard } from './board.js';
 import { positionsNeeded } from './live.js';
 import { recommend } from './advise.js';
-import { makeRng } from './simulate.js';
+import { makeRng, picksBetween } from './simulate.js';
+import { outstandingDemand, replacementLevel, attachVorp } from './replacement.js';
+import { scarcityByPosition } from './scarcity.js';
+import { evaluate } from './value.js';
+import { ROUNDS } from './config.js';
 
 /** Best legal XI from a 15: 1 GK, at least 3 DEF, 2 MID, 1 FWD, 11 total. */
 function bestElevenTotal(roster) {
@@ -44,6 +48,34 @@ export const STRATEGIES = {
     return pool.filter((p) => need[p.element_type] > 0)
       .sort((a, b) => b.proj - a.proj)[0];
   },
+  /**
+   * The real decision engine: live outstanding demand -> replacement level ->
+   * VORP -> scarcity -> the full decision score. Unlike `vorp` above (which
+   * ranks off a VORP fixed once at draft start), this recomputes replacement
+   * and scarcity fresh on every pick from the league's actual outstanding
+   * demand, exactly as the live board does.
+   */
+  value: (pool, ctx) => {
+    const { roster, pick, myPicks, rosters, leagueSize } = ctx;
+    const types = new Map();
+    for (const rows of rosters.values()) for (const r of rows) types.set(r.id, r.element_type);
+    const idsBySlot = new Map([...rosters].map(([slot, rows]) => [slot, rows.map((r) => r.id)]));
+
+    const demand = outstandingDemand(idsBySlot, leagueSize, types);
+    const replacement = replacementLevel(pool, demand, { leagueSize });
+    const withVorp = attachVorp(pool, replacement);
+    const scarcity = scarcityByPosition(withVorp, demand, { leagueSize, replacement });
+
+    const ranked = evaluate(withVorp, {
+      replacement, demand, scarcity,
+      needs: positionsNeeded(roster),
+      picksRemaining: ROUNDS - roster.length,
+      opponentPicksBeforeMyNext: picksBetween(pick, myPicks || []),
+      round: Math.ceil(pick / leagueSize),
+      leagueSize,
+    });
+    return ranked[0];
+  },
 };
 
 /** Run one full snake draft and report what my strategy ended up with. */
@@ -68,7 +100,7 @@ export function runDraft(rows, { leagueSize = 6, mySlot = 3, strategy, seed = 12
 
     let choice;
     if (myPicks.has(pick)) {
-      choice = strategy(pool, { myPicks: myPickList, pick, roster, seed });
+      choice = strategy(pool, { myPicks: myPickList, pick, roster, seed, rosters, leagueSize });
     } else {
       const need = positionsNeeded(roster);
       const window = pool.filter((p) => need[p.element_type] > 0)
