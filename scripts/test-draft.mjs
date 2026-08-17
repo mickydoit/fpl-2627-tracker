@@ -10,6 +10,7 @@ import {
   SCHEMA_VERSION, createDraft, addPick, undoLastPick, editPick, derive, needsFor,
   slotForPick, roundForPick, finishDraft, finalPools, save, load, clear, migrateLegacy,
 } from '../js/draft/state.js';
+import { outstandingDemand, replacementLevel, attachVorp } from '../js/draft/replacement.js';
 
 let failures = 0;
 let checks = 0;
@@ -232,6 +233,51 @@ ok('migrateLegacy finds and removes the old keys', migrateLegacy() === true);
 ok('migrateLegacy leaves no trace of the legacy keys',
   localStorage.getItem('draftTaken') === null && localStorage.getItem('draftEntry') === null);
 ok('migrateLegacy reports false once there is nothing left to migrate', migrateLegacy() === false);
+
+console.log('\nReplacement level');
+const mkRows = (type, projections) => projections.map((proj, i) => ({
+  id: type * 1000 + i, element_type: type, proj,
+}));
+// 8 forwards, descending. In an 8-team league 24 FWD slots exist in total.
+const fwds = mkRows(4, [92, 89, 87, 69, 67, 65, 60, 55]);
+
+const emptyRosters = new Map();
+const demand0 = outstandingDemand(emptyRosters, 8, new Map());
+ok('an untouched league demands every roster slot',
+  demand0[4] === 24 && demand0[2] === 40 && demand0[3] === 40 && demand0[1] === 16);
+
+const types = new Map(fwds.map((r) => [r.id, 4]));
+const rosters = new Map([[1, [fwds[0].id, fwds[1].id]], [2, [fwds[2].id]]]);
+const demand1 = outstandingDemand(rosters, 8, types);
+ok('drafted players reduce outstanding demand', demand1[4] === 21, `got ${demand1[4]}`);
+ok('untouched positions keep full demand', demand1[2] === 40);
+
+const rep = replacementLevel(fwds, { 4: 3 }, { basis: 'demand' });
+ok('replacement sits at the edge of outstanding demand', rep[4] === 69, `got ${rep[4]}`);
+
+const repDeep = replacementLevel(fwds, { 4: 100 }, { basis: 'demand' });
+ok('demand beyond the pool falls back to the worst available', repDeep[4] === 55);
+
+const repNone = replacementLevel([], { 4: 3 }, { basis: 'demand' });
+ok('an empty pool gives a zero baseline', repNone[4] === 0);
+
+console.log('\nReplacement level moves as the draft runs');
+const early = replacementLevel(fwds, { 4: 8 }, { basis: 'demand' })[4];
+const late = replacementLevel(fwds.slice(3), { 4: 4 }, { basis: 'demand' })[4];
+ok('a thinning pool lowers the baseline', late < early || late === 55, `early ${early} late ${late}`);
+
+console.log('\nVORP');
+const withVorp = attachVorp(fwds, { 4: 69 });
+ok('VORP is measured against replacement', withVorp[0].vorp === 92 - 69);
+ok('the replacement player scores zero VORP',
+  withVorp.find((r) => r.proj === 69).vorp === 0);
+ok('below-replacement players score negative VORP',
+  withVorp.find((r) => r.proj === 55).vorp < 0);
+ok('VORP responds to league size', (() => {
+  const small = replacementLevel(fwds, outstandingDemand(new Map(), 4, new Map()), { basis: 'demand' })[4];
+  const big = replacementLevel(fwds, outstandingDemand(new Map(), 8, new Map()), { basis: 'demand' })[4];
+  return small >= big;
+})(), 'a smaller league should not have a deeper replacement level');
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
 process.exit(failures ? 1 : 0);
