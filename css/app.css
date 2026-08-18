@@ -540,3 +540,12 @@ tr.mine { background: rgba(159, 237, 0, 0.08); }
      full elsewhere on the page — for barely-readable type, which is worse. */
   body[data-page="draft"] .tile .s { white-space: nowrap; font-size: 0.6rem; }
 }
+
+/* Sync status. Transient and non-blocking — it never sits between you and a
+   pick, and it disappears on its own. */
+.syncnote {
+  background: var(--surface-2); border: 1px solid var(--accent);
+  color: var(--text); border-radius: var(--radius);
+  padding: var(--s-sm) var(--s-md); margin-bottom: var(--s-md);
+  font-size: 0.85rem;
+}

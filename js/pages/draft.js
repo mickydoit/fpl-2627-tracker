@@ -17,6 +17,7 @@ import { outstandingDemand, replacementLevel, attachVorp } from '../draft/replac
 import { scarcityByPosition } from '../draft/scarcity.js';
 import { evaluate } from '../draft/value.js';
 import { LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX, QUOTA } from '../draft/config.js';
+import { pull, debouncedPush, syncConfigured, deviceName } from '../draft/sync.js';
 
 const app = $('#app');
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
@@ -64,6 +65,27 @@ if (linked) {
     state = save(linked);
   }
 }
+
+/**
+ * Adopt the synced board when it is further along than this device's copy.
+ *
+ * Deliberately conservative: a cloud draft only replaces a local one when it
+ * has strictly MORE picks. Equal or fewer means this device is level or ahead,
+ * and silently rewinding a live draft would be far worse than a stale mirror.
+ * A cloud draft that is behind gets overwritten on the next pick anyway.
+ */
+async function adoptRemoteIfAhead() {
+  if (!syncConfigured()) return;
+  const remote = await pull();
+  if (!remote?.state?.log) return;
+  const here = state?.log?.length ?? 0;
+  const there = remote.state.log.length;
+  if (there > here) {
+    state = save(remote.state);
+    render();
+    note(`Picked up ${there} picks from your ${remote.device || 'other device'}.`);
+  }
+}
 let query = '';
 let posFilter = 0;
 
@@ -97,7 +119,7 @@ function renderSetup() {
     el('button', {
       class: 'primary',
       onClick: () => {
-        state = save(createDraft({ leagueSize: size, mySlot: +slotSelect.value }));
+        persist(createDraft({ leagueSize: size, mySlot: +slotSelect.value }));
         render();
       },
     }, 'Start draft'),
@@ -125,10 +147,31 @@ function compute() {
   return { d, needs, available: withVorp, demand, replacement, scarcity, ranked };
 }
 
+const pushSoon = debouncedPush();
+
+/** Local save first, cloud mirror second — never the other way round. */
+function persist(next) {
+  state = save(next);
+  pushSoon(state);
+  return state;
+}
+
 function pick(id, mine) {
-  state = save(addPick(state, { elementId: id, mine }));
+  persist(addPick(state, { elementId: id, mine }));
   query = '';
   render();
+}
+
+/** A transient status line. Never a modal — nothing may block a pick. */
+function note(text) {
+  let n = $('#syncnote');
+  if (!n) {
+    n = el('div', { class: 'syncnote', id: 'syncnote' });
+    app.prepend(n);
+  }
+  n.textContent = text;
+  clearTimeout(note._t);
+  note._t = setTimeout(() => n.remove(), 4000);
 }
 
 function playerLine(r) {
@@ -256,7 +299,7 @@ function render() {
       d.myRoster.length === 15 && !state.finished
         ? el('button', {
             class: 'primary',
-            onClick: () => { state = save(finishDraft(state)); render(); },
+            onClick: () => { persist(finishDraft(state)); render(); },
           }, 'Finish draft')
         : null,
       state.finished
@@ -270,7 +313,7 @@ function render() {
     el('div', { class: 'card' },
       el('h2', {}, 'Draft log'),
       el('div', { class: 'logactions' },
-        el('button', { class: 'ghost', onClick: () => { state = save(undoLastPick(state)); render(); } }, 'Undo last pick'),
+        el('button', { class: 'ghost', onClick: () => { persist(undoLastPick(state)); render(); } }, 'Undo last pick'),
         el('button', {
           class: 'ghost',
           onClick: async (e) => {
@@ -315,7 +358,7 @@ function render() {
                     if (!name) return;
                     const found = projected.find((x) => x.web_name.toLowerCase().includes(name.trim().toLowerCase()));
                     if (!found) { alert('No player matched that name.'); return; }
-                    state = save(editPick(state, i, { elementId: found.id }));
+                    persist(editPick(state, i, { elementId: found.id }));
                     render();
                   },
                 }, 'Edit')),
@@ -338,3 +381,7 @@ function slotLabel(overall) {
 }
 
 render();
+
+// Fire-and-forget: the board is already on screen from localStorage before this
+// resolves, so a slow or dead network delays nothing.
+adoptRemoteIfAhead();

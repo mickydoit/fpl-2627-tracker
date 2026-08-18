@@ -18,6 +18,21 @@ export const QUOTA = { 1: 2, 2: 5, 3: 5, 4: 3 };
  */
 export const STARTER_QUOTA = { 1: 1, 2: 4, 3: 4, 4: 2 };
 
+/**
+ * Cross-device draft sync (optional).
+ *
+ * The anon key is a *publishable* key and belongs in client code — but this
+ * repo is public and there is no sign-in, so treat the synced row as public
+ * data. It holds a pick log and nothing else. Leave `anonKey` empty to turn
+ * sync off entirely; the app then behaves exactly as it did before.
+ *
+ * NEVER put a service_role key here. That key bypasses row-level security.
+ */
+export const SUPABASE = {
+  url: 'https://gwemacdcdpeuajhjhamc.supabase.co',
+  anonKey: '', // paste the project's anon / publishable key to enable sync
+};
+
 export const ROUNDS = 15;
 /**
  * The owner's league is six managers. The Draft API's own
