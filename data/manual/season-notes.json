@@ -1,13 +1,14 @@
 {
-  "updated": "2026-08-16",
-  "note": "Hand-curated research that no API exposes. Edit this file directly — the refresh workflow never overwrites it.",
+  "updated": "2026-08-18",
+  "note": "Hand-curated research that no API exposes. Edit this file directly — the refresh workflow never overwrites it. Injury FLAGS are not curated here: bootstrap-static already carries status, news and chance_of_playing for every player and is authoritative. Entries below earn their place only by adding what the API does not say — a return date it records as unknown, or the tactical consequence. Cross-checked against bootstrap-static on 18 Aug 2026.",
   "season": {
     "first_deadline": "2026-08-21T17:30:00Z",
     "first_fixture": "Arsenal v Coventry City, Fri 21 Aug 2026, 20:00 BST",
     "window_closes": "2026-09-01T18:00:00Z",
     "promoted": ["Coventry City", "Ipswich Town", "Hull City"],
     "relegated_last_season": ["West Ham United", "Burnley", "Wolverhampton Wanderers"],
-    "champions_last_season": "Arsenal (85 pts)"
+    "champions_last_season": "Arsenal (85 pts)",
+    "community_shield": "Arsenal beat Man City on penalties at the Principality Stadium, 16 Aug 2026, after a last-gasp equaliser. Rodri (back) was City's only guaranteed absentee; Saliba and Timber both missed it."
   },
 
   "rule_changes": [
@@ -163,14 +164,14 @@
     { "player": "Amadou Onana", "club": "Aston Villa", "issue": "ACL", "out_until": "~May 2027", "severity": "season" },
     { "player": "William Saliba", "club": "Arsenal", "issue": "Back injury from the World Cup", "out_until": "Extended period, no return date", "severity": "long" },
     { "player": "Rodri", "club": "Manchester City", "issue": "Back surgery", "out_until": "Misses the start of the season", "severity": "long" },
+    { "player": "Jurriën Timber", "club": "Arsenal", "issue": "Groin, aggravated before the World Cup", "out_until": "Weeks from training on 16 Aug; Arteta does not expect his first-choice defence back before the first international break", "severity": "long", "fpl_angle": "Ben White took right-back in the Community Shield, Mosquera partnered Gabriel. Both Arsenal centre-back slots are makeshift into September." },
     { "player": "Evan Ferguson", "club": "Brighton", "issue": "Ankle", "out_until": "~10 Oct", "severity": "medium" },
     { "player": "Yankuba Minteh", "club": "Brighton", "issue": "Leg", "out_until": "~28 Nov", "severity": "long" },
-    { "player": "Wesley Fofana", "club": "Chelsea", "issue": "Suspended (red card carried over)", "out_until": "First two games", "severity": "short" },
+    { "player": "Wesley Fofana", "club": "Chelsea", "issue": "Suspended (red card carried over)", "out_until": "Suspended until 6 Sep — three matches, not two", "severity": "medium" },
     { "player": "Joachim Andersen", "club": "Fulham", "issue": "Suspended", "out_until": "30 Aug", "severity": "short" },
     { "player": "Ryan Christie", "club": "Bournemouth", "issue": "Suspended", "out_until": "29 Aug", "severity": "short" },
-    { "player": "Luke Shaw", "club": "Manchester United", "issue": "Fitness", "out_until": "Misses the opening games", "severity": "short" },
     { "player": "Benjamin Šeško", "club": "Manchester United", "issue": "Shin (75%)", "out_until": "Doubt for GW1", "severity": "short" },
-    { "player": "Dejan Kulusevski", "club": "Tottenham Hotspur", "issue": "Knee", "out_until": "Doubt", "severity": "medium" },
+    { "player": "Dejan Kulusevski", "club": "Tottenham Hotspur", "issue": "Knee", "out_until": "No return date — the API has him unavailable, not merely doubtful", "severity": "long", "fpl_angle": "Named a De Zerbi beneficiary above; that only pays once he is fit." },
     { "player": "Carlos Baleba", "club": "Brighton", "issue": "Ankle", "out_until": "~23 Aug", "severity": "short" },
     { "player": "Jack Butland", "club": "Hull City", "issue": "Arm", "out_until": "Doubt", "severity": "medium" }
   ],
@@ -232,9 +233,9 @@
   ],
 
   "rumours": [
-    { "player": "Bradley Barcola", "from": "PSG", "to": "Liverpool", "status": "Talks held, opening offer prepared; PSG want £128.5–145m. Arsenal also interested.", "impact": "This is the Salah replacement. Would immediately be a premium midfield or forward asset." },
-    { "player": "Cody Gakpo", "from": "Liverpool", "to": "Tottenham Hotspur", "status": "Reported agreement in principle, around €70m.", "impact": "Would further thin Liverpool's wide options and add to De Zerbi's front three." },
-    { "player": "Jack Grealish", "from": "Manchester City", "to": "Everton", "status": "Everton reported favourites after his 2025/26 loan.", "impact": "Would be Moyes' marquee creator." },
+    { "player": "Bradley Barcola", "from": "PSG", "to": "Liverpool", "status": "Stalled as of 17 Aug — PSG are under no pressure to sell and are holding near £145m. Arsenal also interested.", "impact": "This is the Salah replacement. Would immediately be a premium midfield or forward asset." },
+    { "player": "Cody Gakpo", "from": "Liverpool", "to": "Tottenham Hotspur", "status": "Personal terms agreed with Tottenham as of 17 Aug. The fee, reported near £70m, is still not agreed with Liverpool.", "impact": "Would further thin Liverpool's wide options and add to De Zerbi's front three." },
+    { "player": "Jack Grealish", "from": "Manchester City", "to": "Everton", "status": "Everton have opened talks over another LOAN, not a permanent deal, after his 2025/26 loan there.", "impact": "Would be Moyes' marquee creator." },
     { "player": "Enzo Fernández", "from": "Chelsea", "to": "Manchester City", "status": "Talks reported not dead.", "impact": "Would remove Chelsea's backup penalty taker and a primary corner taker." },
     { "player": "Lewis Hall", "from": "Newcastle United", "to": "Manchester United", "status": "United testing Newcastle's resolve at left-back.", "impact": "Hall is Newcastle's main corner and free-kick taker — doubly significant if he goes." },
     { "player": "Vinícius Júnior", "from": "Real Madrid", "to": "Arsenal", "status": "DEAD — signed a new Real Madrid contract.", "impact": "Arsenal have pivoted toward Barcola, Julián Álvarez or a centre-back (Ezri Konsa, ~£60m)." }
