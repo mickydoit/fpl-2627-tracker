@@ -11,7 +11,7 @@ import { readSnapshot } from '../data.js';
 import { projectBoard } from '../draft/project.js';
 import {
   createDraft, addPick, undoLastPick, editPick, derive,
-  save, load, clear, migrateLegacy, finishDraft, finalPools,
+  save, load, clear, migrateLegacy, finishDraft, finalPools, encodeDraft, decodeDraft,
 } from '../draft/state.js';
 import { outstandingDemand, replacementLevel, attachVorp } from '../draft/replacement.js';
 import { scarcityByPosition } from '../draft/scarcity.js';
@@ -41,7 +41,29 @@ const projected = projectBoard(board.players, fixtures, board.teams || []);
 const byId = new Map(projected.map((r) => [r.id, r]));
 const typeOf = new Map(projected.map((r) => [r.id, r.element_type]));
 
+/**
+ * A draft can arrive in the URL from another device. It never overwrites work
+ * silently: if there is already a draft in this browser you are asked, because
+ * losing a live pick log is unrecoverable.
+ */
+function draftFromLink() {
+  const raw = new URLSearchParams(location.hash.slice(1)).get('d');
+  if (!raw) return null;
+  const incoming = decodeDraft(raw);
+  history.replaceState(null, '', location.pathname + location.search);
+  return incoming;
+}
+
 let state = load();
+const linked = draftFromLink();
+if (linked) {
+  const existing = state?.log?.length ?? 0;
+  if (!existing || confirm(
+    `Load the draft from this link (${linked.log.length} picks)?\n\n`
+    + `This browser already has a draft with ${existing} picks, which will be replaced.`)) {
+    state = save(linked);
+  }
+}
 let query = '';
 let posFilter = 0;
 
@@ -249,6 +271,22 @@ function render() {
       el('h2', {}, 'Draft log'),
       el('div', { class: 'logactions' },
         el('button', { class: 'ghost', onClick: () => { state = save(undoLastPick(state)); render(); } }, 'Undo last pick'),
+        el('button', {
+          class: 'ghost',
+          onClick: async (e) => {
+            const url = `${location.origin}${location.pathname}#d=${encodeDraft(state)}`;
+            const btn = e.currentTarget;
+            try {
+              await navigator.clipboard.writeText(url);
+              btn.textContent = 'Link copied — open it on your other device';
+            } catch {
+              // Clipboard is blocked on insecure origins and some mobile
+              // browsers; showing the link is always available as a fallback.
+              prompt('Copy this link and open it on your other device:', url);
+            }
+            setTimeout(() => { btn.textContent = 'Continue on another device'; }, 2500);
+          },
+        }, 'Continue on another device'),
         el('button', {
           class: 'ghost danger',
           onClick: () => {

@@ -6,10 +6,16 @@
  * refresh workflow may ever overwrite the output — once bootstrap is zeroed,
  * this file is the only surviving record of last season's evidence.
  */
-import { readJSON, writeJSON } from './lib/io.mjs';
+import { readFile } from 'node:fs/promises';
+import { gunzipSync } from 'node:zlib';
+import { writeJSON } from './lib/io.mjs';
 
-const RAW_CLASSIC = 'data/draft/raw/classic-bootstrap-2026-08-17.json';
-const RAW_DRAFT = 'data/draft/raw/draft-bootstrap-2026-08-17.json';
+/* The raw captures are stored gzipped: they are 2.2 MB of one-off archive that
+   nothing reads at runtime, and they compress by 92%. */
+const readRaw = async (path) => JSON.parse(gunzipSync(await readFile(path)).toString('utf8'));
+
+const RAW_CLASSIC = 'data/draft/raw/classic-bootstrap-2026-08-17.json.gz';
+const RAW_DRAFT = 'data/draft/raw/draft-bootstrap-2026-08-17.json.gz';
 const OUT = 'data/draft/prior-2526.json';
 
 // Season totals arrive as strings for the expected-goals family and as numbers
@@ -31,8 +37,8 @@ const FIELDS = [
   'defensive_contribution',
 ];
 
-const classic = await readJSON(RAW_CLASSIC);
-const draft = await readJSON(RAW_DRAFT);
+const classic = await readRaw(RAW_CLASSIC);
+const draft = await readRaw(RAW_DRAFT);
 if (!classic?.elements?.length) throw new Error(`no classic payload at ${RAW_CLASSIC}`);
 if (!draft?.elements?.length) throw new Error(`no draft payload at ${RAW_DRAFT}`);
 

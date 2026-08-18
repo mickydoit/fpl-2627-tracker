@@ -155,6 +155,64 @@ export function needsFor(roster, types) {
  * Close the draft. Nothing is discarded — the log stays intact, because the
  * season-long waiver assistant is built from exactly this state.
  */
+/* ------------------------------------------------------------------ *
+ * moving a draft between devices
+ *
+ * localStorage does not follow you from laptop to phone, and on draft night
+ * that is the one failure with no recovery. The pick log is small enough to
+ * travel in a URL — a 6-team draft is under 300 characters, a full 16-team one
+ * under 800 — so a resume link needs no server, no account and no database.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Pack a draft into a compact, URL-safe string.
+ *
+ * The "mine" flag is a LEADING underscore, never a trailing letter: ids are
+ * base36, so every letter a-z is a legal digit and a suffix like `m` collides
+ * with real ids — element 130 encodes as "3m", which a suffix reader would
+ * decode as element 3, owned by me. `_` is outside base36 and safe in a URL.
+ */
+export function encodeDraft(state) {
+  const picks = state.log
+    .map((p) => (p.mine ? '_' : '') + p.elementId.toString(36))
+    .join('.');
+  return `${state.leagueSize}.${state.mySlot}${state.finished ? 'f' : ''}~${picks}`;
+}
+
+/**
+ * Unpack a resume link. Returns null on anything malformed rather than
+ * throwing — a mistyped or truncated link must never take the page down.
+ */
+export function decodeDraft(str) {
+  try {
+    const [head, body = ''] = String(str).split('~');
+    const m = /^(\d+)\.(\d+)(f?)$/.exec(head.trim());
+    if (!m) return null;
+    const leagueSize = clampSize(+m[1]);
+    const state = {
+      version: SCHEMA_VERSION,
+      leagueSize,
+      mySlot: Math.max(1, Math.min(leagueSize, +m[2] || 1)),
+      finished: m[3] === 'f',
+      log: body
+        ? body.split('.').filter(Boolean).map((tok) => {
+            const mine = tok.startsWith('_');
+            const raw = mine ? tok.slice(1) : tok;
+            // Reject anything that is not purely base36 — a stray character
+            // would otherwise parse to a partial id and silently draft a
+            // different player.
+            if (!/^[0-9a-z]+$/.test(raw)) return null;
+            const elementId = parseInt(raw, 36);
+            return Number.isFinite(elementId) ? { elementId, mine } : null;
+          }).filter(Boolean)
+        : [],
+    };
+    return state;
+  } catch {
+    return null;
+  }
+}
+
 export function finishDraft(state) {
   return { ...state, finished: true };
 }

@@ -9,6 +9,7 @@ import { DRAFT_CONFIG, QUOTA, STARTER_QUOTA, ROUNDS,
 import {
   SCHEMA_VERSION, createDraft, addPick, undoLastPick, editPick, derive, needsFor,
   slotForPick, roundForPick, finishDraft, finalPools, save, load, clear, migrateLegacy,
+  encodeDraft, decodeDraft,
 } from '../js/draft/state.js';
 import { outstandingDemand, replacementLevel, attachVorp } from '../js/draft/replacement.js';
 import { playersBeforeCliff, scarcityByPosition, allowedPositions } from '../js/draft/scarcity.js';
@@ -682,6 +683,49 @@ if (boardFile) {
     || (demandWins > startersWins && DRAFT_CONFIG.replacementBasis === 'demand'),
     `starters=${startersWins} demand=${demandWins} configured default=${DRAFT_CONFIG.replacementBasis}`);
 }
+
+console.log('\nA draft travels between devices by link');
+let trip = createDraft({ leagueSize: 6, mySlot: 3 });
+[411, 412, 413, 414, 415].forEach((id, i) => { trip = addPick(trip, { elementId: id, mine: i === 2 }); });
+const link = encodeDraft(trip);
+const back = decodeDraft(link);
+ok('a resume link is URL-safe', /^[A-Za-z0-9._~]+$/.test(link), link);
+ok('a 6-team draft fits well inside a URL', link.length < 2000, `${link.length} chars`);
+ok('league size survives the round trip', back.leagueSize === trip.leagueSize);
+ok('my slot survives the round trip', back.mySlot === trip.mySlot);
+ok('every pick survives in order',
+  JSON.stringify(back.log) === JSON.stringify(trip.log), link);
+ok('the decoded draft derives identically',
+  JSON.stringify([...derive(back).taken]) === JSON.stringify([...derive(trip).taken]));
+ok('my roster survives the round trip',
+  JSON.stringify(derive(back).myRoster) === JSON.stringify(derive(trip).myRoster));
+ok('a finished draft stays finished', decodeDraft(encodeDraft(finishDraft(trip))).finished === true);
+ok('an unfinished draft stays unfinished', back.finished === false);
+
+const big = (() => {
+  let s = createDraft({ leagueSize: 16, mySlot: 16 });
+  for (let i = 0; i < 240; i++) s = addPick(s, { elementId: 100 + i * 2, mine: i % 16 === 4 });
+  return s;
+})();
+ok('even a full 16-team draft fits in a URL', encodeDraft(big).length < 2000,
+  `${encodeDraft(big).length} chars`);
+ok('a 16-team draft round-trips exactly',
+  JSON.stringify(decodeDraft(encodeDraft(big)).log) === JSON.stringify(big.log));
+
+// Element 130 is "3m" in base36. A trailing-letter mine flag decodes that as
+// element 3 owned by me — the bug this assertion exists to prevent.
+let collide = createDraft({ leagueSize: 6, mySlot: 2 });
+collide = addPick(collide, { elementId: 130, mine: false });
+ok('an id whose base36 ends in a letter is not misread as owned',
+  JSON.stringify(decodeDraft(encodeDraft(collide)).log) === JSON.stringify(collide.log),
+  encodeDraft(collide));
+ok('a malformed link returns null, never throws', decodeDraft('not-a-draft') === null);
+ok('an empty link returns null', decodeDraft('') === null);
+ok('a truncated link returns null', decodeDraft('6.') === null);
+ok('junk picks are dropped rather than poisoning the log',
+  decodeDraft('6.3~411.@@@.413').log.length === 2);
+ok('an out-of-range slot is clamped on decode', decodeDraft('6.99~411').mySlot <= 6);
+ok('an empty draft round-trips', decodeDraft(encodeDraft(createDraft({ leagueSize: 8, mySlot: 1 }))).log.length === 0);
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
 process.exit(failures ? 1 : 0);
