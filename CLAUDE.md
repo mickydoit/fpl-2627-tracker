@@ -98,6 +98,33 @@ node scripts/build-pages.mjs   # regenerate HTML shells
 - **FPL API** (unofficial, public, no auth): `bootstrap-static`, `fixtures`, `event/{gw}/live`, `entry/{id}/...`, `leagues-classic/{id}/standings`, `team/set-piece-notes`. Prices are tenths (`now_cost: 60` = £6.0m). `selected_by_percent` is already a percentage. Season xG totals are **strings**, per-90s are **numbers** — coerce both.
 - **ESPN** `eng.1`: scoreboard, standings (note: `/apis/v2/`, not `/apis/site/v2/`), news. No FPL prices or points — fixtures and live scores only.
 
+## Research rules
+
+Everything hand-curated — `data/manual/season-notes.json`, README claims, anything
+reported to the owner as fact — gets verified before it is written down. This is not
+generic caution; it has already gone wrong.
+
+On 18 Aug 2026 a search for the Community Shield returned the headline *"Arsenal beat
+Man City on penalties after a last-gasp equaliser"*. That was the **2023** final. The
+2026 match was Arsenal 3-0 (Calafiori 1', Havertz 28', Ødegaard 48'). The wrong result
+was committed to `season-notes.json` and reported to the owner, who caught it. Search
+results carry no date unless you look for one.
+
+1. **Date the source, not the claim.** An undated snippet about a recurring fixture —
+   a Community Shield, a derby, an opening weekend — is worthless. Open the page and
+   find the year, or use a URL that contains it.
+2. **Prefer the primary source.** Results: thefa.com, the club sites, the Wikipedia
+   match page. Squads, prices, injuries, set pieces: `bootstrap-static`, which is
+   re-fetched every 30 minutes and settles most questions outright.
+3. **Cross-check against the API before believing reporting.** If an article says a
+   player has moved and `bootstrap-static` still registers him at the old club, the API
+   wins — the transfer has not completed. That check caught all six open rumours.
+4. **Aggregators and rumour sites are for transfer *status* only**, and the note must
+   carry the date the status was true: "personal terms agreed as of 17 Aug", never
+   "personal terms agreed".
+5. **If it cannot be verified, write that down** instead of asserting it. A note saying
+   "unconfirmed" costs nothing; a wrong note gets acted on.
+
 ## Still to verify / do
 
 1. **Live endpoints were unverifiable pre-season** — `event/{gw}/live`, fixture `stats[]`, `entry/{id}/picks` all return empty until GW1. Parsers read keys dynamically rather than assuming a fixed set, but check the dashboard against the official site on the first live gameweek.

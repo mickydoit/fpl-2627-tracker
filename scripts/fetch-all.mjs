@@ -15,8 +15,15 @@ import { getJSON, mapLimit } from './lib/http.mjs';
 import { readJSON, writeJSON, writeJSONIfChanged } from './lib/io.mjs';
 
 const FPL = 'https://fantasy.premierleague.com/api';
-const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1';
-const ESPN_STANDINGS = 'https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings';
+// site.web.api, not site.api. Both serve the identical payload, but the
+// Akamai policy in front of site.api.espn.com began 403-ing this job on
+// 16 Aug 2026 and never recovered — two days of scoreboard, standings and
+// news silently frozen at the last good copy while every run "succeeded".
+// It is not the user-agent (a browser UA 403s too) and not the query
+// string; a bare URL 403s as well, and the block is sticky once tripped.
+// site.web.api.espn.com answers the same requests with 200.
+const ESPN = 'https://site.web.api.espn.com/apis/site/v2/sports/soccer/eng.1';
+const ESPN_STANDINGS = 'https://site.web.api.espn.com/apis/v2/sports/soccer/eng.1/standings';
 
 const DATA = 'data';
 const ENTRY_ID = (process.env.FPL_ENTRY_ID || '').trim();
