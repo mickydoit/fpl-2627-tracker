@@ -18,9 +18,20 @@ const ROW_ID = 'fpl-2627-draft';
 const TABLE = 'draft_state';
 const TIMEOUT_MS = 4000;
 
+/**
+ * A dev copy must never write to the live board.
+ *
+ * There is one well-known row, so a mock draft served from localhost would
+ * otherwise push straight over the real one — and a device that later opens the
+ * deployed site would adopt those picks, because all it compares is which board
+ * has more of them. Running the page locally is therefore read-and-write-nothing.
+ */
+const isLocalhost = typeof location !== 'undefined'
+  && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+
 /** Sync is entirely optional — without keys the app behaves as it always did. */
 export function syncConfigured() {
-  return Boolean(SUPABASE?.url && SUPABASE?.anonKey);
+  return Boolean(!isLocalhost && SUPABASE?.url && SUPABASE?.anonKey);
 }
 
 function endpoint(query = '') {
