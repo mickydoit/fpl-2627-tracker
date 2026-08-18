@@ -72,7 +72,7 @@ GitHub Actions (every 30 min)
 - **No runtime dependency on either API.** If FPL 503s at the deadline — which it reliably does — the site keeps serving the last good snapshot.
 - **ESPN's Akamai layer never sees your visitors.** `site.api.espn.com` 403s unrecognised user-agents; the runner presents a browser UA once, rather than every visitor's browser gambling on it.
 
-**Supabase isn't needed.** The only mutable state is your own squad, which lives in `localStorage`, and price history, which git handles better than a database would. Worth adding only if you later want several people using the same instance with their own saved squads.
+**Supabase carries one thing only: the draft board.** Your squad still lives in `localStorage`, and price history stays in git, which handles it better than a database would. The single `draft_state` table exists so a draft can move between a laptop and a phone mid-round — one well-known row, no sign-in, publishable key in the client, `localStorage` still authoritative. Schema and the reasoning behind its row-level security are in [`supabase/0001_draft_state.sql`](supabase/0001_draft_state.sql). Leave `anonKey` empty in [`js/draft/config.js`](js/draft/config.js) to turn sync off entirely.
 
 ### Guards
 

@@ -19,7 +19,7 @@ Three things fall out of it that are worth keeping:
 - The site survives FPL 503s, which are reliable around deadlines.
 - ESPN's Akamai layer never sees visitors (`site.api.espn.com` 403s unrecognised user-agents; the runner presents a browser UA once).
 
-**Supabase is not needed.** The only mutable state is the user's own squad, which lives in `localStorage`. Worth adding only if several people need their own saved squads on one instance.
+**Supabase holds the draft board and nothing else.** Applied 18 Aug 2026 to project `gwemacdcdpeuajhjhamc`: one `draft_state` table, one row id (`fpl-2627-draft`), RLS scoped to that id, a trigger that owns `updated_at` so the client cannot spoof which device is newer. `supabase/0001_draft_state.sql` is the source of truth — re-runnable, and it explains why each policy is shaped the way it is. The squad, and everything else, still lives in `localStorage`; `js/draft/sync.js` is a mirror that fails quietly, never a source of truth. Don't route tracker data through it.
 
 ## Layout
 
@@ -85,6 +85,8 @@ Always compare optimiser and transfer-search at the **same** bank. Giving the tr
 
 ```bash
 npm test      # seed data + full check suite. Run this after touching model.js or optimiser.js
+              # NOTE: it runs make-sample first, which OVERWRITES data/ with synthetic
+              # data. `git checkout -- data/` afterwards, or run npm run refresh.
 npm run seed  # synthetic data, no network
 npm run refresh   # real fetch (needs network)
 npm run serve     # http://localhost:8080

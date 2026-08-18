@@ -52,6 +52,12 @@ begin
 end;
 $$;
 
+-- The function is a trigger, not an API. Without this revoke it is reachable
+-- at /rest/v1/rpc/touch_draft_state as SECURITY DEFINER, which the Supabase
+-- security linter flags. Triggers check EXECUTE at creation time, so the
+-- trigger below still fires.
+revoke execute on function public.touch_draft_state() from public, anon, authenticated;
+
 drop trigger if exists draft_state_touch on public.draft_state;
 create trigger draft_state_touch
   before insert or update on public.draft_state

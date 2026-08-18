@@ -30,7 +30,7 @@ export const STARTER_QUOTA = { 1: 1, 2: 4, 3: 4, 4: 2 };
  */
 export const SUPABASE = {
   url: 'https://gwemacdcdpeuajhjhamc.supabase.co',
-  anonKey: '', // paste the project's anon / publishable key to enable sync
+  anonKey: 'sb_publishable_AuvRYZ78ggTkoF3n-s1qFQ_0otk7JFZ', // publishable key — safe in client code
 };
 
 export const ROUNDS = 15;
