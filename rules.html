@@ -13,6 +13,17 @@
 <meta name="apple-mobile-web-app-title" content="FPL Tracker" />
 <link rel="preload" href="fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+<!-- 700/800/900 are used by the databar, tables and the bottom nav, but a weight
+     is only requested once something renders in it — measured arriving at 1.5-2.0s,
+     long after first paint, which is what made the text visibly re-flow. The
+     italic is deliberately absent: nothing renders in it on load. -->
+<link rel="preload" href="fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="fonts/inter-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="fonts/inter-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="modulepreload" href="js/pages/rules.js" />
+<link rel="modulepreload" href="js/data.js" />
+<link rel="modulepreload" href="js/ui.js" />
+<link rel="modulepreload" href="js/model.js" />
 <link rel="stylesheet" href="css/base.css" />
 <link rel="stylesheet" href="css/app.css" />
 </head>

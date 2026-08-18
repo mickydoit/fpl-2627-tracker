@@ -5,7 +5,8 @@
  * Accent colours cycle through the three the Figma file actually uses — the
  * ladder screen is cyan, the stats screen lime — so each page owns one.
  */
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
+import { dirname, join, normalize } from 'node:path';
 
 const PAGES = [
   // Icons are the WC Draft file's own Menu Bar frame (node 229:55), one per page
@@ -20,9 +21,43 @@ const PAGES = [
   { slug: 'rules',     title: 'Rules',             accent: 'yellow', icon: 'nav-rules',     nav: 'Rules' },
 ];
 
+/** The dashboard's module is named for what it is, not for its URL. */
+const entryFor = (p) => `js/pages/${p.slug === 'index' ? 'dashboard' : p.slug}.js`;
+
+/**
+ * Every module a page reaches, transitively.
+ *
+ * The browser cannot discover `js/data.js` until it has downloaded and parsed
+ * `js/pages/squad.js`, so imports arrive in waves. Measured on the deployed
+ * site that cost ~400ms of dead network time before the first data request even
+ * started, and the draft page is thirteen modules deep. Emitting the whole graph
+ * as `<link rel="modulepreload">` lets them all start at once.
+ *
+ * This changes *when* modules are fetched, never what runs or in what order —
+ * module evaluation order is still decided by the import statements. The one
+ * obligation it creates: re-run this script after adding an import, the same as
+ * for any other change here. A stale list is slow, never wrong.
+ */
+async function moduleGraph(file, out = new Set()) {
+  let src;
+  try {
+    src = await readFile(file, 'utf8');
+  } catch {
+    return out; // a page without its own module is not an error worth failing on
+  }
+  for (const [, spec] of src.matchAll(/from\s+'([^']+)'/g)) {
+    if (!spec.startsWith('.')) continue; // bare specifiers: nothing to preload
+    const path = normalize(join(dirname(file), spec));
+    if (out.has(path)) continue;
+    out.add(path);
+    await moduleGraph(path, out);
+  }
+  return out;
+}
+
 const href = (p) => `${p.slug}.html`;
 
-const page = (p) => `<!DOCTYPE html>
+const page = (p, modules) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -37,6 +72,14 @@ const page = (p) => `<!DOCTYPE html>
 <meta name="apple-mobile-web-app-title" content="FPL Tracker" />
 <link rel="preload" href="fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+<!-- 700/800/900 are used by the databar, tables and the bottom nav, but a weight
+     is only requested once something renders in it — measured arriving at 1.5-2.0s,
+     long after first paint, which is what made the text visibly re-flow. The
+     italic is deliberately absent: nothing renders in it on load. -->
+<link rel="preload" href="fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="fonts/inter-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="fonts/inter-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin />
+${modules.map((m) => `<link rel="modulepreload" href="${m}" />`).join('\n')}
 <link rel="stylesheet" href="css/base.css" />
 <link rel="stylesheet" href="css/app.css" />
 </head>
@@ -58,12 +101,14 @@ ${PAGES.map((q) => `    <a href="${href(q)}"${q.slug === p.slug ? ' class="activ
 <nav class="bottomnav">
 ${PAGES.map((q) => `  <a href="${href(q)}"${q.slug === p.slug ? ' class="active"' : ''}><img src="img/${q.icon}.svg" alt="" /><span>${q.nav}</span></a>`).join('\n')}
 </nav>
-<script type="module" src="js/pages/${p.slug === 'index' ? 'dashboard' : p.slug}.js"></script>
+<script type="module" src="${entryFor(p)}"></script>
 </body>
 </html>
 `;
 
 for (const p of PAGES) {
-  await writeFile(`${p.slug}.html`, page(p));
-  console.log(`✓ ${p.slug}.html — ${p.accent}`);
+  const entry = entryFor(p);
+  const modules = [entry, ...await moduleGraph(entry)];
+  await writeFile(`${p.slug}.html`, page(p, modules));
+  console.log(`✓ ${p.slug}.html — ${p.accent}, ${modules.length} module${modules.length === 1 ? '' : 's'} preloaded`);
 }
