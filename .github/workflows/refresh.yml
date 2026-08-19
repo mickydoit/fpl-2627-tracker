@@ -5,6 +5,12 @@ on:
     # Every 30 minutes. GitHub's scheduler is best-effort and can run late under
     # load, which is fine — the FPL API edge-caches for ~5 minutes anyway.
     - cron: '*/30 * * * *'
+    # Once daily, 04:15 UTC, this same job runs with DEEP=1 and additionally
+    # sweeps element-summary for every plausibly-owned player. That is ~300
+    # requests and several minutes of runner time, which is why it is daily and
+    # not half-hourly — but it is the only source of per-gameweek xG, xA,
+    # defensive contribution, tackles and minutes, so it has to run somewhere.
+    - cron: '15 4 * * *'
   workflow_dispatch:
     inputs:
       deep:
@@ -34,10 +40,16 @@ jobs:
           # Repository variable, not a secret — your entry id is public anyway.
           FPL_ENTRY_ID: ${{ vars.FPL_ENTRY_ID }}
           FPL_LEAGUE_IDS: ${{ vars.FPL_LEAGUE_IDS }}
-          DEEP: ${{ inputs.deep && '1' || '0' }}
+          DEEP: ${{ (inputs.deep || github.event.schedule == '15 4 * * *') && '1' || '0' }}
         run: node scripts/fetch-all.mjs
 
       - name: Fetch Draft data
+        env:
+          # Optional. Set it and the board additionally mirrors your league's
+          # managers and live ownership; leave it unset and everything still
+          # works exactly as it did on draft night. A Draft league id is public
+          # and identifies nobody, so it is a variable rather than a secret.
+          FPL_DRAFT_LEAGUE_ID: ${{ vars.FPL_DRAFT_LEAGUE_ID }}
         run: node scripts/fetch-draft.mjs
         continue-on-error: true
 

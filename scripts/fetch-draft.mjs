@@ -94,3 +94,90 @@ await writeJSONIfChanged(`${DIR}/players.json`, {
   teams,
 });
 console.log(`✓ ${players.length} players on the board, ${teams.length} teams`);
+
+/* ------------------------------------------------------------------ *
+ * Optional: mirror the Draft league
+ *
+ * Everything above works with no league id, and that stays true — the draft
+ * assistant must never require one. This block runs only when
+ * FPL_DRAFT_LEAGUE_ID is set, and any failure leaves the committed file alone.
+ *
+ * What it buys: real manager names instead of "Slot 4", and live ownership so
+ * opponent rosters maintain themselves through the season instead of being
+ * typed in.
+ * ------------------------------------------------------------------ */
+const LEAGUE_ID = (process.env.FPL_DRAFT_LEAGUE_ID || '').trim();
+
+if (!LEAGUE_ID) {
+  console.log('  no FPL_DRAFT_LEAGUE_ID — skipping league mirror (this is fine)');
+} else {
+  console.log(`→ draft league ${LEAGUE_ID}`);
+
+  // Draft element ids are NOT classic element ids — 21 of 587 differ. The board
+  // is keyed on classic ids, so ownership must be translated through `code`
+  // before it is written, or a handful of players silently become the wrong
+  // player. This is the single most dangerous join in the project.
+  const classicIdByCode = new Map(classicBoot.elements.map((p) => [p.code, p.id]));
+  const classicIdByDraftId = new Map();
+  for (const d of draftBoot?.elements || []) {
+    const classicId = classicIdByCode.get(d.code);
+    if (classicId != null) classicIdByDraftId.set(d.id, classicId);
+  }
+
+  const details = await getJSON(`${DRAFT_API}/league/${LEAGUE_ID}/details`, { browserUA: true })
+    .catch((e) => { console.warn(`  league details failed: ${e.message}`); return null; });
+
+  const status = await getJSON(`${DRAFT_API}/league/${LEAGUE_ID}/element-status`, { browserUA: true })
+    .catch((e) => { console.warn(`  element-status failed: ${e.message}`); return null; });
+
+  // Round-1 pick order IS the draft slot, so the choices endpoint is what turns
+  // an entry id into a slot number. It is empty until the draft starts.
+  const choices = await getJSON(`${DRAFT_API}/draft/${LEAGUE_ID}/choices`, { browserUA: true })
+    .catch(() => null);
+
+  if (!details?.league) {
+    console.warn('  ✗ no league payload — leaving any committed league.json untouched');
+  } else {
+    const slotByEntry = new Map();
+    for (const c of choices?.choices || []) {
+      if (c.round === 1 && c.entry != null) slotByEntry.set(c.entry, c.pick);
+    }
+
+    const managers = (details.league_entries || []).map((e) => ({
+      entryId: e.entry_id ?? e.id ?? null,
+      leagueEntryId: e.id ?? null,
+      teamName: e.entry_name ?? null,
+      manager: [e.player_first_name, e.player_last_name].filter(Boolean).join(' ') || null,
+      shortName: e.short_name ?? null,
+      slot: slotByEntry.get(e.entry_id ?? e.id) ?? null,
+    }));
+
+    // element → owning league entry, translated to classic ids.
+    const ownership = {};
+    let untranslated = 0;
+    for (const row of status?.element_status || []) {
+      if (row.owner == null) continue;
+      const classicId = classicIdByDraftId.get(row.element);
+      if (classicId == null) { untranslated += 1; continue; }
+      ownership[classicId] = row.owner;
+    }
+    if (untranslated) console.warn(`  ${untranslated} owned elements could not be mapped to a classic id`);
+
+    const changed = await writeJSONIfChanged(`${DIR}/league.json`, {
+      fetchedAt: new Date().toISOString(),
+      leagueId: Number(LEAGUE_ID),
+      name: details.league.name ?? null,
+      size: details.league.max_entries ?? managers.length,
+      draftAt: details.league.draft_dt ?? null,
+      draftStatus: details.league.draft_status ?? null,
+      pickTimeLimit: details.league.draft_pick_time_limit ?? null,
+      tradesEnabled: details.league.trades === 'y',
+      managers,
+      ownership,
+      // Provenance, per the Phase 2 brief: every consumer should be able to see
+      // where a field came from and how stale it is.
+      source: { managers: 'draft-api', ownership: 'draft-api', slots: choices?.choices?.length ? 'draft-api' : 'unknown' },
+    });
+    console.log(`  ${managers.length} managers, ${Object.keys(ownership).length} owned players${changed ? '' : ' (unchanged)'}`);
+  }
+}
