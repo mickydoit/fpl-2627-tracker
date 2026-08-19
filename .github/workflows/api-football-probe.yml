@@ -1,0 +1,27 @@
+name: Probe API-Football coverage
+
+# Manual only. This spends a slice of a 100/day free allowance, so it must
+# never run on a schedule. It writes no files and commits nothing — the output
+# is the Action log.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Probe coverage
+        env:
+          # The key never leaves the runner. Nothing here is written to disk or
+          # committed, so it cannot reach the published site.
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: node scripts/probe-api-football.mjs
