@@ -18,6 +18,7 @@ import { scarcityByPosition } from '../draft/scarcity.js';
 import { evaluate } from '../draft/value.js';
 import { LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX, QUOTA } from '../draft/config.js';
 import { pull, debouncedPush, syncConfigured, deviceName } from '../draft/sync.js';
+import { renderHub } from './draft-hub.js';
 
 const app = $('#app');
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
@@ -26,6 +27,9 @@ migrateLegacy();
 
 const board = await readSnapshot('draft/players');
 const fixtures = await readSnapshot('fixtures', []);
+// Optional. Present only when FPL_DRAFT_LEAGUE_ID is set on the repo; without
+// it the hub shows slot numbers instead of names and nothing else changes.
+const league = await readSnapshot('draft/league', null);
 if (!board?.players?.length) {
   setKids(app, el('p', { class: 'empty' },
     'Player data has not been published yet. It arrives with the next scheduled refresh.'));
@@ -185,8 +189,35 @@ function actionButtons(r) {
   );
 }
 
+/**
+ * Once the draft is finished the page becomes the League Hub. The draft log is
+ * never discarded — `showDraft` flips back to it, and every roster shown in the
+ * hub is derived from that log rather than stored separately.
+ */
+let showDraft = false;
+
+function renderSeason() {
+  const d = derive(state, typeOf);
+  const rostersBySlot = new Map();
+  for (const [slot, ids] of d.rosters) {
+    rostersBySlot.set(slot, ids.map((id) => byId.get(id)).filter(Boolean));
+  }
+  const pool = projected
+    .filter((r) => !d.taken.has(r.id))
+    .sort((a, b) => b.proj - a.proj);
+
+  setKids(app, renderHub({
+    rostersBySlot,
+    pool,
+    league,
+    mySlot: state.mySlot,
+    onShowDraft: () => { showDraft = true; render(); },
+  }));
+}
+
 function render() {
   if (!state) return renderSetup();
+  if (state.finished && !showDraft) return renderSeason();
   const { d, needs, available, demand, scarcity, ranked } = compute();
   const best = ranked[0];
   const alternatives = ranked.slice(1, 6);
@@ -306,6 +337,9 @@ function render() {
         ? el('p', { class: 'hint' },
             `Draft complete. ${finalPools(state, projected.map((r) => r.id), typeOf).undrafted.length} `
             + 'players went undrafted and become your free-agent pool.')
+        : null,
+      state.finished
+        ? el('button', { class: 'primary', onClick: () => { showDraft = false; render(); } }, 'Back to League Hub')
         : null,
     ),
 

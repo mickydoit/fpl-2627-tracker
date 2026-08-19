@@ -33,6 +33,22 @@ export const SUPABASE = {
   anonKey: 'sb_publishable_AuvRYZ78ggTkoF3n-s1qFQ_0otk7JFZ', // publishable key — safe in client code
 };
 
+/**
+ * How the League Hub's headline rating weighs its components.
+ *
+ * These are weights on each squad's PERCENTILE within the league, not on raw
+ * points — see js/draft/rating.js for why. They must sum to 1.
+ *
+ * The shape of the opinion: only eleven players score, so best-XI strength
+ * dominates. Total squad strength still matters because injuries and rotation
+ * are certain over 38 gameweeks, but it is worth less than the XI. Depth is
+ * measured as what the XI actually loses per absence, which is why it earns
+ * real weight rather than a token. VORP and risk are deliberately small — both
+ * are already partly expressed through the first three, and double-counting
+ * them would let one idea dominate the number.
+ */
+export const RATING_WEIGHTS = { xi: 0.40, ros: 0.25, depth: 0.15, vorp: 0.10, risk: 0.10 };
+
 export const ROUNDS = 15;
 /**
  * The owner's league is six managers. The Draft API's own

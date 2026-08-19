@@ -19,6 +19,7 @@ import { projectBoard, toModelRow } from '../js/draft/project.js';
 import { teamDefence } from '../js/model.js';
 import { estimateBps90, bonusFromBps90, draftBonusModel } from '../js/draft/scoring.js';
 import { runDraft, STRATEGIES } from '../js/draft/compete.js';
+import { bestXI, depthCost, squadVorp, riskScore, rateSquad, rateLeague } from '../js/draft/rating.js';
 
 let failures = 0;
 let checks = 0;
@@ -726,6 +727,91 @@ ok('junk picks are dropped rather than poisoning the log',
   decodeDraft('6.3~411.@@@.413').log.length === 2);
 ok('an out-of-range slot is clamped on decode', decodeDraft('6.99~411').mySlot <= 6);
 ok('an empty draft round-trips', decodeDraft(encodeDraft(createDraft({ leagueSize: 8, mySlot: 1 }))).log.length === 0);
+
+/* ------------------------------------------------------------------ *
+ * season mode — squad and league ratings
+ * ------------------------------------------------------------------ */
+console.log('\nA finished draft becomes a rateable league');
+{
+  // Deterministic synthetic squads: value descends with id so expectations are
+  // arithmetic rather than guesswork, and no real dataset is needed.
+  const mk = (id, type, proj, extra = {}) => ({
+    id, element_type: type, web_name: `p${id}`, team: 1 + (id % 20),
+    proj, rosValue: proj, nearTermValue: proj / 7.6, availability: 1, minutes: 2000, ...extra,
+  });
+  const squad = (base) => [
+    mk(base + 1, 1, 100), mk(base + 2, 1, 40),
+    mk(base + 3, 2, 90), mk(base + 4, 2, 85), mk(base + 5, 2, 80), mk(base + 6, 2, 50), mk(base + 7, 2, 45),
+    mk(base + 8, 3, 120), mk(base + 9, 3, 110), mk(base + 10, 3, 100), mk(base + 11, 3, 60), mk(base + 12, 3, 55),
+    mk(base + 13, 4, 130), mk(base + 14, 4, 70), mk(base + 15, 4, 65),
+  ];
+
+  const s = squad(0);
+  const xi = bestXI(s);
+  ok('the best XI is eleven players', xi.xi.length === 11, `got ${xi.xi.length}`);
+  ok('the bench is the remaining four', xi.bench.length === 4, `got ${xi.bench.length}`);
+  const count = (t) => xi.xi.filter((p) => p.element_type === t).length;
+  ok('the XI is legal — 1 GK, 3+ DEF, 2+ MID, 1+ FWD',
+    count(1) === 1 && count(2) >= 3 && count(3) >= 2 && count(4) >= 1,
+    `got ${count(1)}/${count(2)}/${count(3)}/${count(4)}`);
+  ok('the reserve keeper is never in the XI', !xi.xi.some((p) => p.id === 2));
+  ok('no player appears in both the XI and the bench',
+    !xi.xi.some((a) => xi.bench.some((b) => b.id === a.id)));
+  ok('the XI total is the sum of its members',
+    Math.abs(xi.total - xi.xi.reduce((t, p) => t + p.proj, 0)) < 1e-9);
+
+  // Depth: the same starters with a stronger bench must lose less per absence.
+  const thin = squad(100);
+  const deep = squad(200).map((p) => (p.proj < 70 ? { ...p, proj: p.proj + 40 } : p));
+  ok('a stronger bench measures as better depth',
+    depthCost(deep).perAbsence < depthCost(thin).perAbsence,
+    `${depthCost(deep).perAbsence.toFixed(1)} vs ${depthCost(thin).perAbsence.toFixed(1)}`);
+  ok('depth names the costliest single absence',
+    depthCost(thin).worst && depthCost(thin).worst.drop > 0);
+  ok('an incomplete squad reports depth as unmeasurable',
+    depthCost(s.slice(0, 6)).measurable === false);
+
+  // VORP is measured against the best available at each position, so a weak
+  // pool must raise it and a strong pool must lower it.
+  const weakPool = [mk(900, 1, 10), mk(901, 2, 10), mk(902, 3, 10), mk(903, 4, 10)];
+  const strongPool = [mk(910, 1, 200), mk(911, 2, 200), mk(912, 3, 200), mk(913, 4, 200)];
+  ok('a weak free-agent pool raises VORP',
+    squadVorp(s, weakPool).total > squadVorp(s, strongPool).total);
+  ok('VORP goes negative when the pool beats the XI',
+    squadVorp(s, strongPool).total < 0);
+  ok('VORP covers exactly the eleven starters',
+    squadVorp(s, weakPool).perPlayer.length === 11);
+
+  // Risk is projection-weighted: a doubtful star must outweigh a doubtful sub.
+  const doubtStar = s.map((p) => (p.id === 13 ? { ...p, availability: 0.25 } : p));
+  const doubtSub = s.map((p) => (p.id === 2 ? { ...p, availability: 0.25 } : p));
+  ok('a doubtful star carries more risk than a doubtful reserve',
+    riskScore(doubtStar).score > riskScore(doubtSub).score);
+  ok('a fully fit squad has zero risk', riskScore(s).score === 0);
+  ok('risk lists the flagged players', riskScore(doubtStar).flagged.length === 1);
+
+  const rated = rateSquad(s, { pool: weakPool });
+  ok('every rating component is present',
+    ['ros', 'xi', 'byPos', 'depth', 'vorp', 'risk', 'fixtures'].every((k) => k in rated));
+  ok('positional totals sum to the squad total',
+    Math.abs([1, 2, 3, 4].reduce((t, k) => t + rated.byPos[k].ros, 0) - rated.ros) < 1e-9);
+
+  // A league of identical squads must tie, and a clearly better squad must win.
+  const rosters = new Map([[1, squad(0)], [2, squad(300)], [3, squad(600)]]);
+  const flat = rateLeague(rosters, { pool: weakPool });
+  ok('identical squads rate identically', new Set(flat.map((r) => r.rating)).size === 1);
+  ok('every squad is ranked', flat.length === 3 && flat.every((r) => r.rank >= 1 && r.rank <= 3));
+
+  const better = squad(900).map((p) => ({ ...p, proj: p.proj * 1.5 }));
+  const mixed = rateLeague(new Map([[1, squad(0)], [2, better], [3, squad(600)]]), { pool: weakPool });
+  ok('the strongest squad ranks first', mixed[0].slot === 2, `slot ${mixed[0].slot} led`);
+  ok('ranks are dense and ordered', mixed.map((r) => r.rank).join() === '1,2,3');
+  ok('the headline rating stays inside 0-100',
+    mixed.every((r) => r.rating >= 0 && r.rating <= 100));
+  ok('positional ranks are assigned for every position',
+    mixed.every((r) => [1, 2, 3, 4].every((t) => r.posRank[t] >= 1 && r.posRank[t] <= 3)));
+  ok('an empty league rates to nothing', rateLeague(new Map(), { pool: [] }).length === 0);
+}
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
 process.exit(failures ? 1 : 0);
