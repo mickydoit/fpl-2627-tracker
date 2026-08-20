@@ -53,6 +53,16 @@ jobs:
         run: node scripts/fetch-draft.mjs
         continue-on-error: true
 
+      # 21 ESPN calls, so it rides the daily deep slot rather than every
+      # half hour. Rosters barely move day to day and the map is only useful
+      # once per match anyway. continue-on-error because ESPN has no contract:
+      # if it 403s, the previously committed map stays in place and every FPL
+      # projection carries on untouched.
+      - name: Rebuild player identity map
+        if: ${{ inputs.deep || github.event.schedule == '15 4 * * *' }}
+        run: node scripts/build-identity.mjs
+        continue-on-error: true
+
       - name: Rebuild projections
         run: node scripts/derive.mjs
 
