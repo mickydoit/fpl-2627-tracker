@@ -63,6 +63,17 @@ jobs:
         run: node scripts/build-identity.mjs
         continue-on-error: true
 
+      # Runs on every refresh, but the first call tells it whether anything
+      # has finished since last time — so outside a matchday it costs one
+      # request and exits. Capped per run so a backlog cannot eat the runner.
+      # continue-on-error: ESPN has no contract, and a match missed now is
+      # simply collected on the next run.
+      - name: Collect finished matches (ESPN)
+        env:
+          ESPN_MAX_MATCHES: '12'
+        run: node scripts/fetch-espn-matches.mjs
+        continue-on-error: true
+
       - name: Rebuild projections
         run: node scripts/derive.mjs
 
