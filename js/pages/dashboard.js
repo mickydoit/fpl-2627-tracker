@@ -162,10 +162,21 @@ if (squadIds.length === 15) {
   addKids(app, 
     el('div', { class: 'card' },
       el('h2', {}, 'No squad yet'),
-      el('p', {},
-        'Set the ', el('code', {}, 'FPL_ENTRY_ID'), ' repository variable to pull your real team automatically, ',
-        'or build one on the ', el('a', { href: 'squad.html' }, 'Squad'), ' page and save it to this browser.',
-      ),
+      // Three different situations used to share one message telling you to set
+      // a variable you may already have set. FPL does not publish picks until
+      // the first deadline passes, so between registering a team and GW1 the
+      // entry resolves, the NAME is known, and the squad is legitimately empty.
+      // Saying "go set the variable" there is wrong and wastes the reader's time.
+      d.entry?.entry?.name
+        ? el('p', {},
+          'Your team ', el('strong', {}, d.entry.entry.name), ' is connected, but FPL does not publish ',
+          'picks until the first deadline passes. It will appear here once GW1 locks. ',
+          'Until then you can plan one on the ', el('a', { href: 'squad.html' }, 'Squad'), ' page.',
+        )
+        : el('p', {},
+          'Set the ', el('code', {}, 'FPL_ENTRY_ID'), ' repository variable to pull your real team automatically, ',
+          'or build one on the ', el('a', { href: 'squad.html' }, 'Squad'), ' page and save it to this browser.',
+        ),
     ),
   );
 }
