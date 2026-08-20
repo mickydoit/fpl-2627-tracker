@@ -5,6 +5,18 @@ on:
     branches: [main]
     paths-ignore:
       - 'README.md'
+  # The refresh job commits with the default GITHUB_TOKEN, and GitHub
+  # deliberately does not raise `push` events for those commits — it is how it
+  # stops workflows triggering each other forever. The consequence here was
+  # invisible and total: every data refresh committed fine, and NONE of them
+  # ever deployed. The site only moved when a human pushed, which masked it
+  # completely during a week of active development, and left the live data 10
+  # hours stale the moment that stopped.
+  #
+  # workflow_run fires on the refresh job finishing, whatever token caused it.
+  workflow_run:
+    workflows: ['Refresh FPL data']
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -18,6 +30,8 @@ concurrency:
 
 jobs:
   deploy:
+    # A failed refresh has nothing new to publish.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
