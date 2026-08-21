@@ -662,3 +662,33 @@ table.players th.col-r, table.players td.col-r { text-align: right; font-variant
 .fdrkey-t { letter-spacing: .1em; text-transform: uppercase; font-weight: 800; color: var(--muted); }
 .fdrkey-l, .fdrkey-c { color: var(--muted); }
 .fdrkey-c { margin-left: auto; }
+
+/* ------------------------------------------------------------------ *
+ * desktop: let the shell use the screen
+ * ------------------------------------------------------------------ *
+ * 1120px was chosen for reading. It is too narrow for the things this app
+ * actually shows on a big monitor — two squads side by side, a seven-column
+ * table, a fixture ticker — all of which were being squeezed while half the
+ * display sat empty.
+ *
+ * Capped rather than truly 100%: on an ultrawide, edge-to-edge would stretch a
+ * sentence across a metre of glass. Wide enough to hold two pitches, no wider.
+ */
+@media (min-width: 1200px) {
+  :root { --shell: min(94vw, 1760px); }
+}
+
+/* Prose does not benefit from the extra width, so it keeps a readable measure
+   while tables, pitches and grids take the room. */
+@media (min-width: 1200px) {
+  .card > p,
+  .card > .hint,
+  .card > ul:not(.hub-list):not(.rings-key) { max-width: 68ch; }
+}
+
+/* With the room available, compare the two squads side by side sooner and
+   stop shrinking the shirts to fit. */
+@media (min-width: 1200px) {
+  .compare-col .shirt { transform: none; }
+  .compare-col .pitch-row { gap: .5rem; }
+}
