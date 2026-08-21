@@ -14,7 +14,7 @@ const PAGES = [
   // in the order they sit on the canvas. Each is a single #F4FF7B glyph on a
   // transparent ground, which is what the bottom nav's grey-out filter expects.
   { slug: 'index',     title: 'Dashboard',         accent: 'lime',   icon: 'nav-dashboard', nav: 'Dashboard' },
-  { slug: 'squad',     title: 'Squad Optimiser',   accent: 'cyan',   icon: 'nav-squad',     nav: 'Squad' },
+  { slug: 'squad',     title: 'Squad Optimiser',   accent: 'cyan',   icon: 'nav-squad',     nav: 'Optimiser' },
   { slug: 'draft',     title: 'Draft Board',       accent: 'cyan',   icon: 'nav-draft',     nav: 'Draft' },
   { slug: 'transfers', title: 'Transfers',         accent: 'yellow', icon: 'nav-transfers', nav: 'Transfers' },
   { slug: 'players',   title: 'Players',           accent: 'lime',   icon: 'nav-players',   nav: 'Players' },

@@ -1,6 +1,7 @@
 import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
 import { projectAll, POS, SQUAD_RULES } from '../model.js';
-import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI } from '../optimiser.js';
+import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI, scoreSquad } from '../optimiser.js';
+import { squadPitch, playerCard } from '../squadview.js';
 import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown , setKids, addKids} from '../ui.js';
 
 const app = $('#app');
@@ -23,6 +24,18 @@ let rows = [];
 let ctx = null;
 let byId = new Map();
 const teams = Object.fromEntries(d.boot.teams.map((t) => [t.id, t]));
+
+/** A player's upcoming fixtures, shaped for the shared player card. */
+const fixturesFor = (p) => (d.fixtures || [])
+  .filter((f) => f.event && (f.team_h === p.team || f.team_a === p.team))
+  .map((f) => ({
+    event: f.event,
+    home: f.team_h === p.team,
+    opponent: f.team_h === p.team ? f.team_a : f.team_h,
+    difficulty: f.team_h === p.team ? f.team_h_difficulty : f.team_a_difficulty,
+  }))
+  .sort((a, b) => a.event - b.event);
+
 
 function recompute() {
   const r = projectAll(d.boot, d.fixtures, { horizon, riskAversion });
@@ -294,6 +307,7 @@ function renderResult(ms) {
       el('div', { class: 'tile' }, el('span', { class: 'k' }, 'Solve time'), el('span', { class: 'v' }, `${ms}ms`), el('span', { class: 's' }, 'randomised greedy + local search')),
     ),
     check.ok ? null : el('div', { class: 'banner err' }, check.errors.join('; ')),
+    compareCard(result),
     el('div', { class: 'card' },
       el('div', { class: 'row between' },
         el('h2', {}, 'Suggested squad'),
@@ -378,3 +392,99 @@ function showPlayer(p) {
 
 recompute();
 run();
+
+/* ------------------------------------------------------------------ *
+ * your squad vs the optimiser's
+ * ------------------------------------------------------------------ */
+/**
+ * Side by side, both labelled, with the difference stated once at the top.
+ *
+ * The distinction this card exists to make: the optimiser answers "what would
+ * the model pick from scratch today", which is NOT the same question as "what
+ * should I change". A fifteen-player difference is normal and is not a
+ * fifteen-transfer instruction. So differences are listed as differences, and
+ * nothing here is phrased as a recommendation — the Transfers page owns that,
+ * and it has to clear a much higher bar before it says move.
+ */
+function compareCard(result) {
+  const { ids: mineIds, source } = resolveSquadIds(d.entry, getState());
+  if (mineIds.length !== 15) {
+    return el('div', { class: 'card' },
+      el('h2', {}, 'Compare with my squad'),
+      el('p', { class: 'hint' },
+        source === 'none'
+          ? 'No squad of your own yet. Save one here, or wait for your FPL picks to publish after the first deadline, and this will compare the two.'
+          : `Your squad has ${mineIds.length} of 15 recognised players, so a like-for-like comparison would mislead.`));
+  }
+
+  const mine = mineIds.map((id) => byId.get(id)).filter(Boolean);
+  if (mine.length !== 15) {
+    return el('div', { class: 'card' },
+      el('h2', {}, 'Compare with my squad'),
+      el('p', { class: 'hint' }, 'Some of your players are missing from the current dataset, so the comparison is not reliable this refresh.'));
+  }
+
+  const mineXI = bestXI(mine);
+  const mineScore = scoreSquad(mine, { horizon, riskAversion });
+  const optScore = scoreSquad(result.squad, { horizon, riskAversion });
+  const delta = optScore - mineScore;
+
+  const optIds = new Set(result.squad.map((p) => p.id));
+  const mineSet = new Set(mine.map((p) => p.id));
+  const out = mine.filter((p) => !optIds.has(p.id)).sort((a, b) => b.proj - a.proj);
+  const inc = result.squad.filter((p) => !mineSet.has(p.id)).sort((a, b) => b.proj - a.proj);
+
+  const openPlayer = (p) => playerCard(p, { teams, fixturesFor, horizon, fromEvent: ctx?.nextEvent ?? 1 });
+  const pitchFor = (squad) => {
+    const { xi, bench } = bestXI(squad);
+    return squadPitch({
+      xi, bench, teams,
+      value: (p) => fmt.pts(p.proj),
+      sub: (p) => fmt.price(p.now_cost),
+      onPlayer: openPlayer,
+    });
+  };
+
+  return el('div', { class: 'card' },
+    el('h2', {}, 'Compare with my squad'),
+    el('div', { class: 'tiles' },
+      el('div', { class: 'tile' },
+        el('span', { class: 'k' }, `Your squad · ${horizon} GW`),
+        el('span', { class: 'v' }, fmt.pts(mineScore)),
+        el('span', { class: 's' }, source === 'fpl' ? 'from your FPL team' : 'from your saved squad')),
+      el('div', { class: 'tile' },
+        el('span', { class: 'k' }, `Optimiser · ${horizon} GW`),
+        el('span', { class: 'v' }, fmt.pts(optScore)),
+        el('span', { class: 's' }, 'built from scratch today')),
+      el('div', { class: `tile ${delta > 0 ? 'accent' : ''}` },
+        el('span', { class: 'k' }, 'Theoretical gap'),
+        el('span', { class: 'v' }, fmt.signed(delta)),
+        el('span', { class: 's' }, `${out.length} player${out.length === 1 ? '' : 's'} differ`)),
+    ),
+    el('p', { class: 'hint' },
+      'The optimiser builds from scratch under the budget — it is a benchmark, not a to-do list. '
+      + 'Differences here are differences, not recommended transfers; the Transfers page decides that, '
+      + 'and it has to clear a far higher bar than a projection gap before it says move.'),
+    el('div', { class: 'compare-grid' },
+      el('div', { class: 'compare-col' },
+        el('h3', {}, source === 'fpl' ? 'My FPL squad' : 'My saved squad'),
+        pitchFor(mine)),
+      el('div', { class: 'compare-col' },
+        el('h3', {}, 'Optimiser squad'),
+        pitchFor(result.squad)),
+    ),
+    out.length
+      ? el('div', { class: 'tablewrap' }, el('table', { class: 'players' },
+        el('thead', {}, el('tr', {}, ...['In your squad only', 'Proj', 'In optimiser only', 'Proj', 'Difference'].map((h) => el('th', {}, h)))),
+        el('tbody', {}, out.map((o, i) => {
+          const n = inc[i];
+          return el('tr', {},
+            el('td', { onClick: () => openPlayer(o) }, `${o.web_name} (${teams[o.team]?.short_name || ''})`),
+            el('td', {}, fmt.pts(o.proj)),
+            el('td', n ? { onClick: () => openPlayer(n) } : {}, n ? `${n.web_name} (${teams[n.team]?.short_name || ''})` : '—'),
+            el('td', {}, n ? fmt.pts(n.proj) : '—'),
+            el('td', {}, n ? el('span', { class: n.proj - o.proj >= 0 ? 'up' : 'down' }, fmt.signed(n.proj - o.proj)) : '—'));
+        }))))
+      : el('p', { class: 'hint' }, 'Your squad already matches the optimiser exactly.'),
+  );
+}
