@@ -98,8 +98,11 @@ export function shirt(p, { teams, captain, vice, value, sub, onPlayer }) {
   const isVice = vice && p.id === vice.id;
   return el('div', {
     class: `shirt ${isCap ? 'cap' : ''} ${p.status && p.status !== 'a' ? 'flagged' : ''}`,
+    'data-pid': String(p.id),
     title: `${p.first_name || ''} ${p.second_name || p.web_name} — ${teams[p.team]?.name || ''}`,
-    onClick: onPlayer ? () => onPlayer(p) : null,
+    // A drag ends with a click; without this guard, releasing a shirt also
+    // opens the player card.
+    onClick: onPlayer ? (e) => { if (!e.currentTarget.classList.contains('was-dragged')) onPlayer(p); } : null,
   },
     isCap ? el('span', { class: 'arm' }, 'C') : isVice ? el('span', { class: 'arm vice' }, 'V') : null,
     p.status && p.status !== 'a' ? el('span', { class: 'shirt-flag' }, '!') : null,
@@ -167,3 +170,139 @@ export function playerCard(p, { teams, fixturesFor, horizon = 5, fromEvent = 1, 
 }
 
 export { POS };
+
+/* ------------------------------------------------------------------ *
+ * dragging players between the XI and the bench
+ * ------------------------------------------------------------------ */
+const HOLD_MS = 400;   // touch: how long to hold before the shirt lifts
+const MOVE_PX = 5;     // mouse: movement before it counts as a drag
+const SCROLL_PX = 10;  // touch: movement that means "scroll", not "hold"
+
+/**
+ * Make every shirt inside `root` draggable onto every other shirt.
+ *
+ * Generic on purpose: it knows nothing about Classic or Draft, only that some
+ * pairs may swap and some may not. `legal(a, b)` decides; `onSwap(a, b)` is
+ * told what happened and owns the consequences.
+ *
+ * The gesture rules are the ones that make this usable on a phone. A touch
+ * must HOLD before the shirt lifts, because a finger that moves immediately is
+ * scrolling the page, not picking a player up. A mouse lifts on movement,
+ * since there is no ambiguity. And the drag paints a ghost that follows the
+ * pointer — a shirt that stays put while you drag gives no sense of carrying
+ * anything.
+ *
+ * @param {HTMLElement} root container holding `.shirt[data-pid]` nodes
+ * @param {(aId:number,bId:number)=>boolean} legal
+ * @param {(aId:number,bId:number)=>void} onSwap
+ */
+export function enableSwapping(root, { legal, onSwap }) {
+  const shirtUnder = (x, y) => document.elementsFromPoint(x, y)
+    .find((n) => n.classList?.contains('shirt') && n.dataset.pid);
+  const clearTargets = () => root.querySelectorAll('.drop-ok, .drop-hot')
+    .forEach((n) => n.classList.remove('drop-ok', 'drop-hot'));
+  const markTargets = (id) => {
+    for (const n of root.querySelectorAll('.shirt[data-pid]')) {
+      const other = Number(n.dataset.pid);
+      if (other !== id && legal(id, other)) n.classList.add('drop-ok');
+    }
+  };
+
+  for (const node of root.querySelectorAll('.shirt[data-pid]')) {
+    const id = Number(node.dataset.pid);
+    node.addEventListener('pointerdown', (ev) => {
+      if (ev.button != null && ev.button > 0) return;
+      const touch = ev.pointerType === 'touch';
+      const x0 = ev.clientX;
+      const y0 = ev.clientY;
+      let dragging = false;
+      let hold = null;
+      let lastTarget = null;
+      let ghost = null;
+
+      const placeGhost = (x, y) => {
+        if (ghost) ghost.style.transform = `translate3d(${x - ghost._ox}px, ${y - ghost._oy}px, 0)`;
+      };
+      const start = () => {
+        if (dragging) return;
+        dragging = true;
+        node.classList.add('dragging');
+        const r = node.getBoundingClientRect();
+        ghost = node.cloneNode(true);
+        ghost.classList.add('drag-ghost');
+        ghost.classList.remove('dragging');
+        ghost.style.width = `${r.width}px`;
+        ghost.style.height = `${r.height}px`;
+        ghost.style.left = '0';
+        ghost.style.top = '0';
+        ghost._ox = x0 - r.left;
+        ghost._oy = y0 - r.top;
+        document.body.appendChild(ghost);
+        placeGhost(x0, y0);
+        markTargets(id);
+      };
+      if (touch) hold = setTimeout(start, HOLD_MS);
+
+      // Non-passive, and added per drag: a normal swipe beginning on a shirt
+      // must still scroll the page.
+      const blockScroll = (e) => { if (dragging) e.preventDefault(); };
+      document.addEventListener('touchmove', blockScroll, { passive: false });
+
+      const move = (e) => {
+        const dx = Math.abs(e.clientX - x0);
+        const dy = Math.abs(e.clientY - y0);
+        if (!dragging) {
+          if (touch && (dx > SCROLL_PX || dy > SCROLL_PX)) return cancel();
+          if (!touch && (dx > MOVE_PX || dy > MOVE_PX)) start();
+          if (!dragging) return;
+        }
+        placeGhost(e.clientX, e.clientY);
+        const t = shirtUnder(e.clientX, e.clientY);
+        if (t !== lastTarget) {
+          lastTarget?.classList.remove('drop-hot');
+          if (t?.classList.contains('drop-ok')) t.classList.add('drop-hot');
+          lastTarget = t;
+        }
+      };
+
+      const up = (e) => {
+        const wasDragging = dragging;
+        const t = dragging ? shirtUnder(e.clientX, e.clientY) : null;
+        cancel();
+        if (wasDragging) {
+          // Suppress the click that follows a drag, or releasing a shirt also
+          // opens the player card.
+          node.classList.add('was-dragged');
+          setTimeout(() => node.classList.remove('was-dragged'), 0);
+        }
+        const other = t?.dataset.pid ? Number(t.dataset.pid) : null;
+        if (other && other !== id && legal(id, other)) onSwap(id, other);
+      };
+
+      function cancel() {
+        clearTimeout(hold);
+        dragging = false;
+        node.classList.remove('dragging');
+        ghost?.remove();
+        ghost = null;
+        lastTarget?.classList.remove('drop-hot');
+        clearTargets();
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        document.removeEventListener('pointercancel', cancel);
+        document.removeEventListener('touchmove', blockScroll);
+      }
+
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+      document.addEventListener('pointercancel', cancel);
+    });
+  }
+}
+
+/** A Draft XI is legal at 1 GK, 3+ DEF, 2+ MID, 1+ FWD and eleven players. */
+export function legalDraftXI(xi) {
+  if (xi.length !== 11) return false;
+  const n = (t) => xi.filter((p) => p.element_type === t).length;
+  return n(1) === 1 && n(2) >= 3 && n(3) >= 2 && n(4) >= 1;
+}

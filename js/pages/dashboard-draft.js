@@ -15,7 +15,7 @@ import { readSnapshot } from '../data.js';
 import { projectBoard } from '../draft/project.js';
 import { rateLeague, bestXI } from '../draft/rating.js';
 import { DRAFT_CONFIG } from '../draft/config.js';
-import { squadPitch, playerCard, activityRings } from '../squadview.js';
+import { squadPitch, playerCard, activityRings, enableSwapping, legalDraftXI } from '../squadview.js';
 
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
@@ -102,10 +102,92 @@ export async function renderDraftDashboard(host) {
 
   const openPlayer = (p) => playerCard(p, { teams, fixturesFor, horizon: 5, fromEvent: nextEvent(fixtures) });
 
-  const { xi, bench } = bestXI(mine);
   const livePts = (p) => live?.elements?.[p.id]?.total_points ?? null;
-  const gwTotal = xi.reduce((s, p) => s + (livePts(p) ?? 0), 0);
   const gwLive = Boolean(live?.elements && Object.keys(live.elements).length);
+
+  /**
+   * Your chosen XI, which is not necessarily the best one.
+   *
+   * The board can compute the strongest legal eleven, but the eleven you
+   * actually named on the FPL site is the one that scores — so the dashboard
+   * has to be able to hold a lineup that differs from the optimum, and let you
+   * push players around to see what a change costs.
+   *
+   * Stored under its own key: this is Draft state and must never reach the
+   * Classic squad.
+   */
+  const XI_KEY = 'draftXi.v1';
+  const optimal = bestXI(mine);
+  let chosen = optimal.xi.map((p) => p.id);
+  try {
+    const saved = JSON.parse(localStorage.getItem(XI_KEY) || 'null');
+    if (Array.isArray(saved) && saved.length === 11) {
+      const rows = saved.map((id) => mine.find((p) => p.id === id)).filter(Boolean);
+      if (rows.length === 11 && legalDraftXI(rows)) chosen = saved;
+    }
+  } catch { /* unreadable storage is not worth failing over */ }
+
+  const paintSquad = (into) => {
+    const xi = chosen.map((id) => mine.find((p) => p.id === id)).filter(Boolean);
+    const bench = mine.filter((p) => !chosen.includes(p.id));
+    const chosenTotal = xi.reduce((t, p) => t + p.proj, 0);
+    const lost = optimal.total - chosenTotal;
+    const gwTotal = xi.reduce((t, p) => t + (livePts(p) ?? 0), 0);
+
+    const pitch = squadPitch({
+      xi, bench, teams,
+      value: (p) => (gwLive ? String(livePts(p) ?? 0) : fmt.pts(p.proj)),
+      sub: (p) => POS[p.element_type],
+      onPlayer: openPlayer,
+    });
+
+    setKids(into,
+      el('h2', {}, 'Squad'),
+      el('p', { class: 'hint' },
+        'Drag a player onto another to swap them — hold to pick one up on a phone. '
+        + 'Only legal swaps highlight, and your lineup is remembered.'),
+      el('div', { class: 'tiles' },
+        el('div', { class: `tile ${gwLive ? 'accent' : ''}` },
+          el('span', { class: 'k' }, gwLive ? 'Your XI, live' : 'Your XI, projected'),
+          el('span', { class: 'v' }, gwLive ? fmt.pts(gwTotal) : fmt.pts(chosenTotal)),
+          el('span', { class: 's' }, 'the eleven you have named')),
+        el('div', { class: 'tile' },
+          el('span', { class: 'k' }, 'Strongest legal XI'),
+          el('span', { class: 'v' }, fmt.pts(optimal.total)),
+          el('span', { class: 's' }, 'by rest-of-season projection')),
+        el('div', { class: `tile ${lost > 0.05 ? 'warn' : ''}` },
+          el('span', { class: 'k' }, 'On your bench'),
+          el('span', { class: 'v' }, lost > 0.05 ? `−${lost.toFixed(1)}` : '0.0'),
+          el('span', { class: 's' }, lost > 0.05 ? 'points left out of the XI' : 'you are playing the optimum')),
+      ),
+      pitch,
+      lost > 0.05
+        ? el('button', { class: 'ghost', onClick: () => { chosen = optimal.xi.map((p) => p.id); save(); paintSquad(into); } },
+          'Reset to the strongest XI')
+        : null,
+    );
+
+    const save = () => { try { localStorage.setItem(XI_KEY, JSON.stringify(chosen)); } catch { /* ignore */ } };
+
+    // A swap is legal when the resulting eleven still is. Keepers may only
+    // trade with keepers, which legalDraftXI enforces by counting them.
+    enableSwapping(pitch, {
+      legal: (aId, bId) => {
+        const inXi = (id) => chosen.includes(id);
+        if (inXi(aId) === inXi(bId)) return false;
+        const next = chosen.map((id) => (id === aId ? bId : id === bId ? aId : id));
+        return legalDraftXI(next.map((id) => mine.find((p) => p.id === id)).filter(Boolean));
+      },
+      onSwap: (aId, bId) => {
+        chosen = chosen.map((id) => (id === aId ? bId : id === bId ? aId : id));
+        save();
+        paintSquad(into);
+      },
+    });
+  };
+
+  const squadCard = el('div', { class: 'card' });
+  paintSquad(squadCard);
 
   setKids(host,
     /* ---- headline: rings + gameweek ---- */
@@ -123,7 +205,10 @@ export async function renderDraftDashboard(host) {
         el('div', { class: 'tiles dd-tiles' },
           el('div', { class: 'tile accent' },
             el('span', { class: 'k' }, gwLive ? 'Gameweek points' : 'Gameweek'),
-            el('span', { class: 'v' }, gwLive ? fmt.pts(gwTotal) : '—'),
+            el('span', { class: 'v' }, gwLive
+              ? fmt.pts(chosen.map((id) => mine.find((p) => p.id === id)).filter(Boolean)
+                .reduce((t, p) => t + (livePts(p) ?? 0), 0))
+              : '—'),
             el('span', { class: 's' }, gwLive ? 'starting XI, live' : 'no matches played yet')),
           el('div', { class: 'tile' },
             el('span', { class: 'k' }, 'Rest of season'),
@@ -137,17 +222,7 @@ export async function renderDraftDashboard(host) {
       ),
     ),
 
-    /* ---- the squad ---- */
-    el('div', { class: 'card' },
-      el('h2', {}, 'Squad'),
-      el('p', { class: 'hint' }, 'Best legal XI by rest-of-season projection. Tap a player for his next five fixtures.'),
-      squadPitch({
-        xi, bench, teams,
-        value: (p) => (gwLive ? String(livePts(p) ?? 0) : fmt.pts(p.proj)),
-        sub: (p) => POS[p.element_type],
-        onPlayer: openPlayer,
-      }),
-    ),
+    squadCard,
 
     riskCard(mine, openPlayer),
     waiverCard(mine, pool, teams, openPlayer),
