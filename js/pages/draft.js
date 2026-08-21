@@ -19,6 +19,7 @@ import { evaluate } from '../draft/value.js';
 import { LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX, QUOTA } from '../draft/config.js';
 import { pull, debouncedPush, syncConfigured, deviceName } from '../draft/sync.js';
 import { renderHub } from './draft-hub.js';
+import { playerCard } from '../squadview.js';
 
 const app = $('#app');
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
@@ -30,6 +31,7 @@ const fixtures = await readSnapshot('fixtures', []);
 // Optional. Present only when FPL_DRAFT_LEAGUE_ID is set on the repo; without
 // it the hub shows slot numbers instead of names and nothing else changes.
 const league = await readSnapshot('draft/league', null);
+const transactions = await readSnapshot('draft/transactions', null);
 if (!board?.players?.length) {
   setKids(app, el('p', { class: 'empty' },
     'Player data has not been published yet. It arrives with the next scheduled refresh.'));
@@ -253,11 +255,25 @@ function renderSeason() {
     pool = projected.filter((r) => !d.taken.has(r.id)).sort((a, b) => b.proj - a.proj);
   }
 
+  const teamMap = Object.fromEntries((board.teams || []).map((t) => [t.id, t]));
+  const fixturesFor = (p) => (fixtures || [])
+    .filter((f) => f.event && (f.team_h === p.team || f.team_a === p.team))
+    .map((f) => ({
+      event: f.event,
+      home: f.team_h === p.team,
+      opponent: f.team_h === p.team ? f.team_a : f.team_h,
+      difficulty: f.team_h === p.team ? f.team_h_difficulty : f.team_a_difficulty,
+    }))
+    .sort((a, b) => a.event - b.event);
+
   setKids(app, renderHub({
     rostersBySlot,
     pool,
     league,
+    transactions,
+    teams: teamMap,
     mySlot: mySlotNow(),
+    onPlayer: (p) => playerCard(p, { teams: teamMap, fixturesFor, horizon: 5, fromEvent: 1 }),
     source: synced ? 'league' : 'manual',
     onShowDraft: state?.log?.length ? () => { showDraft = true; render(); } : null,
   }));

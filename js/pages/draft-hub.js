@@ -8,6 +8,8 @@
  * and everything else is identical.
  */
 import { el, setKids } from '../ui.js';
+import { squadPitch } from '../squadview.js';
+import { bestXI } from '../draft/rating.js';
 import { rateLeague } from '../draft/rating.js';
 import { DRAFT_CONFIG } from '../draft/config.js';
 
@@ -138,7 +140,7 @@ function powerTable(rated, league, mySlot, onOpen) {
 /* ------------------------------------------------------------------ *
  * one manager
  * ------------------------------------------------------------------ */
-function managerCard(r, league, mySlot, onClose) {
+function managerCard(r, league, mySlot, onClose, teams, onPlayer) {
   const c = r.components;
   const who = nameFor(r.slot, league, mySlot);
   return el('div', { class: 'card hub-manager' },
@@ -152,14 +154,17 @@ function managerCard(r, league, mySlot, onClose) {
       metric('Rest of season', one(c.ros), ''),
       metric('Depth', `−${one(c.depth.perAbsence, 1)}`, `${r.depthRank}${ordinal(r.depthRank)}`),
     ),
-    el('div', { class: 'hub-two' },
-      el('div', {},
-        el('h3', {}, `Best XI — ${one(c.xi.total)} pts`),
-        el('ul', { class: 'hub-list' }, c.xi.players.map((p) => playerLine(p)))),
-      el('div', {},
-        el('h3', {}, `Bench — ${c.xi.bench.length}`),
-        el('ul', { class: 'hub-list' }, c.xi.bench.map((p) => playerLine(p)))),
-    ),
+    el('h3', {}, `Best XI — ${one(c.xi.total)} pts`),
+    // Squad view, the same component every other squad in the app uses, so an
+    // opponent's team is read the same way as your own rather than as a list.
+    squadPitch({
+      xi: c.xi.players,
+      bench: c.xi.bench,
+      teams,
+      value: (p) => one(p.proj),
+      sub: (p) => POS[p.element_type],
+      onPlayer,
+    }),
     c.risk.flagged.length
       ? el('div', {}, el('h3', {}, 'Availability'),
         el('ul', { class: 'hub-list' }, c.risk.flagged.map((p) => playerLine(p,
@@ -205,6 +210,47 @@ function freeAgents(pool, state) {
 }
 
 /* ------------------------------------------------------------------ *
+ * league transactions
+ * ------------------------------------------------------------------ */
+/**
+ * Who moved, and where.
+ *
+ * The Draft API does not publish transactions without a login — both
+ * league/{id}/transactions and draft/{id}/trades 404 — so this is derived by
+ * diffing ownership between refreshes. That has one honest consequence: the
+ * log starts the day it was switched on and cannot reconstruct anything
+ * earlier, which the empty state says rather than implying nothing has
+ * happened.
+ */
+function transactionsCard(log, byId, league, mySlot, teams, onPlayer) {
+  const events = [...(log?.events || [])].reverse().slice(0, 40);
+  const nameOf = (entryId) => {
+    const m = league?.managers?.find((x) => x.entryId === entryId);
+    return m ? (m.teamName || m.manager) : 'free agents';
+  };
+
+  return el('div', { class: 'card' },
+    el('h2', {}, 'League transfers'),
+    events.length
+      ? el('div', { class: 'tablewrap' }, el('table', { class: 'players' },
+        el('thead', {}, el('tr', {}, ...['When', 'Player', 'From', 'To'].map((h) => el('th', { class: 'col-l' }, h)))),
+        el('tbody', {}, events.map((e) => {
+          const p = byId.get(e.element);
+          return el('tr', {},
+            el('td', { class: 'col-l' }, new Date(e.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })),
+            el('td', { class: 'col-l', onClick: p ? () => onPlayer(p) : null },
+              p ? `${p.web_name} (${teams[p.team]?.short_name || ''})` : `#${e.element}`),
+            el('td', { class: 'col-l' }, nameOf(e.from)),
+            el('td', { class: 'col-l' }, nameOf(e.to)));
+        }))))
+      : el('p', { class: 'hint' },
+        'No moves recorded yet. The Draft API does not publish its transaction log without a login, so this is '
+        + 'built by watching ownership change between refreshes — it starts from now and will fill as waivers '
+        + 'and trades happen.'),
+  );
+}
+
+/* ------------------------------------------------------------------ *
  * entry point
  * ------------------------------------------------------------------ */
 /**
@@ -215,7 +261,7 @@ function freeAgents(pool, state) {
  * @param {number} o.mySlot
  * @param {() => void} o.onShowDraft return to the pick log
  */
-export function renderHub({ rostersBySlot, pool, league, mySlot, source = 'manual', onShowDraft = null }) {
+export function renderHub({ rostersBySlot, pool, league, mySlot, teams = {}, transactions = null, onPlayer = null, source = 'manual', onShowDraft = null }) {
   const rated = rateLeague(rostersBySlot, {
     pool,
     horizon: DRAFT_CONFIG.nearTermHorizon,
@@ -229,9 +275,10 @@ export function renderHub({ rostersBySlot, pool, league, mySlot, source = 'manua
     const openRated = open == null ? null : rated.find((r) => r.slot === open);
     setKids(host,
       myTeamCard(me, league, mySlot, rated.length),
-      openRated ? managerCard(openRated, league, mySlot, () => { open = null; paint(); }) : null,
+      openRated ? managerCard(openRated, league, mySlot, () => { open = null; paint(); }, teams, onPlayer) : null,
       powerTable(rated, league, mySlot, (slot) => { open = slot === open ? null : slot; paint(); }),
       freeAgents(pool),
+      transactionsCard(transactions, new Map(pool.concat([...rostersBySlot.values()].flat()).map((p) => [p.id, p])), league, mySlot, teams, onPlayer),
       el('div', { class: 'card' },
         el('h2', {}, 'Source'),
         el('p', { class: 'hint' }, source === 'league'

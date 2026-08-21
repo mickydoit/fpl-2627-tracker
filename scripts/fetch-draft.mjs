@@ -167,6 +167,48 @@ if (!LEAGUE_ID) {
     }
     if (untranslated) console.warn(`  ${untranslated} owned elements could not be mapped to a classic id`);
 
+    /* ---------------------------------------------------------------- *
+     * derive the transaction log
+     * ---------------------------------------------------------------- *
+     * league/{id}/transactions and draft/{id}/trades both 404 without a
+     * login, so the moves themselves are not published. Ownership is, and a
+     * change of owner IS a transaction — so the log is built by diffing this
+     * refresh against the last committed one and appending what moved.
+     *
+     * It therefore starts empty and accumulates from the first refresh after
+     * this ships. It cannot recover history it never saw, and it should not
+     * pretend otherwise.
+     */
+    const previous = await readJSON(`${DIR}/league.json`).catch(() => null);
+    const log = (await readJSON(`${DIR}/transactions.json`).catch(() => null)) || { events: [] };
+    if (previous?.ownership && Object.keys(previous.ownership).length) {
+      const now = new Date().toISOString();
+      const seen = new Set([...Object.keys(previous.ownership), ...Object.keys(ownership)]);
+      const fresh = [];
+      for (const id of seen) {
+        const before = previous.ownership[id] ?? null;
+        const after = ownership[id] ?? null;
+        if (before === after) continue;
+        fresh.push({
+          at: now,
+          element: Number(id),
+          from: before,
+          to: after,
+          kind: before == null ? 'added' : after == null ? 'dropped' : 'traded',
+        });
+      }
+      if (fresh.length) {
+        log.events.push(...fresh);
+        // A season of waivers is small, but unbounded growth is still a bug.
+        if (log.events.length > 2000) log.events = log.events.slice(-2000);
+        console.log(`  ${fresh.length} ownership change${fresh.length === 1 ? '' : 's'} recorded`);
+      }
+    }
+    // Written every run, changes or not, so the page always has a file to read
+    // rather than having to treat "missing" and "nothing happened yet" alike.
+    log.updatedAt = new Date().toISOString();
+    await writeJSONIfChanged(`${DIR}/transactions.json`, log);
+
     const changed = await writeJSONIfChanged(`${DIR}/league.json`, {
       fetchedAt: new Date().toISOString(),
       leagueId: Number(LEAGUE_ID),
