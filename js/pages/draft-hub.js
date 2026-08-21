@@ -215,7 +215,7 @@ function freeAgents(pool, state) {
  * @param {number} o.mySlot
  * @param {() => void} o.onShowDraft return to the pick log
  */
-export function renderHub({ rostersBySlot, pool, league, mySlot, onShowDraft }) {
+export function renderHub({ rostersBySlot, pool, league, mySlot, source = 'manual', onShowDraft = null }) {
   const rated = rateLeague(rostersBySlot, {
     pool,
     horizon: DRAFT_CONFIG.nearTermHorizon,
@@ -233,9 +233,13 @@ export function renderHub({ rostersBySlot, pool, league, mySlot, onShowDraft }) 
       powerTable(rated, league, mySlot, (slot) => { open = slot === open ? null : slot; paint(); }),
       freeAgents(pool),
       el('div', { class: 'card' },
-        el('h2', {}, 'Draft'),
-        el('p', { class: 'hint' }, 'The pick log is kept in full — every pick, in order, exactly as it was entered.'),
-        el('button', { class: 'ghost', onClick: onShowDraft }, 'Show the draft log')),
+        el('h2', {}, 'Source'),
+        el('p', { class: 'hint' }, source === 'league'
+          ? 'Rosters come from your Draft league, refreshed automatically — so they stay correct through waivers and trades, not just draft night.'
+          : 'Rosters are derived from the pick log entered on this device. Every pick is kept, in order.'),
+        onShowDraft
+          ? el('button', { class: 'ghost', onClick: onShowDraft }, 'Show the draft log')
+          : null),
     );
   };
   paint();

@@ -196,28 +196,82 @@ function actionButtons(r) {
  */
 let showDraft = false;
 
-function renderSeason() {
-  const d = derive(state, typeOf);
-  const rostersBySlot = new Map();
-  for (const [slot, ids] of d.rosters) {
-    rostersBySlot.set(slot, ids.map((id) => byId.get(id)).filter(Boolean));
+/**
+ * Rosters from the league mirror, when it has them.
+ *
+ * A draft entered by hand produces a pick log; a draft run on the FPL site
+ * produces none, and until now that meant a completed draft left the hub with
+ * nothing to show. Ownership is the better source anyway: it stays correct
+ * through waivers and trades, where a pick log only ever describes draft night.
+ *
+ * `ownership` is keyed by CLASSIC element id (translated server-side) and
+ * valued by ENTRY id, so it needs the manager list to reach a slot number.
+ * Returns null unless every slot is present and complete — a half-filled
+ * mirror would render a league of phantom squads.
+ */
+function rostersFromLeague() {
+  if (!league?.ownership || !league?.managers?.length) return null;
+  const slotByEntry = new Map(
+    league.managers.filter((m) => m.slot).map((m) => [m.entryId, m.slot]),
+  );
+  if (!slotByEntry.size) return null;
+
+  const bySlot = new Map();
+  for (const [elementId, entryId] of Object.entries(league.ownership)) {
+    const slot = slotByEntry.get(entryId);
+    const row = byId.get(Number(elementId));
+    if (!slot || !row) continue;
+    if (!bySlot.has(slot)) bySlot.set(slot, []);
+    bySlot.get(slot).push(row);
   }
-  const pool = projected
-    .filter((r) => !d.taken.has(r.id))
-    .sort((a, b) => b.proj - a.proj);
+  if (bySlot.size !== slotByEntry.size) return null;
+  if ([...bySlot.values()].some((r) => r.length !== 15)) return null;
+  return bySlot;
+}
+
+/** My slot, from the mirror when it knows it, otherwise from the local draft. */
+function mySlotNow() {
+  const mine = league?.managers?.find((m) => m.entryId === league?.myEntryId);
+  return mine?.slot ?? state?.mySlot ?? null;
+}
+
+function renderSeason() {
+  const synced = rostersFromLeague();
+
+  let rostersBySlot;
+  let pool;
+  if (synced) {
+    rostersBySlot = synced;
+    const owned = new Set([...synced.values()].flat().map((r) => r.id));
+    pool = projected.filter((r) => !owned.has(r.id)).sort((a, b) => b.proj - a.proj);
+  } else {
+    const d = derive(state, typeOf);
+    rostersBySlot = new Map();
+    for (const [slot, ids] of d.rosters) {
+      rostersBySlot.set(slot, ids.map((id) => byId.get(id)).filter(Boolean));
+    }
+    pool = projected.filter((r) => !d.taken.has(r.id)).sort((a, b) => b.proj - a.proj);
+  }
 
   setKids(app, renderHub({
     rostersBySlot,
     pool,
     league,
-    mySlot: state.mySlot,
-    onShowDraft: () => { showDraft = true; render(); },
+    mySlot: mySlotNow(),
+    source: synced ? 'league' : 'manual',
+    onShowDraft: state?.log?.length ? () => { showDraft = true; render(); } : null,
   }));
 }
 
 function render() {
-  if (!state) return renderSetup();
-  if (state.finished && !showDraft) return renderSeason();
+  // A draft run on the FPL site leaves no local state at all. If the mirror
+  // says the league has drafted, go straight to the hub rather than asking the
+  // owner to set up a draft that already happened.
+  if (!state) {
+    if (league?.draftStatus === 'post' && rostersFromLeague()) return renderSeason();
+    return renderSetup();
+  }
+  if ((state.finished || league?.draftStatus === 'post') && !showDraft) return renderSeason();
   const { d, needs, available, demand, scarcity, ranked } = compute();
   const best = ranked[0];
   const alternatives = ranked.slice(1, 6);

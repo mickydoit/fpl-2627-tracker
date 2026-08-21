@@ -107,6 +107,10 @@ console.log(`✓ ${players.length} players on the board, ${teams.length} teams`)
  * typed in.
  * ------------------------------------------------------------------ */
 const LEAGUE_ID = (process.env.FPL_DRAFT_LEAGUE_ID || '').trim();
+// Which of the league's entries is the owner's. The Draft API cannot tell us
+// without a login, so it is configured; without it the hub can still show every
+// squad, it just cannot mark one of them "you".
+const MY_ENTRY_ID = Number(process.env.FPL_DRAFT_ENTRY_ID || 0) || null;
 
 if (!LEAGUE_ID) {
   console.log('  no FPL_DRAFT_LEAGUE_ID — skipping league mirror (this is fine)');
@@ -166,6 +170,7 @@ if (!LEAGUE_ID) {
     const changed = await writeJSONIfChanged(`${DIR}/league.json`, {
       fetchedAt: new Date().toISOString(),
       leagueId: Number(LEAGUE_ID),
+      myEntryId: MY_ENTRY_ID,
       name: details.league.name ?? null,
       size: details.league.max_entries ?? managers.length,
       draftAt: details.league.draft_dt ?? null,
