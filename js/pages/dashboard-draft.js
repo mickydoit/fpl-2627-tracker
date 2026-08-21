@@ -10,7 +10,7 @@
  * transfers or the Classic optimiser. The two dashboards share a tab strip and
  * nothing else.
  */
-import { el, setKids, fmt, horizonPicker } from '../ui.js';
+import { el, setKids, fmt, horizonBadge, horizonPicker } from '../ui.js';
 import { readSnapshot } from '../data.js';
 import { projectBoard, projectBoardAt } from '../draft/project.js';
 import { rateLeague, bestXI } from '../draft/rating.js';
