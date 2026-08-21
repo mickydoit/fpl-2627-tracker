@@ -174,7 +174,21 @@ if (squadIds.length === 15) {
    * rearranging a lineup you can no longer change would be fiction.
    */
   const MY_XI_KEY = 'myXi';
-  const optimalClassic = bestXI(squad);
+  /**
+   * The strongest eleven FOR THE NEXT GAMEWEEK.
+   *
+   * bestXI ranks on `proj`, which here is the five-gameweek projection — the
+   * right basis for judging a squad and the wrong one for choosing a lineup.
+   * Starting the player who is better over five weeks rather than the one with
+   * the easier fixture on Saturday is a real cost, every week.
+   *
+   * Squad-level numbers above still use the longer horizon, because "how good
+   * is this squad" and "who plays this week" are different questions.
+   */
+  const gwRows = projectAll(d.boot, d.fixtures, { horizon: 1, riskAversion: state.riskAversion ?? 0.5 }).rows;
+  const gwById = new Map(gwRows.map((r) => [r.id, r.proj]));
+  const byGw = (p) => gwById.get(p.id) ?? p.projPerGW ?? 0;
+  const optimalClassic = bestXI(squad.map((p) => ({ ...p, proj: byGw(p) })));
   let chosenXi = xi.map((p) => p.id);
   if (!isLiveGW) {
     const saved = getState()[MY_XI_KEY];
@@ -191,15 +205,15 @@ if (squadIds.length === 15) {
     const curXi = chosenXi.map((id) => byId.get(id)).filter(Boolean);
     const curBench = squad.filter((p) => !chosenXi.includes(p.id));
     const cap = curXi.includes(captain) ? captain : null;
-    const projTotal = curXi.reduce((t, p) => t + p.projPerGW, 0) + (cap?.projPerGW || 0);
+    const projTotal = curXi.reduce((t, p) => t + byGw(p), 0) + (cap ? byGw(cap) : 0);
     const liveTotal = curXi.reduce((t, p) => t + (livePts(p) ?? 0), 0);
-    const optTotal = optimalClassic.xi.reduce((t, p) => t + p.projPerGW, 0)
-      + (optimalClassic.captain?.projPerGW || 0);
+    const optTotal = optimalClassic.xi.reduce((t, p) => t + byGw(p), 0)
+      + (optimalClassic.captain ? byGw(optimalClassic.captain) : 0);
     const lost = optTotal - projTotal;
 
     const pitch = squadPitch({
       xi: curXi, bench: curBench, teams, captain: cap,
-      value: (p) => fmt.pts(isLiveGW ? (livePts(p) ?? 0) : p.projPerGW * (p === cap ? 2 : 1)),
+      value: (p) => fmt.pts(isLiveGW ? (livePts(p) ?? 0) : byGw(p) * (p === cap ? 2 : 1)),
       sub: (p) => (isLiveGW && liveById.get(p.id) ? `${liveById.get(p.id).minutes}'` : fmt.price(p.now_cost)),
       onPlayer: showPlayer,
     });
@@ -227,7 +241,8 @@ if (squadIds.length === 15) {
       ),
       isLiveGW
         ? el('p', { class: 'hint' }, 'The gameweek is live, so the lineup is fixed.')
-        : el('p', { class: 'hint' }, 'Drag a player onto another to swap them — hold to pick one up on a phone. Only legal swaps highlight.'),
+        : el('p', { class: 'hint' }, 'Ranked by projected points for the next gameweek — the decision you are actually making. '
+          + 'Drag a player onto another to swap them; hold to pick one up on a phone.'),
       pitch,
       !isLiveGW && lost > 0.05
         ? el('button', { class: 'ghost', onClick: () => {

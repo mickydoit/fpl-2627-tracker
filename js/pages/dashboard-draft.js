@@ -117,7 +117,11 @@ export async function renderDraftDashboard(host) {
    * Classic squad.
    */
   const XI_KEY = 'draftXi.v1';
-  const optimal = bestXI(mine);
+  // Ranked on the next gameweek, which is the decision being made. The
+  // rest-of-season number still drives squad RATING above — that is a
+  // different question and rightly uses a different horizon.
+  const byGw = (p) => p.gwValue ?? p.proj;
+  const optimal = bestXI(mine, byGw);
   let chosen = optimal.xi.map((p) => p.id);
   try {
     const saved = JSON.parse(localStorage.getItem(XI_KEY) || 'null');
@@ -130,13 +134,13 @@ export async function renderDraftDashboard(host) {
   const paintSquad = (into) => {
     const xi = chosen.map((id) => mine.find((p) => p.id === id)).filter(Boolean);
     const bench = mine.filter((p) => !chosen.includes(p.id));
-    const chosenTotal = xi.reduce((t, p) => t + p.proj, 0);
+    const chosenTotal = xi.reduce((t, p) => t + byGw(p), 0);
     const lost = optimal.total - chosenTotal;
     const gwTotal = xi.reduce((t, p) => t + (livePts(p) ?? 0), 0);
 
     const pitch = squadPitch({
       xi, bench, teams,
-      value: (p) => (gwLive ? String(livePts(p) ?? 0) : fmt.pts(p.proj)),
+      value: (p) => (gwLive ? String(livePts(p) ?? 0) : fmt.pts(byGw(p))),
       sub: (p) => POS[p.element_type],
       onPlayer: openPlayer,
     });
@@ -144,17 +148,17 @@ export async function renderDraftDashboard(host) {
     setKids(into,
       el('h2', {}, 'Squad'),
       el('p', { class: 'hint' },
-        'Drag a player onto another to swap them — hold to pick one up on a phone. '
-        + 'Only legal swaps highlight, and your lineup is remembered.'),
+        'Ranked by projected points for the next gameweek — the decision you are actually making. '
+        + 'Drag a player onto another to swap them; hold to pick one up on a phone.'),
       el('div', { class: 'tiles' },
         el('div', { class: `tile ${gwLive ? 'accent' : ''}` },
-          el('span', { class: 'k' }, gwLive ? 'Your XI, live' : 'Your XI, projected'),
+          el('span', { class: 'k' }, gwLive ? 'Your XI, live' : 'Your XI, next GW'),
           el('span', { class: 'v' }, gwLive ? fmt.pts(gwTotal) : fmt.pts(chosenTotal)),
           el('span', { class: 's' }, 'the eleven you have named')),
         el('div', { class: 'tile' },
           el('span', { class: 'k' }, 'Strongest legal XI'),
           el('span', { class: 'v' }, fmt.pts(optimal.total)),
-          el('span', { class: 's' }, 'by rest-of-season projection')),
+          el('span', { class: 's' }, 'best eleven for the next gameweek')),
         el('div', { class: `tile ${lost > 0.05 ? 'warn' : ''}` },
           el('span', { class: 'k' }, 'On your bench'),
           el('span', { class: 'v' }, lost > 0.05 ? `−${lost.toFixed(1)}` : '0.0'),

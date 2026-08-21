@@ -68,6 +68,13 @@ export function projectBoard(boardPlayers, fixtures, teams, opts = {}) {
     horizon: DRAFT_CONFIG.nearTermHorizon, prior: draftPrior, bonusModel: draftBonusModel, ...opts,
   });
   const nearById = new Map(near.rows.map((r) => [r.id, r.proj]));
+  // A start-or-bench decision is a ONE gameweek question. Ranking it on the
+  // rest-of-season number starts the player who is better in March over the
+  // one with the easier fixture on Saturday.
+  const gw = projectAll(boot, fixtures, {
+    horizon: 1, prior: draftPrior, bonusModel: draftBonusModel, ...opts,
+  });
+  const gwById = new Map(gw.rows.map((r) => [r.id, r.proj]));
 
   return ros.rows.map((r) => ({
     id: r.id,
@@ -84,6 +91,7 @@ export function projectBoard(boardPlayers, fixtures, teams, opts = {}) {
     proj: r.proj,
     rosValue: r.proj,
     nearTermValue: nearById.get(r.id) ?? 0,
+    gwValue: gwById.get(r.id) ?? 0,
     parts: r.parts,
   }));
 }
