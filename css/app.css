@@ -851,3 +851,15 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
   .compare-col .shirt .pt { font-size: 1.25rem; }
   .compare-col .pitch-row { gap: var(--s-sm); }
 }
+
+/* transfer advice */
+.advice { border: 1px solid var(--hair, #4a4a4c); border-radius: var(--radius); padding: var(--s-md); margin: 0 0 var(--s-lg); }
+.advice.hold { border-left: 3px solid var(--muted); }
+.advice.good { border-left: 3px solid var(--cyan); }
+.advice.strong { border-left: 3px solid var(--lime); }
+.advice > h3 { margin: 0 0 var(--s-xs); }
+.advice-verdict { font-family: var(--font-display); font-size: 1.5rem; margin: var(--s-sm) 0 var(--s-xs); }
+.advice.hold .advice-verdict { color: var(--muted); }
+.advice.good .advice-verdict { color: var(--cyan); }
+.advice.strong .advice-verdict { color: var(--lime); }
+.advice-move { font-size: 1.05rem; margin: 0 0 var(--s-md); }

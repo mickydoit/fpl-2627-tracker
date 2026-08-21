@@ -3,6 +3,8 @@ import { projectAll, POS, SQUAD_RULES } from '../model.js';
 import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI, scoreSquad } from '../optimiser.js';
 import { squadPitch, playerCard } from '../squadview.js';
 import { fdrLegend } from '../ui.js';
+import { suggestTransfers } from '../optimiser.js';
+import { bestMove, recommendedHorizon } from '../transfer-advice.js';
 import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown , setKids, addKids} from '../ui.js';
 
 const app = $('#app');
@@ -355,6 +357,79 @@ function renderResult(ms) {
 }
 
 /**
+ * What one free transfer can actually achieve.
+ *
+ * Separate from the squad comparison above, and deliberately so: the optimiser
+ * rebuilds from scratch, which is a benchmark, while this answers the question
+ * you can actually act on in a normal week. It returns ONE candidate, because a
+ * list of five marginal swaps invites you to make all five, and you have one
+ * transfer.
+ */
+function actionableCard(mine, mineIds) {
+  // Bank and free transfers are the Transfers page's controls, not this page's.
+  // Read them from shared Classic state so both pages agree, and fall back to
+  // the conservative case — no money, one transfer — rather than inventing
+  // headroom the owner may not have.
+  const cstate = getState();
+  const bank = cstate.bank ?? 0;
+  const freeTransfers = cstate.freeTransfers ?? 1;
+
+  const rec = recommendedHorizon({ squad: mine, freeTransfers });
+  const rowsFor = (h) => projectAll(d.boot, d.fixtures, { horizon: h, riskAversion }).rows;
+  const cache = new Map();
+  const at = (h) => {
+    if (!cache.has(h)) cache.set(h, rowsFor(h));
+    return cache.get(h);
+  };
+  const gainAt = (move, h) => {
+    const byH = new Map(at(h).map((r) => [r.id, r]));
+    const sq = mineIds.map((id) => byH.get(id)).filter(Boolean);
+    if (sq.length !== 15) return 0;
+    const inc = byH.get(move.in.id);
+    if (!inc) return 0;
+    const base = scoreSquad(sq, { horizon: h, riskAversion });
+    const trial = sq.filter((p) => p.id !== move.out.id).concat(inc);
+    return scoreSquad(trial, { horizon: h, riskAversion }) - base;
+  };
+
+  const res = suggestTransfers(mineIds, at(rec.horizon), {
+    bank, freeTransfers, horizon: rec.horizon, riskAversion, maxSuggestions: 12,
+  });
+  if (res.error) {
+    return el('div', {}, el('h3', {}, 'This week'), el('p', { class: 'hint' }, res.error));
+  }
+  const hit = freeTransfers >= 1 ? 0 : 4;
+  const best = bestMove(res.singles, gainAt, { hit });
+
+  const head = el('div', {},
+    el('h3', {}, 'This week'),
+    el('p', { class: 'hint' }, `Planning over ${rec.horizon} gameweeks. ${rec.why}`));
+
+  if (!best || best.verdict === 'HOLD') {
+    return el('div', { class: 'advice hold' }, head,
+      el('p', { class: 'advice-verdict' }, 'HOLD'),
+      el('p', {}, best
+        ? `The best available move is ${best.move.out.web_name} → ${best.move.in.web_name}, worth `
+          + `${best.gain >= 0 ? '+' : ''}${best.gain.toFixed(1)} over ${rec.horizon} gameweeks — `
+          + `${best.reasons[0]}.`
+        : 'No legal move improves this squad.'),
+      el('p', { class: 'hint' }, 'A free transfer can be banked, so a move has to beat the player you own, '
+        + 'the model\'s error and the value of keeping the transfer. Nothing here does.'));
+  }
+
+  const m = best.move;
+  return el('div', { class: `advice ${best.verdict === 'STRONG TRANSFER' ? 'strong' : 'good'}` }, head,
+    el('p', { class: 'advice-verdict' }, best.verdict),
+    el('p', { class: 'advice-move' },
+      el('strong', {}, m.out.web_name), ' → ', el('strong', {}, m.in.web_name),
+      el('span', { class: 'dim' }, `  ${hit ? `−${hit} hit` : 'free transfer'}`)),
+    el('div', { class: 'tiles' }, best.cross.gains.map((g) => el('div', { class: 'tile' },
+      el('span', { class: 'k' }, `Next ${g.horizon}`),
+      el('span', { class: 'v' }, `${g.gain >= 0 ? '+' : ''}${g.gain.toFixed(1)}`)))),
+    el('p', { class: 'hint' }, `Confidence ${best.confidence}. ${best.reasons.join('; ')}.`));
+}
+
+/**
  * Column geometry for the squad detail table.
  *
  * `cls` is applied identically to the `th` and the `td`, which is the whole
@@ -490,6 +565,8 @@ function compareCard(result) {
         el('h3', {}, 'Optimiser squad'),
         pitchFor(result.squad)),
     ),
+    actionableCard(mine, mineIds),
+    el('h3', {}, 'Every difference'),
     out.length
       ? el('div', { class: 'tablewrap' }, el('table', { class: 'players' },
         el('thead', {}, el('tr', {}, ...['In your squad only', 'Proj', 'In optimiser only', 'Proj', 'Difference'].map((h) => el('th', {}, h)))),
