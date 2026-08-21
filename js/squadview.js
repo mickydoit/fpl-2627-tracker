@@ -99,6 +99,7 @@ export function shirt(p, { teams, captain, vice, value, sub, onPlayer }) {
   return el('div', {
     class: `shirt ${isCap ? 'cap' : ''} ${p.status && p.status !== 'a' ? 'flagged' : ''}`,
     'data-pid': String(p.id),
+    'data-pos': POS[p.element_type],
     title: `${p.first_name || ''} ${p.second_name || p.web_name} — ${teams[p.team]?.name || ''}`,
     // A drag ends with a click; without this guard, releasing a shirt also
     // opens the player card.
