@@ -7,7 +7,7 @@
  * optional league mirror is missing, managers are "Slot 3" instead of a name
  * and everything else is identical.
  */
-import { el, setKids } from '../ui.js';
+import { el, setKids, horizonBadge } from '../ui.js';
 import { squadPitch } from '../squadview.js';
 import { bestXI } from '../draft/rating.js';
 import { rateLeague } from '../draft/rating.js';
@@ -109,7 +109,7 @@ const ordinal = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'st'
  * ------------------------------------------------------------------ */
 function powerTable(rated, league, mySlot, onOpen) {
   return el('div', { class: 'card' },
-    el('h2', {}, 'League power rankings'),
+    el('div', { class: 'row between' }, el('h2', {}, 'League power rankings'), horizonBadge('ros')),
     el('p', { class: 'hint' },
       'Rating blends best XI, rest-of-season strength, depth, value over free agents and injury risk — '
       + 'each as a percentile within this league. Every column behind it is shown, so a rank is always explainable.'),
@@ -191,7 +191,7 @@ function freeAgents(pool, state) {
   fill();
 
   return el('div', { class: 'card' },
-    el('h2', {}, 'Free agents'),
+    el('div', { class: 'row between' }, el('h2', {}, 'Free agents'), horizonBadge('ros')),
     el('p', { class: 'hint' },
       `${pool.length} players went undrafted. Ranked by rest-of-season projection — `
       + 'the waiver engine that compares these against your own squad comes next.'),

@@ -277,3 +277,23 @@ export function fdrLegend() {
     el('span', { class: 'fdrkey-c' }, 'UPPERCASE = home · lowercase = away'),
   );
 }
+
+/**
+ * Which horizon a number is measured over.
+ *
+ * The app shows three at once — next gameweek for a lineup, five for a
+ * transfer, rest of season for squad quality — and they were distinguishable
+ * only by reading the small print under each tile, or not at all. A projection
+ * without its horizon is not interpretable, so every card that shows one now
+ * states it in the same place, in the same words.
+ */
+export function horizonBadge(kind) {
+  const label = {
+    gw: 'Next gameweek',
+    next5: 'Next 5 gameweeks',
+    next3: 'Next 3 gameweeks',
+    next8: 'Next 8 gameweeks',
+    ros: 'Rest of season',
+  }[kind] || kind;
+  return el('span', { class: `hz hz-${kind}`, title: `These numbers are projected over: ${label.toLowerCase()}` }, label);
+}

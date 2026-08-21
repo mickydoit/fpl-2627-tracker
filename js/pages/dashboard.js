@@ -2,6 +2,7 @@ import { loadAll, getState, resolveSquadIds } from '../data.js';
 import { projectAll, POS } from '../model.js';
 import { bestXI, scoreSquad, legalXI } from '../optimiser.js';
 import { squadPitch, playerCard, enableSwapping } from '../squadview.js';
+import { horizonBadge } from '../ui.js';
 import { $, el, fmt, dataBar, countdown, statusBadge, posPill, modal, breakdown , setKids, addKids} from '../ui.js';
 
 /**
@@ -220,6 +221,9 @@ if (squadIds.length === 15) {
 
     setKids(squadCard,
       head,
+      el('div', { class: 'row between', style: 'margin-bottom:var(--s-sm)' },
+        el('span', { class: 'hint' }, isLiveGW ? 'Live scoring' : 'Lineup decision'),
+        horizonBadge(isLiveGW ? 'gw' : 'gw')),
       el('div', { class: 'tiles' },
         el('div', { class: 'tile accent' },
           el('span', { class: 'k' }, isLiveGW ? 'Live points' : 'Projected points'),

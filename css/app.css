@@ -863,3 +863,13 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
 .advice.good .advice-verdict { color: var(--cyan); }
 .advice.strong .advice-verdict { color: var(--lime); }
 .advice-move { font-size: 1.05rem; margin: 0 0 var(--s-md); }
+
+/* horizon badge: what window a projection covers, stated the same way everywhere */
+.hz {
+  font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 800;
+  padding: .2rem .55rem; border-radius: 20px; white-space: nowrap;
+  border: 1px solid var(--hair, #4a4a4c); color: var(--muted);
+}
+.hz-gw { color: var(--lime); border-color: rgba(159,237,0,.45); }
+.hz-next3, .hz-next5, .hz-next8 { color: var(--cyan); border-color: rgba(139,255,236,.45); }
+.hz-ros { color: var(--yellow); border-color: rgba(244,255,123,.45); }

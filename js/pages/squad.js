@@ -2,7 +2,7 @@ import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
 import { projectAll, POS, SQUAD_RULES } from '../model.js';
 import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI, scoreSquad } from '../optimiser.js';
 import { squadPitch, playerCard } from '../squadview.js';
-import { fdrLegend } from '../ui.js';
+import { fdrLegend, horizonBadge } from '../ui.js';
 import { suggestTransfers } from '../optimiser.js';
 import { bestMove, recommendedHorizon } from '../transfer-advice.js';
 import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown , setKids, addKids} from '../ui.js';
@@ -502,7 +502,7 @@ function compareCard(result) {
   const { ids: mineIds, source } = resolveSquadIds(d.entry, getState());
   if (mineIds.length !== 15) {
     return el('div', { class: 'card' },
-      el('h2', {}, 'Compare with my squad'),
+      el('div', { class: 'row between' }, el('h2', {}, 'Compare with my squad'), horizonBadge(horizon === 5 ? 'next5' : `next${horizon}`)),
       el('p', { class: 'hint' },
         source === 'none'
           ? 'No squad of your own yet. Save one here, or wait for your FPL picks to publish after the first deadline, and this will compare the two.'
@@ -512,7 +512,7 @@ function compareCard(result) {
   const mine = mineIds.map((id) => byId.get(id)).filter(Boolean);
   if (mine.length !== 15) {
     return el('div', { class: 'card' },
-      el('h2', {}, 'Compare with my squad'),
+      el('div', { class: 'row between' }, el('h2', {}, 'Compare with my squad'), horizonBadge(horizon === 5 ? 'next5' : `next${horizon}`)),
       el('p', { class: 'hint' }, 'Some of your players are missing from the current dataset, so the comparison is not reliable this refresh.'));
   }
 
@@ -538,7 +538,7 @@ function compareCard(result) {
   };
 
   return el('div', { class: 'card' },
-    el('h2', {}, 'Compare with my squad'),
+    el('div', { class: 'row between' }, el('h2', {}, 'Compare with my squad'), horizonBadge(horizon === 5 ? 'next5' : `next${horizon}`)),
     el('div', { class: 'tiles' },
       el('div', { class: 'tile' },
         el('span', { class: 'k' }, `Your squad · ${horizon} GW`),

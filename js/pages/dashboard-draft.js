@@ -10,7 +10,7 @@
  * transfers or the Classic optimiser. The two dashboards share a tab strip and
  * nothing else.
  */
-import { el, setKids, fmt } from '../ui.js';
+import { el, setKids, fmt, horizonBadge } from '../ui.js';
 import { readSnapshot } from '../data.js';
 import { projectBoard } from '../draft/project.js';
 import { rateLeague, bestXI } from '../draft/rating.js';
@@ -146,7 +146,7 @@ export async function renderDraftDashboard(host) {
     });
 
     setKids(into,
-      el('h2', {}, 'Squad'),
+      el('div', { class: 'row between' }, el('h2', {}, 'Squad'), horizonBadge('gw')),
       el('p', { class: 'hint' },
         'Ranked by projected points for the next gameweek — the decision you are actually making. '
         + 'Drag a player onto another to swap them; hold to pick one up on a phone.'),
@@ -196,7 +196,7 @@ export async function renderDraftDashboard(host) {
   setKids(host,
     /* ---- headline: rings + gameweek ---- */
     el('div', { class: 'card' },
-      el('h2', {}, 'My Draft team'),
+      el('div', { class: 'row between' }, el('h2', {}, 'My Draft team'), horizonBadge('ros')),
       el('div', { class: 'dd-head' },
         me ? activityRings(
           [
