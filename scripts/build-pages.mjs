@@ -6,6 +6,7 @@
  * ladder screen is cyan, the stats screen lime — so each page owns one.
  */
 import { readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { dirname, join, normalize } from 'node:path';
 
 const PAGES = [
@@ -38,6 +39,28 @@ const entryFor = (p) => `js/pages/${p.slug === 'index' ? 'dashboard' : p.slug}.j
  * obligation it creates: re-run this script after adding an import, the same as
  * for any other change here. A stale list is slow, never wrong.
  */
+/**
+ * A content hash over a page's whole module graph, used to version its script
+ * URLs.
+ *
+ * Data files already carry a cache-buster; JS did not, and browsers were
+ * serving stale modules after a deploy — a change would be live in the repo,
+ * live on Pages, and simply not running in anyone's browser until they
+ * happened to hard-refresh. That is the worst kind of bug: everything reports
+ * success and the user sees the old app.
+ *
+ * Hashing the graph rather than stamping a build time means an unchanged page
+ * keeps its URL and stays cached, which is the whole point of caching.
+ */
+async function graphHash(files) {
+  const h = createHash('sha256');
+  for (const f of [...files].sort()) {
+    h.update(f);
+    h.update(await readFile(f, 'utf8').catch(() => ''));
+  }
+  return h.digest('hex').slice(0, 8);
+}
+
 async function moduleGraph(file, out = new Set()) {
   let src;
   try {
@@ -55,9 +78,34 @@ async function moduleGraph(file, out = new Set()) {
   return out;
 }
 
+/**
+ * Modules reached only through a dynamic `import()`.
+ *
+ * These must NOT be preloaded — being lazy is the whole reason they are
+ * dynamic — but they DO have to affect the page's version hash, or editing one
+ * leaves every browser running the cached copy with nothing to signal it.
+ */
+async function lazyGraph(files) {
+  const out = new Set();
+  for (const file of files) {
+    const src = await readFile(file, 'utf8').catch(() => '');
+    // Matches both import('./x.js') and import(`./x.js${v}`) — the second form
+    // is what a cache-busted lazy import looks like, and a quote-only pattern
+    // silently found nothing, which is exactly the staleness this guards.
+    for (const [, spec] of src.matchAll(/import\(\s*[`']([^`'$]+)/g)) {
+      if (!spec.startsWith('.')) continue;
+      const path = normalize(join(dirname(file), spec));
+      if (out.has(path) || files.has?.(path)) continue;
+      out.add(path);
+      await moduleGraph(path, out);
+    }
+  }
+  return out;
+}
+
 const href = (p) => `${p.slug}.html`;
 
-const page = (p, modules) => `<!DOCTYPE html>
+const page = (p, modules, v, cssV) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -79,9 +127,9 @@ const page = (p, modules) => `<!DOCTYPE html>
 <link rel="preload" href="fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin />
-${modules.map((m) => `<link rel="modulepreload" href="${m}" />`).join('\n')}
-<link rel="stylesheet" href="css/base.css" />
-<link rel="stylesheet" href="css/app.css" />
+${modules.map((m) => `<link rel="modulepreload" href="${m}?v=${v}" />`).join('\n')}
+<link rel="stylesheet" href="css/base.css?v=${cssV}" />
+<link rel="stylesheet" href="css/app.css?v=${cssV}" />
 </head>
 <body data-accent="${p.accent}" data-page="${p.slug}">
 <header class="topbar">
@@ -101,14 +149,24 @@ ${PAGES.map((q) => `    <a href="${href(q)}"${q.slug === p.slug ? ' class="activ
 <nav class="bottomnav">
 ${PAGES.map((q) => `  <a href="${href(q)}"${q.slug === p.slug ? ' class="active"' : ''}><img src="img/${q.icon}.svg" alt="" /><span>${q.nav}</span></a>`).join('\n')}
 </nav>
-<script type="module" src="${entryFor(p)}"></script>
+<script type="module" src="${entryFor(p)}?v=${v}"></script>
 </body>
 </html>
 `;
 
+// Stylesheets need the same treatment as modules, and for the same reason: a
+// cached app.css against fresh JS renders new markup with no rules for it,
+// which looks like a layout bug rather than a caching one.
+const cssV = await graphHash(['css/base.css', 'css/app.css']);
+
 for (const p of PAGES) {
   const entry = entryFor(p);
   const modules = [entry, ...await moduleGraph(entry)];
-  await writeFile(`${p.slug}.html`, page(p, modules));
-  console.log(`✓ ${p.slug}.html — ${p.accent}, ${modules.length} module${modules.length === 1 ? '' : 's'} preloaded`);
+  // Lazy modules count toward the hash but are deliberately left out of the
+  // preload list below.
+  const lazy = await lazyGraph(new Set(modules));
+  const v = await graphHash([...modules, ...lazy]);
+  await writeFile(`${p.slug}.html`, page(p, modules, v, cssV));
+  console.log(`✓ ${p.slug}.html — ${p.accent}, ${modules.length} module${modules.length === 1 ? '' : 's'}`
+    + `${lazy.size ? ` + ${lazy.size} lazy` : ''}, v=${v}`);
 }
