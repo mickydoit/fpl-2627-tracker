@@ -1,6 +1,7 @@
 import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
 import { projectAll, POS } from '../model.js';
 import { suggestTransfers, bestXI, scoreSquad } from '../optimiser.js';
+import { bestMove, recommendedHorizon, TRANSFER_CONFIG } from '../transfer-advice.js';
 import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown , setKids, addKids} from '../ui.js';
 
 const app = $('#app');
@@ -102,15 +103,52 @@ function run() {
       ),
     );
 
-    const best = res.singles[0];
+    /**
+     * The old headline simply printed the highest-scoring legal move, which
+     * meant a +0.3 swap was presented with the same confidence as a +9 one.
+     * The adviser decides whether ANY move is worth a transfer, and most weeks
+     * answers no.
+     */
+    const rec = recommendedHorizon({ squad, freeTransfers });
+    const hcache = new Map();
+    const rowsAtH = (h) => {
+      if (!hcache.has(h)) hcache.set(h, projectAll(d.boot, d.fixtures, { horizon: h, riskAversion }).rows);
+      return hcache.get(h);
+    };
+    const gainAt = (move, h) => {
+      const byH = new Map(rowsAtH(h).map((r) => [r.id, r]));
+      const sq = squadIds.map((id) => byH.get(id)).filter(Boolean);
+      const inc = byH.get(move.in.id);
+      if (sq.length !== 15 || !inc) return 0;
+      const base = scoreSquad(sq, { horizon: h, riskAversion });
+      return scoreSquad(sq.filter((p) => p.id !== move.out.id).concat(inc), { horizon: h, riskAversion }) - base;
+    };
+    const advice = bestMove(res.singles, gainAt, { hit: freeTransfers >= 1 ? 0 : 4 });
+    const isMove = advice && advice.verdict !== 'HOLD' && advice.verdict !== 'WATCH';
 
-    setKids(output, 
+    setKids(output,
+      el('div', { class: `advice ${isMove ? (advice.verdict === 'STRONG TRANSFER' ? 'strong' : 'good') : 'hold'}` },
+        el('h3', {}, 'This week'),
+        el('p', { class: 'hint' }, `Planning over ${rec.horizon} gameweeks. ${rec.why}`),
+        el('p', { class: 'advice-verdict' }, advice ? advice.verdict : 'HOLD'),
+        isMove
+          ? el('div', {},
+            el('p', { class: 'advice-move' },
+              el('strong', {}, advice.move.out.web_name), ' → ', el('strong', {}, advice.move.in.web_name),
+              el('span', { class: 'dim' }, `  ${advice.move.hit ? `−${advice.move.hit} hit` : 'free transfer'}`)),
+            el('div', { class: 'tiles' }, advice.cross.gains.map((g) => el('div', { class: 'tile' },
+              el('span', { class: 'k' }, `Next ${g.horizon}`),
+              el('span', { class: 'v' }, `${g.gain >= 0 ? '+' : ''}${g.gain.toFixed(1)}`)))),
+            el('p', { class: 'hint' }, `Confidence ${advice.confidence}. ${advice.reasons.join('; ')}.`))
+          : el('div', {},
+            el('p', {}, advice
+              ? `The best available move is ${advice.move.out.web_name} → ${advice.move.in.web_name}, `
+                + `worth ${advice.gain >= 0 ? '+' : ''}${advice.gain.toFixed(1)} over ${rec.horizon} gameweeks — ${advice.reasons[0]}.`
+              : 'No legal move improves this squad.'),
+            el('p', { class: 'hint' }, 'A free transfer can be banked, so a move has to beat the player you own, '
+              + `the model's error and the value of keeping the transfer. Nothing clears that bar this week.`)),
+      ),
       el('div', { class: 'tiles' },
-        el('div', { class: 'tile accent' },
-          el('span', { class: 'k' }, 'Best single move'),
-          el('span', { class: 'v' }, best ? fmt.signed(best.net) : '—'),
-          el('span', { class: 's' }, best ? `${best.out.web_name} → ${best.in.web_name}` : 'no improving move found'),
-        ),
         el('div', { class: 'tile' },
           el('span', { class: 'k' }, `Squad projection`),
           el('span', { class: 'v' }, fmt.pts(scoreSquad(squad, { horizon, riskAversion }))),
@@ -129,8 +167,11 @@ function run() {
       ),
 
       el('div', { class: 'card' },
-        el('h2', {}, 'Single transfers'),
-        el('p', { class: 'hint' }, `Net gain in projected points over the next ${horizon} gameweeks, after any points hit. Only moves you can afford with ${fmt.price(bank)} in the bank and that keep you within 3 players per club.`),
+        el('h2', {}, 'Every legal move'),
+        el('p', { class: 'hint' }, `For reference, not recommendation — the verdict above is the one to act on. `
+          + `Net gain over ${horizon} gameweeks after any hit, for moves you can afford with ${fmt.price(bank)} in the bank `
+          + `and that keep you within 3 per club. Anything under +${TRANSFER_CONFIG.meaningful.toFixed(1)} is inside the `
+          + `model's own error and should not move a squad on its own.`),
         res.singles.length
           ? el('div', {}, res.singles.map((s) => {
               const node = swapRow(s);
