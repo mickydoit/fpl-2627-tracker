@@ -1,6 +1,7 @@
 import { loadAll, getState, resolveSquadIds } from '../data.js';
 import { projectAll, POS } from '../model.js';
 import { bestXI, scoreSquad } from '../optimiser.js';
+import { squadPitch, playerCard } from '../squadview.js';
 import { $, el, fmt, dataBar, countdown, statusBadge, posPill, modal, breakdown , setKids, addKids} from '../ui.js';
 
 /**
@@ -160,26 +161,6 @@ if (squadIds.length === 15) {
     el('span', { class: 'small dim' }, squadSource === 'fpl' ? 'from your FPL team' : 'from your saved squad'),
   );
 
-  const shirt = (p, isCap) => {
-    const lp = livePts(p);
-    const shown = isLiveGW ? (lp ?? 0) : (p.projPerGW * (isCap ? 2 : 1));
-    const l = liveById.get(p.id);
-    return el('div', {
-      class: `shirt ${isCap ? 'cap' : ''}`,
-      title: `${p.first_name} ${p.second_name} — ${teams[p.team]?.name}`,
-      onClick: () => showPlayer(p),
-    },
-      isCap ? el('span', { class: 'arm' }, 'C') : null,
-      el('span', { class: 'nm' }, p.web_name),
-      el('span', { class: 'pr' }, isLiveGW && l ? `${l.minutes}'` : fmt.price(p.now_cost)),
-      el('span', { class: 'pt' }, fmt.pts(shown)),
-    );
-  };
-
-  const rowFor = (pos) => {
-    const ps = xi.filter((p) => p.element_type === pos);
-    return ps.length ? el('div', { class: 'pitch-row' }, ps.map((p) => shirt(p, p === captain))) : null;
-  };
 
   addKids(app, 
     el('div', { class: 'card' },
@@ -201,10 +182,15 @@ if (squadIds.length === 15) {
           el('span', { class: 's' }, squad.filter((p) => p.status !== 'a').map((p) => p.web_name).join(', ') || 'all fit'),
         ),
       ),
-      el('div', { class: 'pitch' },
-        [1, 2, 3, 4].map(rowFor).filter(Boolean),
-        el('div', { class: 'bench-strip' }, bench.map((p) => shirt(p, false))),
-      ),
+      // The shared squad view, so a shirt here looks and behaves exactly as it
+      // does on the Optimiser and the Draft dashboard — club badge included,
+      // which this page never used to show.
+      squadPitch({
+        xi, bench, teams, captain,
+        value: (p) => fmt.pts(isLiveGW ? (livePts(p) ?? 0) : p.projPerGW * (p === captain ? 2 : 1)),
+        sub: (p) => (isLiveGW && liveById.get(p.id) ? `${liveById.get(p.id).minutes}'` : fmt.price(p.now_cost)),
+        onPlayer: showPlayer,
+      }),
     ),
   );
 } else {
@@ -328,21 +314,28 @@ if (d.notes?.watchlist?.length) {
 }
 
 /* ------------------------------------------------------------------ */
+/** A player's upcoming fixtures, shaped for the shared player card. */
+const fixturesFor = (p) => (d.fixtures || [])
+  .filter((f) => f.event && (f.team_h === p.team || f.team_a === p.team))
+  .map((f) => ({
+    event: f.event,
+    home: f.team_h === p.team,
+    opponent: f.team_h === p.team ? f.team_a : f.team_h,
+    difficulty: f.team_h === p.team ? f.team_h_difficulty : f.team_a_difficulty,
+  }))
+  .sort((a, b) => a.event - b.event);
+
 function showPlayer(p) {
-  const t = teams[p.team];
-  const body = el('div', {},
-    el('p', { class: 'row' }, posPill(p), el('strong', {}, `${p.first_name} ${p.second_name}`), el('span', { class: 'dim' }, t?.name), statusBadge(p)),
-    p.news ? el('p', { class: 'small badge warn', style: 'display:block;padding:0.4rem 0.6rem' }, p.news) : null,
-    el('div', { class: 'tiles' },
+  playerCard(p, {
+    teams,
+    fixturesFor,
+    horizon: 5,
+    fromEvent: ctx?.nextEvent ?? 1,
+    extra: el('div', { class: 'tiles' },
       el('div', { class: 'tile' }, el('span', { class: 'k' }, 'Price'), el('span', { class: 'v' }, fmt.price(p.now_cost))),
       el('div', { class: 'tile' }, el('span', { class: 'k' }, `Proj ${horizon} GW`), el('span', { class: 'v' }, fmt.pts(p.proj))),
       el('div', { class: 'tile' }, el('span', { class: 'k' }, 'Owned by'), el('span', { class: 'v' }, `${p.selected_by_percent}%`)),
     ),
-    el('h3', {}, 'Per-gameweek breakdown'),
-    breakdown(p.parts || {}),
-    p.parts?.isPrior
-      ? el('p', { class: 'hint' }, 'Limited minutes on record — this projection leans on a price-based prior rather than his own data.')
-      : null,
-  );
-  modal(p.web_name, body);
+  });
 }
+

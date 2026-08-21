@@ -651,3 +651,14 @@ tr.mine { background: rgba(159, 237, 0, 0.08); }
 .compare-col .pitch { margin: 0; }
 .compare-col .shirt { transform: scale(.86); }
 .compare-col .pitch-row { gap: .25rem; }
+
+/* table column geometry — the class is shared by th and td */
+table.players th.col-c, table.players td.col-c { text-align: center; font-variant-numeric: tabular-nums; }
+table.players th.col-l, table.players td.col-l { text-align: left; }
+table.players th.col-r, table.players td.col-r { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* fixture colour key */
+.fdrkey { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin: .75rem 0 .5rem; font-size: .72rem; }
+.fdrkey-t { letter-spacing: .1em; text-transform: uppercase; font-weight: 800; color: var(--muted); }
+.fdrkey-l, .fdrkey-c { color: var(--muted); }
+.fdrkey-c { margin-left: auto; }

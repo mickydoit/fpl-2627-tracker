@@ -252,3 +252,28 @@ export function modal(title, body) {
   document.addEventListener('keydown', esc);
   return back;
 }
+
+/**
+ * The key to the fixture colours.
+ *
+ * Built from the same `data-d` values that fdrTicker() stamps on every chip,
+ * so the legend and the chips are styled by one CSS rule set and cannot
+ * disagree. Inventing a second palette here is exactly how a legend ends up
+ * lying about the thing it explains.
+ */
+export function fdrLegend() {
+  const levels = [
+    [1, 'Very favourable'],
+    [2, 'Favourable'],
+    [3, 'Neutral'],
+    [4, 'Difficult'],
+    [5, 'Very difficult'],
+  ];
+  return el('div', { class: 'fdrkey' },
+    el('span', { class: 'fdrkey-t' }, 'Fixture key'),
+    el('span', { class: 'fdr' }, levels.map(([d, label]) =>
+      el('span', { 'data-d': String(d), title: `Difficulty ${d} — ${label}` }, String(d)))),
+    el('span', { class: 'fdrkey-l' }, 'easier → harder'),
+    el('span', { class: 'fdrkey-c' }, 'UPPERCASE = home · lowercase = away'),
+  );
+}

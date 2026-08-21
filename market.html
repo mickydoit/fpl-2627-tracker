@@ -20,12 +20,15 @@
 <link rel="preload" href="fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="modulepreload" href="js/pages/market.js?v=83f60988" />
-<link rel="modulepreload" href="js/data.js?v=83f60988" />
-<link rel="modulepreload" href="js/ui.js?v=83f60988" />
-<link rel="modulepreload" href="js/model.js?v=83f60988" />
-<link rel="stylesheet" href="css/base.css?v=f054f705" />
-<link rel="stylesheet" href="css/app.css?v=f054f705" />
+<script type="importmap">
+{"imports":{"./js/pages/market.js":"./js/pages/market.js?v=d698c7e6","./js/data.js":"./js/data.js?v=d698c7e6","./js/ui.js":"./js/ui.js?v=d698c7e6","./js/model.js":"./js/model.js?v=d698c7e6"}}
+</script>
+<link rel="modulepreload" href="js/pages/market.js?v=d698c7e6" />
+<link rel="modulepreload" href="js/data.js?v=d698c7e6" />
+<link rel="modulepreload" href="js/ui.js?v=d698c7e6" />
+<link rel="modulepreload" href="js/model.js?v=d698c7e6" />
+<link rel="stylesheet" href="css/base.css?v=60abd53c" />
+<link rel="stylesheet" href="css/app.css?v=60abd53c" />
 </head>
 <body data-accent="cyan" data-page="market">
 <header class="topbar">
@@ -36,11 +39,10 @@
   <nav>
     <a href="index.html">Dashboard</a>
     <a href="squad.html">Optimiser</a>
-    <a href="draft.html">Draft</a>
     <a href="transfers.html">Transfers</a>
     <a href="players.html">Players</a>
     <a href="market.html" class="active">Market</a>
-    <a href="rules.html">Rules</a>
+    <a href="draft.html">Draft</a>
   </nav>
 </header>
 <main class="container">
@@ -51,12 +53,11 @@
 <nav class="bottomnav">
   <a href="index.html"><img src="img/nav-dashboard.svg" alt="" /><span>Dashboard</span></a>
   <a href="squad.html"><img src="img/nav-squad.svg" alt="" /><span>Optimiser</span></a>
-  <a href="draft.html"><img src="img/nav-draft.svg" alt="" /><span>Draft</span></a>
   <a href="transfers.html"><img src="img/nav-transfers.svg" alt="" /><span>Transfers</span></a>
   <a href="players.html"><img src="img/nav-players.svg" alt="" /><span>Players</span></a>
   <a href="market.html" class="active"><img src="img/nav-market.svg" alt="" /><span>Market</span></a>
-  <a href="rules.html"><img src="img/nav-rules.svg" alt="" /><span>Rules</span></a>
+  <a href="draft.html"><img src="img/nav-draft.svg" alt="" /><span>Draft</span></a>
 </nav>
-<script type="module" src="js/pages/market.js?v=83f60988"></script>
+<script type="module" src="js/pages/market.js?v=d698c7e6"></script>
 </body>
 </html>

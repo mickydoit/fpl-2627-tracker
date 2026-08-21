@@ -15,11 +15,13 @@ const PAGES = [
   // transparent ground, which is what the bottom nav's grey-out filter expects.
   { slug: 'index',     title: 'Dashboard',         accent: 'lime',   icon: 'nav-dashboard', nav: 'Dashboard' },
   { slug: 'squad',     title: 'Squad Optimiser',   accent: 'cyan',   icon: 'nav-squad',     nav: 'Optimiser' },
-  { slug: 'draft',     title: 'Draft Board',       accent: 'cyan',   icon: 'nav-draft',     nav: 'Draft' },
   { slug: 'transfers', title: 'Transfers',         accent: 'yellow', icon: 'nav-transfers', nav: 'Transfers' },
   { slug: 'players',   title: 'Players',           accent: 'lime',   icon: 'nav-players',   nav: 'Players' },
   { slug: 'market',    title: 'Market',            accent: 'cyan',   icon: 'nav-market',    nav: 'Market' },
-  { slug: 'rules',     title: 'Rules',             accent: 'yellow', icon: 'nav-rules',     nav: 'Rules' },
+  { slug: 'rules',     title: 'Rules',             accent: 'yellow', icon: 'nav-rules',     nav: 'Rules', hidden: true },
+  // Draft sits last: it is a separate product mode, not another view of the
+  // Classic tracker, and putting it at the end says so.
+  { slug: 'draft',     title: 'Draft Board',       accent: 'cyan',   icon: 'nav-draft',     nav: 'Draft' },
 ];
 
 /** The dashboard's module is named for what it is, not for its URL. */
@@ -105,7 +107,30 @@ async function lazyGraph(files) {
 
 const href = (p) => `${p.slug}.html`;
 
-const page = (p, modules, v, cssV) => `<!DOCTYPE html>
+/**
+ * An import map, because a version query does not survive a nested import.
+ *
+ * `squad.js?v=abc` importing `../ui.js` resolves against its own URL and the
+ * query is NOT inherited — the browser fetches an unversioned `/js/ui.js` and
+ * happily serves whatever it cached last week. Versioning only the entry point
+ * therefore busts nothing below it, and worse, the preload hints point at URLs
+ * the imports never request.
+ *
+ * Mapping every module in the graph fixes both: the specifier a module writes
+ * is rewritten to the versioned URL, so one map covers the whole tree.
+ *
+ * Keys MUST carry the `./` prefix. Without it the browser reads `js/ui.js` as a
+ * BARE specifier — the npm-package kind — which never matches a relative import
+ * and silently maps nothing. Keeping them relative also means this works at the
+ * site root and under a project subpath alike.
+ */
+const importMap = (modules, v) => `<script type="importmap">
+${JSON.stringify({
+    imports: Object.fromEntries(modules.map((m) => [`./${m}`, `./${m}?v=${v}`])),
+  }, null, 0)}
+</script>`;
+
+const page = (p, modules, v, cssV, lazy = []) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -127,6 +152,7 @@ const page = (p, modules, v, cssV) => `<!DOCTYPE html>
 <link rel="preload" href="fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin />
+${importMap([...modules, ...lazy], v)}
 ${modules.map((m) => `<link rel="modulepreload" href="${m}?v=${v}" />`).join('\n')}
 <link rel="stylesheet" href="css/base.css?v=${cssV}" />
 <link rel="stylesheet" href="css/app.css?v=${cssV}" />
@@ -138,7 +164,7 @@ ${modules.map((m) => `<link rel="modulepreload" href="${m}?v=${v}" />`).join('\n
     <span class="brand-text">FPL<br />26/27</span>
   </a>
   <nav>
-${PAGES.map((q) => `    <a href="${href(q)}"${q.slug === p.slug ? ' class="active"' : ''}>${q.nav}</a>`).join('\n')}
+${PAGES.filter((q) => !q.hidden).map((q) => `    <a href="${href(q)}"${q.slug === p.slug ? ' class="active"' : ''}>${q.nav}</a>`).join('\n')}
   </nav>
 </header>
 <main class="container">
@@ -147,7 +173,7 @@ ${PAGES.map((q) => `    <a href="${href(q)}"${q.slug === p.slug ? ' class="activ
   <div id="app"><p class="loading">Loading…</p></div>
 </main>
 <nav class="bottomnav">
-${PAGES.map((q) => `  <a href="${href(q)}"${q.slug === p.slug ? ' class="active"' : ''}><img src="img/${q.icon}.svg" alt="" /><span>${q.nav}</span></a>`).join('\n')}
+${PAGES.filter((q) => !q.hidden).map((q) => `  <a href="${href(q)}"${q.slug === p.slug ? ' class="active"' : ''}><img src="img/${q.icon}.svg" alt="" /><span>${q.nav}</span></a>`).join('\n')}
 </nav>
 <script type="module" src="${entryFor(p)}?v=${v}"></script>
 </body>
@@ -166,7 +192,7 @@ for (const p of PAGES) {
   // preload list below.
   const lazy = await lazyGraph(new Set(modules));
   const v = await graphHash([...modules, ...lazy]);
-  await writeFile(`${p.slug}.html`, page(p, modules, v, cssV));
+  await writeFile(`${p.slug}.html`, page(p, modules, v, cssV, [...lazy]));
   console.log(`✓ ${p.slug}.html — ${p.accent}, ${modules.length} module${modules.length === 1 ? '' : 's'}`
     + `${lazy.size ? ` + ${lazy.size} lazy` : ''}, v=${v}`);
 }

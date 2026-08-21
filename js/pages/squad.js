@@ -2,6 +2,7 @@ import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
 import { projectAll, POS, SQUAD_RULES } from '../model.js';
 import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI, scoreSquad } from '../optimiser.js';
 import { squadPitch, playerCard } from '../squadview.js';
+import { fdrLegend } from '../ui.js';
 import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown , setKids, addKids} from '../ui.js';
 
 const app = $('#app');
@@ -335,19 +336,16 @@ function renderResult(ms) {
       el('h2', {}, 'Squad detail'),
       el('div', { class: 'tablewrap' },
         el('table', { class: 'players' },
-          el('thead', {}, el('tr', {}, ['Pos', 'Player', 'Price', `Proj ${horizon}GW`, 'Pts/£m', 'Own %', 'Fixtures'].map((h) => el('th', {}, h)))),
+          // One definition per column drives BOTH the header and the cell, so a
+          // heading cannot drift out of alignment with the values under it —
+          // which is what happened when only the cells carried a class.
+          el('thead', {}, el('tr', {}, SQUAD_COLUMNS(horizon).map((c) => el('th', { class: c.cls }, c.label)))),
           el('tbody', {}, squad.map((p) =>
             el('tr', { class: xi.includes(p) ? 'picked' : '', style: 'cursor:pointer', onClick: () => showPlayer(p) },
-              el('td', {}, posPill(p)),
-              el('td', { class: 'name' }, p.web_name, el('span', { class: 'club' }, teams[p.team]?.short_name), ' ', statusBadge(p), ' ', penBadge(p)),
-              el('td', { class: 'num' }, fmt.price(p.now_cost)),
-              el('td', { class: 'num proj' }, fmt.pts(p.proj)),
-              el('td', { class: 'num' }, fmt.pts(p.value)),
-              el('td', { class: 'num' }, `${p.selected_by_percent}%`),
-              el('td', {}, fdrTicker(p.fixtures, teams, Math.min(horizon, 6), ctx.fromEvent)),
-            ))),
+              ...SQUAD_COLUMNS(horizon).map((c) => el('td', { class: c.cls + (c.extra ? ` ${c.extra}` : '') }, c.cell(p)))))),
         ),
       ),
+      fdrLegend(),
       el('p', { class: 'hint' }, 'Highlighted rows are the starting XI; the rest is your bench.'),
       el('p', { class: 'hint' }, manualXi
         ? 'Manual XI — your swaps are saved. Re-optimising restores the suggested team.'
@@ -355,6 +353,25 @@ function renderResult(ms) {
     ),
   );
 }
+
+/**
+ * Column geometry for the squad detail table.
+ *
+ * `cls` is applied identically to the `th` and the `td`, which is the whole
+ * point: alignment is a property of the column, not of the two places it
+ * happens to be written. Numbers are centred per the owner's preference;
+ * player and fixtures stay left, because both are variable-width content that
+ * reads badly centred.
+ */
+const SQUAD_COLUMNS = (horizon) => [
+  { label: 'Pos', cls: 'col-c', cell: (p) => posPill(p) },
+  { label: 'Player', cls: 'col-l name', cell: (p) => [p.web_name, el('span', { class: 'club' }, teams[p.team]?.short_name), ' ', statusBadge(p), ' ', penBadge(p)] },
+  { label: 'Price', cls: 'col-c', cell: (p) => fmt.price(p.now_cost) },
+  { label: `Proj ${horizon}GW`, cls: 'col-c', extra: 'proj', cell: (p) => fmt.pts(p.proj) },
+  { label: 'Pts/£m', cls: 'col-c', cell: (p) => fmt.pts(p.value) },
+  { label: 'Own %', cls: 'col-c', cell: (p) => `${p.selected_by_percent}%` },
+  { label: 'Fixtures', cls: 'col-l', cell: (p) => fdrTicker(p.fixtures, teams, Math.min(horizon, 6), ctx.fromEvent) },
+];
 
 function saveSquad() {
   setState({ manualSquad: result.squad.map((p) => p.id) });

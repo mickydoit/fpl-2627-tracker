@@ -76,10 +76,25 @@ export function setState(patch) {
  * Your 15. Prefers the squad the workflow pulled from your FPL entry id;
  * falls back to whatever you picked manually in the optimiser.
  */
+/**
+ * Which fifteen to show.
+ *
+ * Your REAL picks win once FPL publishes them. A saved squad used to take
+ * precedence unconditionally, which was right before the first deadline — when
+ * picks do not exist yet and a planned squad is all there is — and wrong
+ * immediately after, when it meant the Dashboard showed a stale plan while your
+ * actual team scored points, with no control anywhere in the app to clear it.
+ *
+ * `preferManual` is the escape hatch: set it and a saved squad wins again, for
+ * planning a wildcard or a future gameweek. It is explicit, and it is
+ * reversible.
+ */
 export function resolveSquadIds(entry, state) {
-  if (state?.manualSquad?.length === 15) return { ids: state.manualSquad, source: 'manual' };
   const picks = entry?.picks?.picks;
+  const manual = state?.manualSquad || [];
+  if (state?.preferManual && manual.length === 15) return { ids: manual, source: 'manual' };
   if (picks?.length) return { ids: picks.map((p) => p.element), source: 'fpl' };
-  if (state?.manualSquad?.length) return { ids: state.manualSquad, source: 'manual-partial' };
+  if (manual.length === 15) return { ids: manual, source: 'manual' };
+  if (manual.length) return { ids: manual, source: 'manual-partial' };
   return { ids: [], source: 'none' };
 }
