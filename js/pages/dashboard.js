@@ -1,7 +1,7 @@
 import { loadAll, getState, resolveSquadIds } from '../data.js';
 import { projectAll, POS } from '../model.js';
-import { bestXI, scoreSquad } from '../optimiser.js';
-import { squadPitch, playerCard } from '../squadview.js';
+import { bestXI, scoreSquad, legalXI } from '../optimiser.js';
+import { squadPitch, playerCard, enableSwapping } from '../squadview.js';
 import { $, el, fmt, dataBar, countdown, statusBadge, posPill, modal, breakdown , setKids, addKids} from '../ui.js';
 
 /**
@@ -162,37 +162,99 @@ if (squadIds.length === 15) {
   );
 
 
-  addKids(app, 
-    el('div', { class: 'card' },
+  /**
+   * Your XI is yours to set here too.
+   *
+   * The page shows the eleven you actually submitted when FPL has published
+   * picks, and the model's preferred eleven before that — but either way you
+   * may want to try a change and see what it costs. Stored in Classic state,
+   * under its own key, and never read by anything in Draft.
+   *
+   * A live gameweek is the one time this is locked: once players are scoring,
+   * rearranging a lineup you can no longer change would be fiction.
+   */
+  const MY_XI_KEY = 'myXi';
+  const optimalClassic = bestXI(squad);
+  let chosenXi = xi.map((p) => p.id);
+  if (!isLiveGW) {
+    const saved = getState()[MY_XI_KEY];
+    if (Array.isArray(saved) && saved.length === 11) {
+      const rows = saved.map((id) => byId.get(id)).filter(Boolean);
+      if (rows.length === 11 && legalXI(rows) && rows.every((r) => squad.includes(r))) {
+        chosenXi = saved;
+      }
+    }
+  }
+
+  const squadCard = el('div', { class: 'card' });
+  const paintClassicSquad = () => {
+    const curXi = chosenXi.map((id) => byId.get(id)).filter(Boolean);
+    const curBench = squad.filter((p) => !chosenXi.includes(p.id));
+    const cap = curXi.includes(captain) ? captain : null;
+    const projTotal = curXi.reduce((t, p) => t + p.projPerGW, 0) + (cap?.projPerGW || 0);
+    const liveTotal = curXi.reduce((t, p) => t + (livePts(p) ?? 0), 0);
+    const optTotal = optimalClassic.xi.reduce((t, p) => t + p.projPerGW, 0)
+      + (optimalClassic.captain?.projPerGW || 0);
+    const lost = optTotal - projTotal;
+
+    const pitch = squadPitch({
+      xi: curXi, bench: curBench, teams, captain: cap,
+      value: (p) => fmt.pts(isLiveGW ? (livePts(p) ?? 0) : p.projPerGW * (p === cap ? 2 : 1)),
+      sub: (p) => (isLiveGW && liveById.get(p.id) ? `${liveById.get(p.id).minutes}'` : fmt.price(p.now_cost)),
+      onPlayer: showPlayer,
+    });
+
+    setKids(squadCard,
       head,
       el('div', { class: 'tiles' },
         el('div', { class: 'tile accent' },
           el('span', { class: 'k' }, isLiveGW ? 'Live points' : 'Projected points'),
-          el('span', { class: 'v' }, fmt.pts(total)),
-          el('span', { class: 's' }, isLiveGW ? 'includes provisional bonus once official' : `captain: ${captain?.web_name || '—'}`),
-        ),
+          el('span', { class: 'v' }, fmt.pts(isLiveGW ? liveTotal : projTotal)),
+          el('span', { class: 's' }, isLiveGW ? 'includes provisional bonus once official' : `captain: ${cap?.web_name || '—'}`)),
         el('div', { class: 'tile' },
           el('span', { class: 'k' }, `Next ${horizon} GWs`),
           el('span', { class: 'v' }, fmt.pts(scoreSquad(squad, { horizon }))),
-          el('span', { class: 's' }, 'XI + captain + weighted bench'),
-        ),
-        el('div', { class: 'tile' },
-          el('span', { class: 'k' }, 'Flagged players'),
-          el('span', { class: 'v' }, squad.filter((p) => p.status !== 'a').length),
-          el('span', { class: 's' }, squad.filter((p) => p.status !== 'a').map((p) => p.web_name).join(', ') || 'all fit'),
-        ),
+          el('span', { class: 's' }, 'XI + captain + weighted bench')),
+        isLiveGW
+          ? el('div', { class: 'tile' },
+            el('span', { class: 'k' }, 'Flagged players'),
+            el('span', { class: 'v' }, squad.filter((p) => p.status !== 'a').length),
+            el('span', { class: 's' }, squad.filter((p) => p.status !== 'a').map((p) => p.web_name).join(', ') || 'all fit'))
+          : el('div', { class: `tile ${lost > 0.05 ? 'warn' : ''}` },
+            el('span', { class: 'k' }, 'On your bench'),
+            el('span', { class: 'v' }, lost > 0.05 ? `−${lost.toFixed(1)}` : '0.0'),
+            el('span', { class: 's' }, lost > 0.05 ? 'points left out of the XI' : 'you are playing the optimum')),
       ),
-      // The shared squad view, so a shirt here looks and behaves exactly as it
-      // does on the Optimiser and the Draft dashboard — club badge included,
-      // which this page never used to show.
-      squadPitch({
-        xi, bench, teams, captain,
-        value: (p) => fmt.pts(isLiveGW ? (livePts(p) ?? 0) : p.projPerGW * (p === captain ? 2 : 1)),
-        sub: (p) => (isLiveGW && liveById.get(p.id) ? `${liveById.get(p.id).minutes}'` : fmt.price(p.now_cost)),
-        onPlayer: showPlayer,
-      }),
-    ),
-  );
+      isLiveGW
+        ? el('p', { class: 'hint' }, 'The gameweek is live, so the lineup is fixed.')
+        : el('p', { class: 'hint' }, 'Drag a player onto another to swap them — hold to pick one up on a phone. Only legal swaps highlight.'),
+      pitch,
+      !isLiveGW && lost > 0.05
+        ? el('button', { class: 'ghost', onClick: () => {
+          chosenXi = optimalClassic.xi.map((p) => p.id);
+          setState({ [MY_XI_KEY]: chosenXi });
+          paintClassicSquad();
+        } }, 'Reset to the strongest XI')
+        : null,
+    );
+
+    if (isLiveGW) return;
+    enableSwapping(pitch, {
+      legal: (aId, bId) => {
+        const inXi = (id) => chosenXi.includes(id);
+        if (inXi(aId) === inXi(bId)) return false;
+        const next = chosenXi.map((id) => (id === aId ? bId : id === bId ? aId : id));
+        return legalXI(next.map((id) => byId.get(id)).filter(Boolean));
+      },
+      onSwap: (aId, bId) => {
+        chosenXi = chosenXi.map((id) => (id === aId ? bId : id === bId ? aId : id));
+        setState({ [MY_XI_KEY]: chosenXi });
+        paintClassicSquad();
+      },
+    });
+  };
+  paintClassicSquad();
+  addKids(app, squadCard);
 } else {
   addKids(app, 
     el('div', { class: 'card' },
