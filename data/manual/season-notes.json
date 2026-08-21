@@ -1,6 +1,6 @@
 {
-  "updated": "2026-08-18",
-  "note": "Hand-curated research that no API exposes. Edit this file directly — the refresh workflow never overwrites it. Injury FLAGS are not curated here: bootstrap-static already carries status, news and chance_of_playing for every player and is authoritative. Entries below earn their place only by adding what the API does not say — a return date it records as unknown, or the tactical consequence. Cross-checked against bootstrap-static on 18 Aug 2026.",
+  "updated": "2026-08-21",
+  "note": "Hand-curated research that no API exposes. Edit this file directly — the refresh workflow never overwrites it. Injury FLAGS are not curated here: bootstrap-static already carries status, news and chance_of_playing for every player and is authoritative. Entries below earn their place only by adding what the API does not say — a return date it records as unknown, or the tactical consequence. Cross-checked against bootstrap-static on 18 Aug 2026; set-piece orders re-checked 21 Aug 2026 (Villa corners corrected — see Aston Villa).",
   "season": {
     "first_deadline": "2026-08-21T17:30:00Z",
     "first_fixture": "Arsenal v Coventry City, Fri 21 Aug 2026, 20:00 BST",
@@ -138,7 +138,7 @@
 
   "penalty_takers": {
     "Arsenal": { "pens": ["Viktor Gyökeres", "Bukayo Saka", "Martin Ødegaard"], "corners": ["Declan Rice", "Bukayo Saka", "Bruno Guimarães"], "note": "Sources conflict — RotoWire has Gyökeres first, AllAboutFPL still lists Saka. Treat as not fully nailed on." },
-    "Aston Villa": { "pens": ["Emiliano Buendía", "Ollie Watkins", "John McGinn"], "corners": ["Emiliano Buendía", "John McGinn"], "note": "The biggest quiet role upgrade in the league — Rogers, Tielemans and Digne all left, so Buendía inherits penalties, corners and free-kicks." },
+    "Aston Villa": { "pens": ["Emiliano Buendía", "Ollie Watkins"], "corners": ["Matty Cash", "John McGinn"], "note": "Rogers, Tielemans and Digne all left and Buendía inherits penalties and direct free-kicks — but NOT corners: bootstrap-static lists Cash first and McGinn second on corners, with Buendía unlisted (checked 21 Aug 2026). Watkins is second on penalties." },
     "Bournemouth": { "pens": ["Justin Kluivert", "Junior Kroupi"], "corners": ["Alex Scott", "Marcus Tavernier"] },
     "Brentford": { "pens": ["Igor Thiago", "Callum Wilson"], "corners": ["Mathias Jensen", "Mikkel Damsgaard"], "note": "Igor Thiago converted 8 of 9 last season. One of only four clubs with genuinely clear-cut duties." },
     "Brighton": { "pens": ["Pascal Groß", "Charalampos Kostoulas"], "corners": ["Pascal Groß", "Maxim De Cuyper"] },
@@ -222,7 +222,7 @@
     { "player": "Mohamed Salah", "from": "Liverpool", "to": "Trabzonspor", "fee": "Free", "why_it_matters": "The defining exit of the window. Liverpool lose their primary right-sided goal source and have not replaced him. Szoboszlai and Isak inherit set pieces and penalties." },
     { "player": "Bruno Guimarães", "from": "Newcastle United", "to": "Arsenal", "fee": "£75m", "why_it_matters": "Part of a four-man leadership exodus that strips Newcastle of penalties, corners, free-kicks and the captaincy." },
     { "player": "Anthony Gordon", "from": "Newcastle United", "to": "Barcelona", "fee": "£69m", "why_it_matters": "Newcastle's best attacking outlet gone." },
-    { "player": "Morgan Rogers", "from": "Aston Villa", "to": "Chelsea", "fee": "£117m", "why_it_matters": "Villa's creative hub. Combined with Tielemans and Digne leaving, Buendía inherits every set-piece duty." },
+    { "player": "Morgan Rogers", "from": "Aston Villa", "to": "Chelsea", "fee": "£117m", "why_it_matters": "Villa's creative hub. Combined with Tielemans and Digne leaving, Buendía inherits penalties and direct free-kicks; corners went to Cash, not Buendía (bootstrap-static, 21 Aug 2026)." },
     { "player": "Rasmus Højlund", "from": "Manchester United", "to": "Napoli", "fee": "£38m", "why_it_matters": "Clears the number nine spot entirely for Šeško." },
     { "player": "Marc Cucurella", "from": "Chelsea", "to": "Real Madrid", "fee": "£47.5–51.8m", "why_it_matters": "Vacates left wing-back for Chavarría, Barco or Palestra." },
     { "player": "Marcos Senesi", "from": "Bournemouth", "to": "Tottenham Hotspur", "fee": "Free", "why_it_matters": "Bournemouth lose their left centre-back on top of losing Semenyo." },
@@ -244,7 +244,7 @@
   "watchlist": [
     "Liverpool are a different team — Salah gone, Ekitiké out until 2027, no winger signed, and Iraola trades control for chaos. More chances, worse clean-sheet security.",
     "Alonso's Chelsea wing-backs (Quenda, Palestra) are two brand-new attacking-defender assets if he commits to the back three.",
-    "Buendía is the biggest quiet role upgrade in the league — he inherits penalties, corners and free-kicks at Villa.",
+    "Buendía is a quiet role upgrade at Villa — he inherits penalties and direct free-kicks. Corners are Cash's, not his (bootstrap-static, 21 Aug 2026), so the upgrade is smaller than the raw 'inherits the set pieces' framing suggests.",
     "Newcastle are a fade until proven otherwise: four senior leaders sold, two weeks of preparation, two keepers competing.",
     "Glasner at Forest and Sage at Palace both mean wing-backs. Neco Williams, Ola Aina, Muñoz and Mitchell are the systemic beneficiaries.",
     "The BPS rebalance quietly downgrades stationary centre-backs and upgrades attacking full-backs and shot-stopping keepers."

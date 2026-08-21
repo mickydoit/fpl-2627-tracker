@@ -140,4 +140,4 @@ results carry no date unless you look for one.
 - Free transfers bank to 5. Prices move at 00:00 UK, max £0.3m per gameweek
 - Scores finalise 09:00 the day after the last match, not an hour after the whistle
 - Salah left Liverpool on a free; Ekitiké out until 2027; no winger signed
-- Buendía inherits every Villa set-piece duty after Rogers, Tielemans and Digne left
+- Buendía inherits Villa's penalties and direct free-kicks after Rogers, Tielemans and Digne left — but **not corners**: bootstrap-static lists Cash first and McGinn second there (checked 21 Aug 2026)
