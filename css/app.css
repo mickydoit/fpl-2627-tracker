@@ -318,7 +318,6 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   padding-top: 0.8rem;
   border-top: 1px dashed var(--border);
 }
-.bench-strip .shirt { background: linear-gradient(160deg, #3a3b3d, #55575a); color: var(--text); }
 .bench-strip .shirt .pt { color: var(--cyan); }
 /* Bench slot badge: the reserve keeper sits in its own slot, the outfield
    subs are numbered in autosub order. Muted so it labels without competing
@@ -737,3 +736,70 @@ table.players th.col-r, table.players td.col-r { text-align: right; font-variant
   .compare-col .shirt { transform: none; }
   .compare-col .pitch-row { gap: .5rem; }
 }
+
+/* ------------------------------------------------------------------ *
+ * spacing pass
+ * ------------------------------------------------------------------ *
+ * base.css defines a scale — --s-xs through --s-xl — with each step
+ * documented for a purpose. Almost nothing used it: values were hard-coded in
+ * rems all over this file, so related things sat at 0.4rem here and 0.8rem
+ * there, and cards were separated by --s-md (1rem) when the scale reserves
+ * --s-xl for exactly that job. The result read as cramped because it was.
+ *
+ * Everything below moves onto the scale. No new numbers are invented.
+ */
+
+/* between cards: the scale's own definition of a major section break */
+.card { margin-bottom: var(--s-xl); }
+.card:last-child { margin-bottom: 0; }
+
+/* inside a card: heading, then a breath, then content */
+.card > h2 { margin: 0 0 var(--s-md); }
+.card > h3 { margin: var(--s-lg) 0 var(--s-sm); }
+.card > p, .card > .hint { margin: 0 0 var(--s-md); }
+.card > p:last-child, .card > .hint:last-child { margin-bottom: 0; }
+.card > .tablewrap + .hint { margin-top: var(--s-md); }
+
+/* groups of numbers */
+.tiles { gap: var(--s-sm); margin-bottom: var(--s-lg); }
+.tiles:last-child { margin-bottom: 0; }
+
+/* the pitch and its rows */
+.pitch { padding: var(--s-lg) var(--s-md); gap: var(--s-md); }
+.pitch-row { gap: var(--s-sm); }
+.bench-strip { padding-top: var(--s-md); gap: var(--s-sm); margin-top: var(--s-xs); }
+
+/* the draft headline: rings and numbers side by side rather than the rings
+   marooned in a column of empty space, which is what happened when this had
+   no layout rules at all */
+.dd-head {
+  display: grid;
+  gap: var(--s-lg);
+  align-items: center;
+  margin-bottom: var(--s-md);
+}
+@media (min-width: 46rem) {
+  .dd-head { grid-template-columns: auto 1fr; }
+  .dd-head .dd-tiles { margin-bottom: 0; }
+}
+.rings-wrap { gap: var(--s-md); }
+.rings-key { gap: var(--s-xs); }
+
+/* comparison columns */
+.compare-grid { gap: var(--s-lg); margin-bottom: var(--s-lg); }
+.compare-col h3 { margin: 0 0 var(--s-sm); }
+
+/* league hub */
+.hub-grid { gap: var(--s-sm); margin-bottom: var(--s-md); }
+.hub-poscols { gap: var(--s-sm); margin-bottom: var(--s-md); }
+.hub-two { gap: var(--s-lg); }
+.hub-player { padding: var(--s-xs) 0; gap: var(--s-sm); }
+.hub-summary { padding-left: var(--s-md); }
+
+/* controls and keys */
+.modetabs { gap: var(--s-xs); margin-bottom: var(--s-lg); }
+.fdrkey { gap: var(--s-sm); margin: var(--s-md) 0 var(--s-sm); }
+.chiprow { gap: var(--s-xs); }
+
+/* tables breathe a little more than they did */
+table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
