@@ -10,9 +10,9 @@
  * transfers or the Classic optimiser. The two dashboards share a tab strip and
  * nothing else.
  */
-import { el, setKids, fmt, horizonBadge } from '../ui.js';
+import { el, setKids, fmt, horizonPicker } from '../ui.js';
 import { readSnapshot } from '../data.js';
-import { projectBoard } from '../draft/project.js';
+import { projectBoard, projectBoardAt } from '../draft/project.js';
 import { rateLeague, bestXI } from '../draft/rating.js';
 import { DRAFT_CONFIG } from '../draft/config.js';
 import { squadPitch, playerCard, activityRings, enableSwapping, legalDraftXI } from '../squadview.js';
@@ -117,11 +117,25 @@ export async function renderDraftDashboard(host) {
    * Classic squad.
    */
   const XI_KEY = 'draftXi.v1';
-  // Ranked on the next gameweek, which is the decision being made. The
-  // rest-of-season number still drives squad RATING above — that is a
-  // different question and rightly uses a different horizon.
-  const byGw = (p) => p.gwValue ?? p.proj;
-  const optimal = bestXI(mine, byGw);
+  /**
+   * The lineup horizon is the reader's to choose.
+   *
+   * One gameweek answers "who do I start on Saturday"; ten answers "who is
+   * worth keeping through a fixture swing". Both are legitimate and they give
+   * different elevens, so the window is a control rather than an assumption.
+   * Squad RATING stays on rest-of-season regardless — that is a different
+   * question and must not move when this does.
+   */
+  const HZ_KEY = 'draftLineupHorizon';
+  let lineupH = 1;
+  try { lineupH = Number(localStorage.getItem(HZ_KEY)) || 1; } catch { /* ignore */ }
+  const hzCache = new Map([[1, new Map(projected.map((r) => [r.id, r.gwValue ?? r.proj]))]]);
+  const valuesAt = (h) => {
+    if (!hzCache.has(h)) hzCache.set(h, projectBoardAt(board.players, fixtures, board.teams || [], h));
+    return hzCache.get(h);
+  };
+  let byGw = (p) => valuesAt(lineupH).get(p.id) ?? p.proj;
+  let optimal = bestXI(mine, byGw);
   let chosen = optimal.xi.map((p) => p.id);
   try {
     const saved = JSON.parse(localStorage.getItem(XI_KEY) || 'null');
@@ -146,19 +160,26 @@ export async function renderDraftDashboard(host) {
     });
 
     setKids(into,
-      el('div', { class: 'row between' }, el('h2', {}, 'Squad'), horizonBadge('gw')),
+      el('div', { class: 'row between' }, el('h2', {}, 'Squad'),
+        horizonPicker(lineupH, (n) => {
+          lineupH = n;
+          try { localStorage.setItem(HZ_KEY, String(n)); } catch { /* ignore */ }
+          byGw = (p) => valuesAt(lineupH).get(p.id) ?? p.proj;
+          optimal = bestXI(mine, byGw);
+          paintSquad(into);
+        })),
       el('p', { class: 'hint' },
-        'Ranked by projected points for the next gameweek — the decision you are actually making. '
-        + 'Drag a player onto another to swap them; hold to pick one up on a phone.'),
+        `Ranked by projected points over ${lineupH === 1 ? 'the next gameweek' : `the next ${lineupH} gameweeks`}`
+        + ' — change the window top right. Drag a player onto another to swap them; hold to lift on a phone.'),
       el('div', { class: 'tiles' },
         el('div', { class: `tile ${gwLive ? 'accent' : ''}` },
-          el('span', { class: 'k' }, gwLive ? 'Your XI, live' : 'Your XI, next GW'),
+          el('span', { class: 'k' }, gwLive ? 'Your XI, live' : `Your XI, ${lineupH === 1 ? 'next GW' : `next ${lineupH}`}`),
           el('span', { class: 'v' }, gwLive ? fmt.pts(gwTotal) : fmt.pts(chosenTotal)),
           el('span', { class: 's' }, 'the eleven you have named')),
         el('div', { class: 'tile' },
           el('span', { class: 'k' }, 'Strongest legal XI'),
           el('span', { class: 'v' }, fmt.pts(optimal.total)),
-          el('span', { class: 's' }, 'best eleven for the next gameweek')),
+          el('span', { class: 's' }, lineupH === 1 ? 'best eleven for the next gameweek' : `best eleven over ${lineupH} gameweeks`)),
         el('div', { class: `tile ${lost > 0.05 ? 'warn' : ''}` },
           el('span', { class: 'k' }, 'On your bench'),
           el('span', { class: 'v' }, lost > 0.05 ? `−${lost.toFixed(1)}` : '0.0'),

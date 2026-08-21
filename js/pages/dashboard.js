@@ -1,8 +1,8 @@
-import { loadAll, getState, resolveSquadIds } from '../data.js';
+import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
 import { projectAll, POS } from '../model.js';
 import { bestXI, scoreSquad, legalXI } from '../optimiser.js';
 import { squadPitch, playerCard, enableSwapping } from '../squadview.js';
-import { horizonBadge } from '../ui.js';
+import { horizonPicker } from '../ui.js';
 import { $, el, fmt, dataBar, countdown, statusBadge, posPill, modal, breakdown , setKids, addKids} from '../ui.js';
 
 /**
@@ -186,10 +186,18 @@ if (squadIds.length === 15) {
    * Squad-level numbers above still use the longer horizon, because "how good
    * is this squad" and "who plays this week" are different questions.
    */
-  const gwRows = projectAll(d.boot, d.fixtures, { horizon: 1, riskAversion: state.riskAversion ?? 0.5 }).rows;
-  const gwById = new Map(gwRows.map((r) => [r.id, r.proj]));
-  const byGw = (p) => gwById.get(p.id) ?? p.projPerGW ?? 0;
-  const optimalClassic = bestXI(squad.map((p) => ({ ...p, proj: byGw(p) })));
+  const LINEUP_HZ = 'lineupHorizon';
+  let lineupH = getState()[LINEUP_HZ] ?? 1;
+  const hzCache = new Map();
+  const valuesAt = (h) => {
+    if (!hzCache.has(h)) {
+      const rows = projectAll(d.boot, d.fixtures, { horizon: h, riskAversion: state.riskAversion ?? 0.5 }).rows;
+      hzCache.set(h, new Map(rows.map((r) => [r.id, r.proj])));
+    }
+    return hzCache.get(h);
+  };
+  let byGw = (p) => valuesAt(lineupH).get(p.id) ?? p.projPerGW ?? 0;
+  let optimalClassic = bestXI(squad.map((p) => ({ ...p, proj: byGw(p) })));
   let chosenXi = xi.map((p) => p.id);
   if (!isLiveGW) {
     const saved = getState()[MY_XI_KEY];
@@ -223,7 +231,13 @@ if (squadIds.length === 15) {
       head,
       el('div', { class: 'row between', style: 'margin-bottom:var(--s-sm)' },
         el('span', { class: 'hint' }, isLiveGW ? 'Live scoring' : 'Lineup decision'),
-        horizonBadge(isLiveGW ? 'gw' : 'gw')),
+        isLiveGW ? null : horizonPicker(lineupH, (n) => {
+          lineupH = n;
+          setState({ [LINEUP_HZ]: n });
+          byGw = (p) => valuesAt(lineupH).get(p.id) ?? p.projPerGW ?? 0;
+          optimalClassic = bestXI(squad.map((p) => ({ ...p, proj: byGw(p) })));
+          paintClassicSquad();
+        })),
       el('div', { class: 'tiles' },
         el('div', { class: 'tile accent' },
           el('span', { class: 'k' }, isLiveGW ? 'Live points' : 'Projected points'),
@@ -245,8 +259,8 @@ if (squadIds.length === 15) {
       ),
       isLiveGW
         ? el('p', { class: 'hint' }, 'The gameweek is live, so the lineup is fixed.')
-        : el('p', { class: 'hint' }, 'Ranked by projected points for the next gameweek — the decision you are actually making. '
-          + 'Drag a player onto another to swap them; hold to pick one up on a phone.'),
+        : el('p', { class: 'hint' }, `Ranked by projected points over ${lineupH === 1 ? 'the next gameweek' : `the next ${lineupH} gameweeks`}`
+          + ' — change the window top right. Drag a player onto another to swap them; hold to lift on a phone.'),
       pitch,
       !isLiveGW && lost > 0.05
         ? el('button', { class: 'ghost', onClick: () => {

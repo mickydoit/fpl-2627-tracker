@@ -873,3 +873,16 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
 .hz-gw { color: var(--lime); border-color: rgba(159,237,0,.45); }
 .hz-next3, .hz-next5, .hz-next8 { color: var(--cyan); border-color: rgba(139,255,236,.45); }
 .hz-ros { color: var(--yellow); border-color: rgba(244,255,123,.45); }
+
+/* the horizon badge as a control */
+select.hz-picker {
+  background: transparent; cursor: pointer; appearance: none;
+  padding-right: 1.4rem; font-family: inherit;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - .62rem) 55%, calc(100% - .38rem) 55%;
+  background-size: .24rem .24rem, .24rem .24rem;
+  background-repeat: no-repeat;
+}
+select.hz-picker:hover { border-color: currentColor; }
+select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text); }

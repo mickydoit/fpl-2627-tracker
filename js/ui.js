@@ -297,3 +297,28 @@ export function horizonBadge(kind) {
   }[kind] || kind;
   return el('span', { class: `hz hz-${kind}`, title: `These numbers are projected over: ${label.toLowerCase()}` }, label);
 }
+
+/**
+ * The horizon badge, but choosable.
+ *
+ * A projection is meaningless without its window, and the right window depends
+ * on the question — one gameweek to pick a lineup, five to judge a transfer,
+ * ten to plan around a fixture swing. Rather than fix one and label it, this
+ * lets the reader move it and re-reads everything underneath.
+ *
+ * Styled as the badge it replaces so the horizon still reads at a glance when
+ * nobody is touching it.
+ */
+export function horizonPicker(value, onChange, { options = [1, 3, 5, 8, 10] } = {}) {
+  const label = (n) => (n === 1 ? 'Next gameweek' : `Next ${n} gameweeks`);
+  const sel = el('select', {
+    class: `hz hz-picker ${value === 1 ? 'hz-gw' : 'hz-next5'}`,
+    title: 'Choose the window these projections cover',
+    onChange: (e) => {
+      const n = Number(e.target.value);
+      sel.className = `hz hz-picker ${n === 1 ? 'hz-gw' : 'hz-next5'}`;
+      onChange(n);
+    },
+  }, options.map((n) => el('option', { value: String(n), selected: n === value }, label(n))));
+  return sel;
+}

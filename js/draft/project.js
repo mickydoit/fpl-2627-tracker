@@ -95,3 +95,22 @@ export function projectBoard(boardPlayers, fixtures, teams, opts = {}) {
     parts: r.parts,
   }));
 }
+
+/**
+ * Board projections at one arbitrary horizon.
+ *
+ * projectBoard returns the three horizons the board itself needs. The lineup
+ * picker lets the reader ask for others, and re-running the whole board for a
+ * single number would be wasteful — this returns just id → projected points.
+ */
+export function projectBoardAt(boardPlayers, fixtures, teams, horizon, opts = {}) {
+  const rows = boardPlayers.map(toModelRow);
+  const teamRows = Array.isArray(teams) && teams.length
+    ? teams
+    : [...new Set(rows.map((r) => r.team))].map((id) => ({ id }));
+  const boot = { elements: rows, teams: teamRows, events: [{ id: 1, is_next: true }] };
+  const out = projectAll(boot, fixtures, {
+    horizon, prior: draftPrior, bonusModel: draftBonusModel, ...opts,
+  });
+  return new Map(out.rows.map((r) => [r.id, r.proj]));
+}
