@@ -55,7 +55,29 @@ export async function renderDraftDashboard(host) {
     if (!rostersBySlot.has(slot)) rostersBySlot.set(slot, []);
     rostersBySlot.get(slot).push(row);
   }
-  const mySlot = slotByEntry.get(league.myEntryId) ?? null;
+  /**
+   * Which squad is mine.
+   *
+   * The mirror knows it only when FPL_DRAFT_ENTRY_ID is configured; failing
+   * that, a draft entered on this device knows its own slot. If neither does,
+   * say so — an unexplained empty dashboard is the worst of the three, and it
+   * is what shipped the first time this ran without the variable set.
+   */
+  let mySlot = slotByEntry.get(league.myEntryId) ?? null;
+  if (mySlot == null) {
+    try {
+      const local = JSON.parse(localStorage.getItem('draftState.v1') || 'null');
+      if (local?.mySlot && rostersBySlot.has(local.mySlot)) mySlot = local.mySlot;
+    } catch { /* unreadable storage is not worth failing over */ }
+  }
+  if (mySlot == null) {
+    setKids(host, el('div', { class: 'card' },
+      el('h2', {}, 'Which squad is yours?'),
+      el('p', {}, `Your league's ${rostersBySlot.size} squads are mirrored, but nothing identifies which one is yours.`),
+      el('p', { class: 'hint' }, 'Set the FPL_DRAFT_ENTRY_ID repository variable to your Draft entry id and the next refresh will label it. '
+        + 'The League Hub on the Draft page still shows every squad meanwhile.')));
+    return;
+  }
   const mine = rostersBySlot.get(mySlot) || [];
   const ownedIds = new Set([...rostersBySlot.values()].flat().map((r) => r.id));
   const pool = projected.filter((r) => !ownedIds.has(r.id)).sort((a, b) => b.proj - a.proj);

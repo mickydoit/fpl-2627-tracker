@@ -50,6 +50,10 @@ jobs:
           # works exactly as it did on draft night. A Draft league id is public
           # and identifies nobody, so it is a variable rather than a secret.
           FPL_DRAFT_LEAGUE_ID: ${{ vars.FPL_DRAFT_LEAGUE_ID }}
+          # Which league entry is the owner's. Without it the mirror still
+          # carries all six squads but cannot mark one of them "you", and the
+          # Draft dashboard renders an empty shell.
+          FPL_DRAFT_ENTRY_ID: ${{ vars.FPL_DRAFT_ENTRY_ID }}
         run: node scripts/fetch-draft.mjs
         continue-on-error: true
 
