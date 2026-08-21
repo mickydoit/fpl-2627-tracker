@@ -803,3 +803,51 @@ table.players th.col-r, table.players td.col-r { text-align: right; font-variant
 
 /* tables breathe a little more than they did */
 table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
+
+/* ------------------------------------------------------------------ *
+ * squad sizing
+ * ------------------------------------------------------------------ *
+ * The shirts were a fixed 5.9rem regardless of screen. Once the shell widened
+ * to 1500px that left eleven small cards clustered in the middle of a very
+ * large box, with a third of the card empty on either side — the squad read as
+ * an afterthought rather than the main object on the page.
+ *
+ * Two changes. The pitch takes a max width and centres, so it stops being a
+ * container the squad rattles around inside. And the shirts grow with the
+ * viewport, in step with their own type, so they stay in proportion instead of
+ * shrinking relative to everything around them.
+ */
+.pitch {
+  max-width: 54rem;
+  margin-inline: auto;
+  width: 100%;
+}
+
+@media (min-width: 46rem) {
+  .shirt { width: 6.6rem; padding: 0.55rem 0.6rem 0.6rem; }
+  .shirt .nm { font-size: 0.8rem; }
+  .shirt .cl { font-size: 0.6rem; }
+  .shirt .pr { font-size: 0.64rem; }
+  .shirt .pt { font-size: 1.45rem; }
+  .pitch-row { gap: var(--s-md); }
+  .bench-strip { gap: var(--s-md); }
+  .pitch { padding: var(--s-xl) var(--s-lg); gap: var(--s-lg); }
+}
+
+@media (min-width: 75rem) {
+  .shirt { width: 7.4rem; padding: 0.65rem 0.7rem 0.7rem; }
+  .shirt .nm { font-size: 0.86rem; }
+  .shirt .pt { font-size: 1.65rem; }
+  .pitch-row { gap: var(--s-lg); }
+  .bench-strip { gap: var(--s-lg); }
+}
+
+/* The comparison view holds two pitches side by side, so they keep the
+   compact scale — two full-size pitches would force a scrollbar. */
+.compare-col .pitch { max-width: none; padding: var(--s-lg) var(--s-md); }
+@media (min-width: 46rem) {
+  .compare-col .shirt { width: 5.9rem; padding: 0.45rem 0.5rem 0.5rem; }
+  .compare-col .shirt .nm { font-size: 0.74rem; }
+  .compare-col .shirt .pt { font-size: 1.25rem; }
+  .compare-col .pitch-row { gap: var(--s-sm); }
+}
