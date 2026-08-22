@@ -15,6 +15,7 @@ import { makeRng, picksBetween, survival } from '../js/draft/simulate.js';
 import { recommend } from '../js/draft/advise.js';
 import { runDraft, STRATEGIES } from '../js/draft/compete.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
+import { hydrate, PRIOR_DEFAULTS } from '../js/prior.js';
 
 let failures = 0;
 let checks = 0;
@@ -561,5 +562,121 @@ console.log('\nDraft baselines');
     runDraft(pool, { leagueSize: 6, mySlot: 3, strategy: STRATEGIES.vorp, seed: 99 }).total
       === runDraft(pool, { leagueSize: 6, mySlot: 3, strategy: STRATEGIES.vorp, seed: 99 }).total);
 }
+
+/* ------------------------------------------------------------------ *
+ * prior blending
+ * ------------------------------------------------------------------ *
+ * The case this exists for: FPL zeroes every season total at the GW1 deadline.
+ * A zeroed payload plus last season must land close to what the model saw
+ * before the zeroing, without handing a one-game cameo the confidence of a
+ * full campaign.
+ */
+console.log('\nPrior blending');
+{
+  const L = PRIOR_DEFAULTS.lastSeasonWeight;
+  const G = PRIOR_DEFAULTS.lastSeasonGames;
+  const el = (over) => ({
+    id: 1, code: 100, element_type: 3, team: 1, now_cost: 70, status: 'a',
+    chance_of_playing_next_round: null, minutes: 0, bps: 0, yellow_cards: 0,
+    expected_goals: '0.0', expected_assists: '0.0', expected_goals_conceded: '0.0',
+    saves: 0, defensive_contribution: 0,
+    clearances_blocks_interceptions: 0, tackles: 0, recoveries: 0,
+    expected_goals_per_90: 0, expected_assists_per_90: 0,
+    expected_goals_conceded_per_90: 0, saves_per_90: 0, defensive_contribution_per_90: 0,
+    ...over,
+  });
+  const priorOf = (over) => ({ players: { 100: { code: 100, minutes: 0, expected_goals: 0,
+    expected_assists: 0, expected_goals_conceded: 0, saves: 0, defensive_contribution: 0,
+    bps: 0, yellow_cards: 0, clearances_blocks_interceptions: 0, tackles: 0, recoveries: 0,
+    ...over } } });
+
+  // a full-time scorer last season, yet to play this one
+  const boot = { elements: [el({ minutes: 0 })], teams: [{ id: 1 }] };
+  const prior = priorOf({ minutes: 3420, expected_goals: 19, bps: 760 });
+  const h = hydrate(boot, prior);
+  const p = h.elements[0];
+
+  ok('a missing prior leaves the payload untouched', hydrate(boot, null) === boot);
+  ok('the input is not mutated', boot.elements[0].minutes === 0 && boot.elements[0].bps === 0);
+  ok('raw minutes survive for display', p.minutes === 0);
+
+  const games = inferGamesPlayed(h.elements);
+  ok('inferGamesPlayed recovers the pooled basis', games === Math.round((1 + L * G)), `got ${games}`);
+  ok('expected minutes come back to a full game',
+    near(p.modelMinutes / games, 90, 0.5), `${(p.modelMinutes / games).toFixed(1)}`);
+  ok('evidence is the minutes actually observed', near(p.evidenceMinutes, L * 3420, 1e-6));
+  ok('a pooled rate is last season’s rate', near(p.expected_goals_per_90, (19 / 3420) * 90, 1e-9));
+  ok('counts are rebuilt to agree with modelMinutes',
+    near((p.bps / p.modelMinutes) * 90, (760 / 3420) * 90, 1e-9));
+
+  // the Tzolis case: one appearance, nothing before it
+  const rookie = hydrate({ elements: [el({ minutes: 75, expected_goals: '0.19' })], teams: [{ id: 1 }] },
+    priorOf({ minutes: 0 })).elements[0];
+  ok('one appearance with no prior is not treated as evidence', near(rookie.evidenceMinutes, 75, 1e-9));
+  ok('...but his role still reads as a near-starter',
+    rookie.modelMinutes / inferGamesPlayed([rookie]) > 60);
+
+  /* The blend has to survive the projection, not just the arithmetic. Two
+     players, identical but for their history: one played 75 minutes and has no
+     past, the other sat out but was a full-time scorer last season. */
+  const fx = [{ event: 1, team_h: 1, team_a: 2, team_h_difficulty: 3, team_a_difficulty: 3, finished: false }];
+  const twoBoot = {
+    elements: [el({ id: 1, code: 100, minutes: 75, expected_goals: '0.19' }),
+      el({ id: 2, code: 101, minutes: 0 })],
+    teams: [{ id: 1 }, { id: 2 }],
+  };
+  const twoPrior = { players: {
+    100: { code: 100, minutes: 0, expected_goals: 0, expected_assists: 0, bps: 0 },
+    101: { code: 101, minutes: 3420, expected_goals: 19, expected_assists: 6, bps: 760 },
+  } };
+  const two = projectAll(hydrate(twoBoot, twoPrior), fx, { horizon: 1 });
+  const rookie2 = two.rows.find((r) => r.id === 1);
+  const veteran = two.rows.find((r) => r.id === 2);
+  ok('a one-game rookie still leans on the price prior', rookie2.parts?.isPrior === true,
+    `evidence ${rookie2.parts?.evidence?.toFixed(3)}`);
+  ok('a full prior season counts as evidence even with no minutes yet',
+    veteran.parts?.isPrior === false, `evidence ${veteran.parts?.evidence?.toFixed(3)}`);
+  ok('the evidenced scorer outprojects the unevidenced rookie', veteran.proj > rookie2.proj,
+    `${veteran.proj.toFixed(2)} vs ${rookie2.proj.toFixed(2)}`);
+
+  /* End to end on the sample dataset. make-sample writes its own codes, so the
+     prior is built from that payload rather than read from disk — the committed
+     prior belongs to real players and would join to nothing here. */
+  const sampleBoot = await readJSON('data/bootstrap.json');
+  const sampleFx = await readJSON('data/fixtures.json', []);
+  if (sampleBoot?.elements?.length) {
+    const zeroed = { ...sampleBoot, elements: sampleBoot.elements.map((e) => ({
+      ...e, minutes: 0, bps: 0, yellow_cards: 0, expected_goals: '0.0', expected_assists: '0.0',
+      expected_goals_conceded: '0.0', saves: 0, defensive_contribution: 0,
+      expected_goals_per_90: 0, expected_assists_per_90: 0, expected_goals_conceded_per_90: 0,
+      saves_per_90: 0, defensive_contribution_per_90: 0,
+    })) };
+    const built = { players: Object.fromEntries(sampleBoot.elements.map((e) => [e.code, {
+      code: e.code, minutes: Number(e.minutes) || 0, expected_goals: parseFloat(e.expected_goals) || 0,
+      expected_assists: parseFloat(e.expected_assists) || 0,
+      expected_goals_conceded: parseFloat(e.expected_goals_conceded) || 0,
+      saves: Number(e.saves) || 0, defensive_contribution: Number(e.defensive_contribution) || 0,
+      bps: Number(e.bps) || 0, yellow_cards: Number(e.yellow_cards) || 0,
+      clearances_blocks_interceptions: 0, tackles: 0, recoveries: 0,
+    }])) };
+    const share = (r) => r.rows.filter((x) => x.parts?.isPrior).length / r.rows.length;
+    const bare = projectAll(zeroed, sampleFx, { horizon: 5 });
+    const pooled = projectAll(hydrate(zeroed, built), sampleFx, { horizon: 5 });
+    ok('a zeroed August recovers its evidence from the prior',
+      share(pooled) < share(bare),
+      `${(share(pooled) * 100).toFixed(0)}% on the prior vs ${(share(bare) * 100).toFixed(0)}%`);
+    ok('every projection stays finite', pooled.rows.every((x) => Number.isFinite(x.proj)));
+    ok('no projection goes negative', pooled.rows.every((x) => x.proj >= 0));
+    ok('pooling restores the ranking a zeroed payload loses', (() => {
+      const full = projectAll(sampleBoot, sampleFx, { horizon: 5 });
+      const order = (r) => new Map([...r.rows].sort((a, b) => b.proj - a.proj).map((x, i) => [x.id, i]));
+      const truth = order(full);
+      const top = [...full.rows].sort((a, b) => b.proj - a.proj).slice(0, 50).map((x) => x.id);
+      const hit = (r) => { const o = order(r); return top.filter((id) => o.get(id) < 50).length; };
+      return hit(pooled) > hit(bare);
+    })());
+  }
+}
+
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);
 process.exit(failures === 0 ? 0 : 1);

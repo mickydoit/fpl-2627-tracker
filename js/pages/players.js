@@ -136,7 +136,10 @@ function showPlayer(p) {
     ),
     el('h3', {}, 'Projection per gameweek'),
     breakdown(p.parts || {}),
-    p.parts?.isPrior ? el('p', { class: 'hint' }, `Only ${p.minutes} minutes on record — this leans on a price-based prior rather than his own numbers.`) : null,
+    p.parts?.isPrior ? el('p', { class: 'hint' },
+      `Only ${Math.round(p.evidenceMinutes ?? p.minutes)} minutes of evidence`
+      + `${p.evidenceMinutes != null ? ' (this season plus a discounted 2025/26)' : ''}`
+      + ' — this leans on a price-based prior rather than his own numbers.') : null,
     el('h3', {}, 'Fixtures'),
     fdrTicker(p.fixtures, teams, Math.min(horizon, 8), ctx.fromEvent),
     el('h3', {}, 'Underlying'),
@@ -145,7 +148,12 @@ function showPlayer(p) {
       el('li', {}, el('span', {}, 'xA per 90'), el('strong', {}, (parseFloat(p.expected_assists_per_90) || 0).toFixed(2))),
       el('li', {}, el('span', {}, 'xGC per 90'), el('strong', {}, (parseFloat(p.expected_goals_conceded_per_90) || 0).toFixed(2))),
       el('li', {}, el('span', {}, 'DefCon per 90'), el('strong', {}, (parseFloat(p.defensive_contribution_per_90) || 0).toFixed(2))),
-      el('li', {}, el('span', {}, 'BPS per 90'), el('strong', {}, p.minutes ? ((p.bps / p.minutes) * 90).toFixed(1) : '—')),
+      // js/prior.js rebuilds bps to agree with modelMinutes when last season is
+      // pooled in, so the rate has to be taken over the same denominator.
+      el('li', {}, el('span', {}, 'BPS per 90'), el('strong', {}, (() => {
+        const mins = p.modelMinutes || p.minutes;
+        return mins ? ((p.bps / mins) * 90).toFixed(1) : '—';
+      })())),
       el('li', {}, el('span', {}, 'Starts'), el('strong', {}, p.starts)),
       el('li', {}, el('span', {}, 'Set pieces'), el('strong', {}, [p.penalties_order === 1 && 'penalties', p.corners_and_indirect_freekicks_order === 1 && 'corners', p.direct_freekicks_order === 1 && 'free-kicks'].filter(Boolean).join(', ') || '—')),
     ),

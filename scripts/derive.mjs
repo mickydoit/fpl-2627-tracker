@@ -8,12 +8,17 @@
  */
 import { readJSON, writeJSON } from './lib/io.mjs';
 import { projectAll, POS } from '../js/model.js';
+import { hydrate } from '../js/prior.js';
 import { optimiseSquad, validate } from '../js/optimiser.js';
 
-const boot = await readJSON('data/bootstrap.json');
+const rawBoot = await readJSON('data/bootstrap.json');
 const fixtures = await readJSON('data/fixtures.json', []);
+// Last season, frozen before the GW1 deadline zeroed the live totals.
+// The browser pools the same file in js/data.js, so both must agree.
+const prior = await readJSON('data/draft/prior-2526.json', null);
+const boot = hydrate(rawBoot, prior);
 
-if (!boot?.elements?.length) {
+if (!rawBoot?.elements?.length) {
   console.error('No bootstrap data — run scripts/fetch-all.mjs first.');
   process.exit(1);
 }

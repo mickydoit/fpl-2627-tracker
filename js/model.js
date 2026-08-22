@@ -81,11 +81,25 @@ export function availability(p) {
 }
 
 /**
+ * Minutes as the model should read them.
+ *
+ * `minutes` is what a player actually played this season and stays that way so
+ * pages can show it honestly. js/prior.js pools two seasons and publishes the
+ * result as `modelMinutes`, on a games basis shared by every player, because a
+ * zeroed August leaves the raw figure with nothing in it. Everything that
+ * reasons about playing time goes through here so the two never drift apart.
+ */
+const modelMinutes = (p) => num(p.modelMinutes) || num(p.minutes);
+
+/**
  * Games played league-wide, inferred from the busiest player's minutes.
  * FPL zeroes teams[].played all season, so there is no direct source.
+ *
+ * Once a prior is blended in this is the pooled basis rather than a count of
+ * real matches, which is what `modelMinutes` is expressed against.
  */
 export function inferGamesPlayed(players) {
-  const max = players.reduce((m, p) => Math.max(m, num(p.minutes)), 0);
+  const max = players.reduce((m, p) => Math.max(m, modelMinutes(p)), 0);
   return Math.max(1, Math.round(max / 90));
 }
 
@@ -113,7 +127,7 @@ export function teamDefence(players, teams) {
   const acc = {};
   for (const p of players) {
     if (p.element_type > 2) continue;
-    const mins = num(p.minutes);
+    const mins = modelMinutes(p);
     if (mins < 450) continue;
     const xgc90 = num(p.expected_goals_conceded_per_90);
     if (xgc90 <= 0) continue;
@@ -173,7 +187,7 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
   const o = { ...DEFAULTS, ...opts };
   const pos = p.element_type;
   const games = ctx.games || 1;
-  const mins = num(p.minutes);
+  const mins = modelMinutes(p);
 
   const avail = availability(p);
   if (avail <= 0) return { total: 0, parts: { unavailable: true } };
@@ -242,8 +256,17 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
 
   const modelled = appearance + attack + cleanSheet + conceded + saves + defcon + bonus + cards;
 
-  /* blend against a price prior until there is enough evidence */
-  const w = clamp(mins / o.priorBlendMinutes, 0, 1);
+  /* blend against a price prior until there is enough evidence
+   *
+   * `minutes` answers "how much does he play", and with a single season on
+   * record it also answered "how much do we know". Those come apart once
+   * js/prior.js pools two seasons: it rebuilds minutes onto a shared games
+   * basis so expected minutes stay right, which would otherwise hand a player
+   * with one appearance and no prior season the confidence of a full campaign.
+   * `evidenceMinutes` is the minutes actually observed, and only that governs
+   * how far we move off the price prior. */
+  const evidence = num(p.evidenceMinutes) || mins;
+  const w = clamp(evidence / o.priorBlendMinutes, 0, 1);
   const prior = (o.prior || pricePrior)(p) * attMult;
   const blended = w * modelled + (1 - w) * prior;
 
