@@ -6,7 +6,7 @@
 import { readJSON } from './lib/io.mjs';
 import {
   projectAll, poissonAtLeast, availability, inferGamesPlayed,
-  teamDefence, upcomingByTeam, SQUAD_RULES, projectFixture,
+  teamDefence, upcomingByTeam, SQUAD_RULES, projectFixture, buildContext,
 } from '../js/model.js';
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
 import { snakePicks, replacementRank, buildBoard, assignTiers } from '../js/draft/board.js';
@@ -676,6 +676,61 @@ console.log('\nPrior blending');
       return hit(pooled) > hit(bare);
     })());
   }
+}
+
+
+/* ------------------------------------------------------------------ *
+ * fixture-window semantics
+ * ------------------------------------------------------------------ *
+ * FPL's flags do not mean what their names suggest. `finished` stays false
+ * until a confirmation pass the morning after the gameweek's last match, and
+ * `is_next` flips to the following gameweek the moment the deadline passes.
+ * Both bit this project; see the table in CLAUDE.md.
+ */
+console.log('\nFixture window');
+{
+  const mk = (over) => ({ event: 1, team_h: 1, team_a: 2, team_h_difficulty: 3,
+    team_a_difficulty: 3, started: false, finished: false, finished_provisional: false, ...over });
+
+  const played = mk({ started: true, finished_provisional: true, finished: false });
+  const toCome = mk({ team_h: 3, team_a: 4 });
+  const up = upcomingByTeam([played, toCome], 1, 5);
+  ok('a played match is not upcoming, despite finished:false', !up[1] && !up[2]);
+  ok('an unplayed match in the same gameweek still is', !!up[3] && !!up[4]);
+
+  // is_next has already moved on while gameweek 1 is half played
+  const boot = {
+    events: [{ id: 1, is_current: true }, { id: 2, is_next: true }],
+    elements: [], teams: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }],
+  };
+  const ctx = buildContext(boot, [played, toCome], { horizon: 5 });
+  ok('the window starts at the earliest gameweek still to be played, not is_next',
+    ctx.fromEvent === 1, `got ${ctx.fromEvent} (is_next is 2)`);
+  ok('a club with a match still to come keeps it', (ctx.upcoming[3] || []).length === 1);
+  ok('a club that has already played does not get it twice', !(ctx.upcoming[1] || []).length);
+
+  // and once everything in the gameweek is played, the window moves on
+  const allPlayed = buildContext(boot,
+    [played, mk({ team_h: 3, team_a: 4, started: true, finished_provisional: true }), mk({ event: 2, team_h: 1, team_a: 3 })],
+    { horizon: 5 });
+  ok('once the gameweek is done the window advances', allPlayed.fromEvent === 2, `got ${allPlayed.fromEvent}`);
+}
+
+/* Team defence must qualify clubs on evidence actually observed. modelMinutes
+ * is rebuilt onto a pooled basis and clears any raw threshold on one match. */
+console.log('\nTeam defence eligibility');
+{
+  const def = (id, over) => ({ id, element_type: 2, team: 1, expected_goals_conceded_per_90: 0.5, ...over });
+  // three defenders who look like regulars but have played once
+  const thin = [1, 2, 3].map((i) => def(i, { minutes: 90, modelMinutes: 1800, evidenceMinutes: 90 }));
+  const teams = [{ id: 1, strength_overall_home: 2, strength_overall_away: 2 }];
+  const d1 = teamDefence(thin, teams);
+  ok('one match does not qualify a club, however inflated its modelMinutes',
+    d1[1] > 0.5 + 1e-9, `got ${d1[1].toFixed(2)} — should fall back to the strength rating`);
+
+  const solid = [1, 2, 3].map((i) => def(i, { minutes: 900, modelMinutes: 1800, evidenceMinutes: 1800 }));
+  const d2 = teamDefence(solid, teams);
+  ok('a club with real evidence is rated from its own numbers', near(d2[1], 0.5, 1e-9), `got ${d2[1]}`);
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);

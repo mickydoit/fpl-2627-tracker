@@ -98,6 +98,34 @@ node scripts/build-pages.mjs   # regenerate HTML shells
 - **FPL API** (unofficial, public, no auth): `bootstrap-static`, `fixtures`, `event/{gw}/live`, `entry/{id}/...`, `leagues-classic/{id}/standings`, `team/set-piece-notes`. Prices are tenths (`now_cost: 60` = £6.0m). `selected_by_percent` is already a percentage. Season xG totals are **strings**, per-90s are **numbers** — coerce both.
 - **ESPN** `eng.1`: scoreboard, standings (note: `/apis/v2/`, not `/apis/site/v2/`), news. No FPL prices or points — fixtures and live scores only.
 
+## Data source semantics — check the field, don't infer it
+
+The research rules below cover claims about the world. These cover claims about
+the **API**, which is where this project actually goes wrong. Every entry here
+was reported to the owner as fact and was wrong. A field name that reads like
+plain English is not a definition.
+
+**Before reporting anything derived from a payload, run the check.** Not after
+he pushes back.
+
+| Trap | What is actually true | Check |
+|---|---|---|
+| `fixture.finished` looks like "match over" | It is **not**. `finished_provisional: true` means played and **bonus already awarded** (3/2/1 in `stats[]`). `finished` only flips after FPL's final confirmation pass the morning after the last match of the gameweek. Bonus is live all season. | `jq '[.[]\|select(.event==1)\|{started,finished,finished_provisional}]' data/fixtures.json` |
+| `is_next` means "the gameweek to project" | It flips to GW+1 **the moment the deadline passes**, while the current gameweek still has unplayed fixtures. Anything keying `fromEvent` off it silently drops the rest of the current gameweek. Fixtures spread Fri–Mon, so this is true most of every week. | compare `events[].is_current/is_next` against `fixtures` with `started=false` in that event |
+| Draft and classic element ids are the same | **21 of 587 differ.** Tzolis is 554 in Draft and 557 in classic. Ownership, live points and the board must all be keyed in one space — see `js/prior.js` and `scripts/fetch-draft.mjs`. Join on `code`, which is stable across both games and across seasons. | `node -e` diff of `draft/players.json` ids vs `bootstrap.json` ids by `code` |
+| `bootstrap-static` totals are this season | They are **last season until the GW1 deadline**, then zeroed and refilled. A payload with ~600 league-wide points is one gameweek, not a season. `data/draft/prior-2526.json` is the frozen copy and is the only surviving record. | `node -e 'const b=require("./data/bootstrap.json");console.log(b.elements.reduce((a,e)=>a+ +e.total_points,0))'` |
+| Season xG totals are numbers | Totals in the `expected_*` family are **strings**; the `*_per_90` variants are numbers. Coerce both or `"0.00"` silently poisons the arithmetic. | `typeof` both before using either |
+| `team/set-piece-notes` is the set-piece authority | Empty for all 20 clubs pre-season ("Check back for additional notes soon") and stays empty for weeks. The authority is `penalties_order` / `corners_and_indirect_freekicks_order` / `direct_freekicks_order` in `bootstrap-static`. | `node -e 'const s=require("./data/set-pieces.json");console.log(s.teams.filter(t=>t.notes?.some(n=>!/Check back/.test(n.info_message))).length)'` |
+| A minutes threshold means the same before and after pooling | `js/prior.js` rebuilds `modelMinutes` onto a pooled basis, so a filter like `teamDefence()`'s `mins < 450` passes on a single match. Eligibility must use `evidenceMinutes` (actually observed), never `modelMinutes`. | see [[classic-model-needs-frozen-prior]] |
+
+**Two rules that would have caught all of these:**
+
+1. **A conclusion about a payload cites the field that proves it.** "Bonus is
+   provisional" cited nothing. `finished_provisional: true` with `bonus: 3` in
+   `stats[]` settles it in one command.
+2. **When the owner questions a claim, re-derive it from the payload before
+   defending it.** Every time this has happened, he was right.
+
 ## Research rules
 
 Everything hand-curated — `data/manual/season-notes.json`, README claims, anything

@@ -127,7 +127,13 @@ export function teamDefence(players, teams) {
   const acc = {};
   for (const p of players) {
     if (p.element_type > 2) continue;
-    const mins = modelMinutes(p);
+    /* Eligibility is a question about evidence, not about role, so it reads
+       evidenceMinutes. modelMinutes is rebuilt onto a pooled basis by
+       js/prior.js and clears 450 on a single appearance — which rated three
+       newly promoted clubs off one match each, Ipswich as the best defence in
+       the league. A club with no Premier League history now stays on its
+       strength rating until it has really played. */
+    const mins = num(p.evidenceMinutes) || modelMinutes(p);
     if (mins < 450) continue;
     const xgc90 = num(p.expected_goals_conceded_per_90);
     if (xgc90 <= 0) continue;
@@ -163,7 +169,11 @@ export function upcomingByTeam(fixtures, fromEvent, horizon) {
   for (const f of fixtures) {
     if (f.event === null || f.event === undefined) continue;
     if (f.event < fromEvent || f.event >= fromEvent + horizon) continue;
-    if (f.finished) continue;
+    // NOT `finished`: that only flips after FPL's confirmation pass the morning
+    // after the gameweek's last match. A match kicked off hours ago still reads
+    // finished:false, and projecting it again would double-count points the
+    // live payload already holds.
+    if (f.started || f.finished || f.finished_provisional) continue;
     (out[f.team_h] ||= []).push({
       event: f.event, opponent: f.team_a, home: true,
       difficulty: f.team_h_difficulty, kickoff: f.kickoff_time,
@@ -314,7 +324,17 @@ export function buildContext(boot, fixtures, opts = {}) {
   const events = boot.events || [];
   const current = events.find((e) => e.is_current)?.id ?? null;
   const next = events.find((e) => e.is_next)?.id ?? 1;
-  const from = o.fromEvent ?? next;
+  /* FPL flips is_next to the following gameweek the moment the deadline passes,
+     while the current one still has matches to play — fixtures run Friday to
+     Monday, so that is true for most of every week. Keying the window off it
+     dropped every unplayed fixture in the current gameweek: on 22 Aug 2026,
+     Haaland's match the next day was in neither his live points nor his
+     projection. Start from the earliest gameweek that still has a fixture to
+     play; upcomingByTeam skips the ones already played. */
+  const unplayed = fixtures
+    .filter((f) => f.event != null && !(f.started || f.finished || f.finished_provisional))
+    .map((f) => f.event);
+  const from = o.fromEvent ?? (unplayed.length ? Math.min(...unplayed) : next);
   return {
     games: inferGamesPlayed(boot.elements),
     defence: teamDefence(boot.elements, boot.teams),
