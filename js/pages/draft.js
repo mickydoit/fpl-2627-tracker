@@ -206,8 +206,12 @@ let showDraft = false;
  * nothing to show. Ownership is the better source anyway: it stays correct
  * through waivers and trades, where a pick log only ever describes draft night.
  *
- * `ownership` is keyed by CLASSIC element id (translated server-side) and
- * valued by ENTRY id, so it needs the manager list to reach a slot number.
+ * `ownership` is keyed by the same element id the board rows carry — the DRAFT
+ * id wherever the Draft game knows the player — and valued by ENTRY id, so it
+ * needs the manager list to reach a slot number. The two games disagree on ids
+ * for 21 of 587 players, so this must stay the board's id space: it was once
+ * translated to classic ids server-side, which quietly put two owned players in
+ * the free-agent pool and gave two free agents to managers who did not own them.
  * Returns null unless every slot is present and complete — a half-filled
  * mirror would render a league of phantom squads.
  */

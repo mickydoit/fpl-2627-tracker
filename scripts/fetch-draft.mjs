@@ -174,16 +174,20 @@ if (!LEAGUE_ID) {
 } else {
   console.log(`→ draft league ${LEAGUE_ID}`);
 
-  // Draft element ids are NOT classic element ids — 21 of 587 differ. The board
-  // is keyed on classic ids, so ownership must be translated through `code`
-  // before it is written, or a handful of players silently become the wrong
-  // player. This is the single most dangerous join in the project.
-  const classicIdByCode = new Map(classicBoot.elements.map((p) => [p.code, p.id]));
-  const classicIdByDraftId = new Map();
-  for (const d of draftBoot?.elements || []) {
-    const classicId = classicIdByCode.get(d.code);
-    if (classicId != null) classicIdByDraftId.set(d.id, classicId);
-  }
+  // Draft element ids are NOT classic element ids — 21 of 587 differ. This is
+  // the single most dangerous join in the project, and it is dangerous in both
+  // directions: every consumer looks ownership up as `byId.get(elementId)`
+  // against a board row, and the board above is keyed on `d?.id ?? p.id` — the
+  // DRAFT id wherever the Draft game knows the player. So ownership must be
+  // written in that same space, straight off `element_status`, with no
+  // translation. It previously translated to classic ids, which silently put
+  // two of this league's owned players in the free-agent pool and handed two
+  // free agents to managers who did not own them.
+  //
+  // Keyed by code so the check below can prove the join rather than assume it.
+  const boardById = new Map(players.map((p) => [p.id, p]));
+  const boardByCode = new Map(players.map((p) => [p.code, p]));
+  const draftCodeById = new Map((draftBoot?.elements || []).map((d) => [d.id, d.code]));
 
   const details = await getJSON(`${DRAFT_API}/league/${LEAGUE_ID}/details`, { browserUA: true })
     .catch((e) => { console.warn(`  league details failed: ${e.message}`); return null; });
@@ -213,16 +217,34 @@ if (!LEAGUE_ID) {
       slot: slotByEntry.get(e.entry_id ?? e.id) ?? null,
     }));
 
-    // element → owning league entry, translated to classic ids.
+    // element → owning league entry, in the board's own id space.
     const ownership = {};
-    let untranslated = 0;
+    let unresolved = 0;
+    let misjoined = 0;
     for (const row of status?.element_status || []) {
       if (row.owner == null) continue;
-      const classicId = classicIdByDraftId.get(row.element);
-      if (classicId == null) { untranslated += 1; continue; }
-      ownership[classicId] = row.owner;
+
+      // The key actually written, and the footballer it is supposed to mean.
+      // `code` is the identity the two games agree on; the key is not. Keeping
+      // them as separate variables is the point — the check below validates the
+      // key, so reintroducing any translation here trips it instead of silently
+      // shipping wrong rosters, which is exactly how this went wrong before.
+      const key = row.element;
+      const code = draftCodeById.get(row.element);
+
+      const target = boardById.get(key);
+      if (!target) { unresolved += 1; continue; }
+      if (code != null && target.code !== code) {
+        misjoined += 1;
+        const should = boardByCode.get(code);
+        console.warn(`  ✗ ownership key ${key} resolves to ${target.web_name} but should be `
+          + `${should?.web_name ?? `code ${code}`} — the join is broken, dropping it`);
+        continue;
+      }
+      ownership[key] = row.owner;
     }
-    if (untranslated) console.warn(`  ${untranslated} owned elements could not be mapped to a classic id`);
+    if (unresolved) console.warn(`  ${unresolved} owned elements are not on the board`);
+    if (misjoined) console.warn(`  ${misjoined} owned elements failed the code check and were dropped`);
 
     /* ---------------------------------------------------------------- *
      * derive the transaction log
