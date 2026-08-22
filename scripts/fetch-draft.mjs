@@ -96,6 +96,63 @@ await writeJSONIfChanged(`${DIR}/players.json`, {
 console.log(`✓ ${players.length} players on the board, ${teams.length} teams`);
 
 /* ------------------------------------------------------------------ *
+ * Live gameweek scoring
+ *
+ * League-independent and public, so it runs with or without a league id.
+ *
+ * It must come from the DRAFT live endpoint, not data/live.json: Draft scores
+ * under its league's own rules, and the two games disagree on element ids for
+ * 21 of 587 players. Keyed on the same id the board above is keyed on
+ * (`d?.id ?? p.id`), because that is what the pages join against — the draft
+ * element id IS that key for every player the endpoint can return, since a
+ * player absent from the Draft game never appears here.
+ *
+ * Flattened to the fields the dashboard renders, matching data/live.json's
+ * slimming, and written as an object keyed by id because that is how
+ * dashboard-draft.js reads it: live.elements[p.id].total_points.
+ * ------------------------------------------------------------------ */
+const game = await getJSON(`${DRAFT_API}/game`, { browserUA: true })
+  .catch((e) => { console.warn(`  draft game state failed: ${e.message}`); return null; });
+const liveGW = game?.current_event ?? null;
+
+if (!liveGW) {
+  console.log('  no current draft gameweek — skipping live scoring');
+} else {
+  console.log(`→ draft event/${liveGW}/live`);
+  const live = await getJSON(`${DRAFT_API}/event/${liveGW}/live`, { browserUA: true })
+    .catch((e) => { console.warn(`  draft live failed: ${e.message}`); return null; });
+
+  if (!live?.elements) {
+    console.warn('  no live payload — leaving any committed live.json untouched');
+  } else {
+    const elements = {};
+    for (const [id, el] of Object.entries(live.elements)) {
+      const s = el.stats || {};
+      elements[id] = {
+        total_points: num(s.total_points),
+        minutes: num(s.minutes),
+        goals_scored: num(s.goals_scored),
+        assists: num(s.assists),
+        clean_sheets: num(s.clean_sheets),
+        saves: num(s.saves),
+        defensive_contribution: num(s.defensive_contribution),
+        bonus: num(s.bonus),
+        bps: num(s.bps),
+        yellow_cards: num(s.yellow_cards),
+        red_cards: num(s.red_cards),
+      };
+    }
+    const playing = Object.values(elements).filter((e) => e.minutes > 0).length;
+    await writeJSONIfChanged(`${DIR}/live.json`, {
+      event: liveGW,
+      fetchedAt: new Date().toISOString(),
+      elements,
+    });
+    console.log(`  GW${liveGW}: ${playing} of ${Object.keys(elements).length} players with minutes`);
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * Optional: mirror the Draft league
  *
  * Everything above works with no league id, and that stays true — the draft
