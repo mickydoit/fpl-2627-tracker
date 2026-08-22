@@ -155,11 +155,32 @@ results carry no date unless you look for one.
 
 ## Still to verify / do
 
-1. **Live endpoints were unverifiable pre-season** — `event/{gw}/live`, fixture `stats[]`, `entry/{id}/picks` all return empty until GW1. Parsers read keys dynamically rather than assuming a fixed set, but check the dashboard against the official site on the first live gameweek.
-2. **`bootstrap-static` currently holds 2025/26 totals.** FPL usually zeroes these at the GW1 deadline (21 Aug). Right prior to project from now, but it is not this season's form.
-3. **`data/manual/season-notes.json` needs a pass after 1 September** — the window closes then and several entries are still labelled rumour (Barcola to Liverpool, Gakpo to Spurs, Grealish to Everton).
-4. Recalibrate the bonus component once real BPS data accumulates.
-5. Not yet pushed to GitHub — see MIGRATE.md.
+*Last reviewed 22 Aug 2026, during GW1.*
+
+1. **Draft `replacementBasis` is set to the losing option for this league.**
+   `scripts/test-draft.mjs` audits the config against a 64-draft head-to-head and
+   fails: at six teams `demand` beats `starters` 46–0, about 41 pts per squad;
+   the crossover is around ten teams, and the test hardcodes eight. Only feeds
+   the live draft assistant (`js/pages/draft.js`), so it is dormant until the
+   next draft — but it is the one failing check in the suite.
+2. **Recalibrate the bonus component.** Still fitted on the old BPS. First real
+   evidence has arrived: the draft suite's bonus-domination check was failing at
+   a 0.39 share during GW1. Revisit once a few gameweeks exist.
+3. **`data/manual/season-notes.json` needs a pass after 1 September** — the
+   window closes then and five entries are still rumour (Barcola to Liverpool,
+   Gakpo to Spurs, Grealish to Everton, Enzo to City, Lewis Hall to United).
+4. **`lastSeasonWeight` in `js/prior.js` is 0.5 by judgement, not by fit.** It
+   sets when this season overtakes last (around GW19). Worth fitting alongside
+   the bonus recalibration.
+5. **Check live scoring against the official site once GW1 completes.** The
+   parsers are verified against the API — `data/live.json` and
+   `data/draft/live.json` both matched `event/1/live` exactly, 0 disagreements
+   across 604 rows on 22 Aug — but the last GW1 match is FUL-CHE on 24 Aug, and
+   `finished` only flips the morning after. Confirm bonus and totals settle.
+
+**Done, kept so it is not re-investigated:** the GW1 zeroing happened as expected
+and `js/prior.js` now pools the frozen prior; the site is live on GitHub Pages at
+`mickydoit.github.io/fpl-2627-tracker` (MIGRATE.md is historical).
 
 ## Season context worth remembering
 
