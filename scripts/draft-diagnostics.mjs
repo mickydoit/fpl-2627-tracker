@@ -15,7 +15,8 @@ import { outstandingDemand, replacementLevel, attachVorp } from '../js/draft/rep
 import { scarcityByPosition } from '../js/draft/scarcity.js';
 import { evaluate } from '../js/draft/value.js';
 import { assignTiers } from '../js/draft/board.js';
-import { QUOTA } from '../js/draft/config.js';
+import { QUOTA, replacementBasisForLeagueSize, DEMAND_BASIS_SIZES,
+  LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX } from '../js/draft/config.js';
 
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 const LEAGUE = Number(process.env.LEAGUE_SIZE) || 8;
@@ -60,6 +61,16 @@ const table = (title, rows) => {
 table(`Top 20 overall (${LEAGUE}-manager league)`, ranked.slice(0, 20));
 for (const [type, n] of [[1, 10], [2, 20], [3, 20], [4, 15]]) {
   table(`Top ${n} ${POS[type]}`, ranked.filter((r) => r.element_type === type).slice(0, n));
+}
+
+console.log(`\nReplacement basis in force: ${replacementBasisForLeagueSize(LEAGUE)} `
+  + `(${LEAGUE} managers; demand applies from ${DEMAND_BASIS_SIZES.min} to ${DEMAND_BASIS_SIZES.max})`);
+console.log('  The rule and the simulation evidence behind it are in js/draft/config.js.');
+console.log('  Across every selectable size:');
+{
+  const line = [];
+  for (let n = LEAGUE_SIZE_MIN; n <= LEAGUE_SIZE_MAX; n++) line.push(`${n}:${replacementBasisForLeagueSize(n)[0]}`);
+  console.log(`    ${line.join(' ')}   (d = demand, s = starters)`);
 }
 
 console.log('\nReplacement level per position (demand basis vs starters basis)');

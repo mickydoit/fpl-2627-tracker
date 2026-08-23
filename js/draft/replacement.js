@@ -11,7 +11,7 @@
  * It has to be recomputed after every pick. A baseline fixed before the draft
  * makes VORP meaningless by the second round.
  */
-import { QUOTA, STARTER_QUOTA, DRAFT_CONFIG, LEAGUE_SIZE_DEFAULT } from './config.js';
+import { QUOTA, STARTER_QUOTA, DRAFT_CONFIG, LEAGUE_SIZE_DEFAULT, replacementBasisForLeagueSize } from './config.js';
 
 const TYPES = [1, 2, 3, 4];
 
@@ -36,12 +36,18 @@ export function outstandingDemand(rosters, leagueSize, types) {
 /**
  * The projected points of the replacement-level player at each position.
  *
- * `basis: 'demand'` uses outstanding league-wide roster demand — the default,
- * and the one that responds to the draft. `basis: 'starters'` measures against
- * starting slots only, which stops bench positions earning early picks; it is
- * kept for comparison in the diagnostics.
+ * `basis: 'demand'` uses outstanding league-wide roster demand, which responds
+ * to the draft as it happens. `basis: 'starters'` measures against starting
+ * slots only, which stops bench positions earning early picks.
+ *
+ * Neither is right everywhere: which one wins depends on league size, and
+ * `replacementBasisForLeagueSize()` in config.js carries the rule and the
+ * simulation evidence behind it. Precedence is explicit argument, then the
+ * DRAFT_CONFIG override, then the rule — so a caller comparing the two bases
+ * can pin either, and everything else gets the size-appropriate one.
  */
-export function replacementLevel(rows, demand, { basis = DRAFT_CONFIG.replacementBasis, leagueSize = LEAGUE_SIZE_DEFAULT } = {}) {
+export function replacementLevel(rows, demand, { basis, leagueSize = LEAGUE_SIZE_DEFAULT } = {}) {
+  const useBasis = basis ?? DRAFT_CONFIG.replacementBasis ?? replacementBasisForLeagueSize(leagueSize);
   const out = {};
   for (const t of TYPES) {
     const pool = rows
@@ -49,7 +55,7 @@ export function replacementLevel(rows, demand, { basis = DRAFT_CONFIG.replacemen
       .sort((a, b) => b.proj - a.proj);
     if (!pool.length) { out[t] = 0; continue; }
 
-    const edge = basis === 'starters'
+    const edge = useBasis === 'starters'
       ? STARTER_QUOTA[t] * leagueSize
       : (demand?.[t] ?? pool.length);
 

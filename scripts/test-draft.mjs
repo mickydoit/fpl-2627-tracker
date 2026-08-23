@@ -5,7 +5,8 @@
  */
 import { readJSON } from './lib/io.mjs';
 import { DRAFT_CONFIG, QUOTA, STARTER_QUOTA, ROUNDS,
-  LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX } from '../js/draft/config.js';
+  LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX,
+  replacementBasisForLeagueSize, DEMAND_BASIS_SIZES } from '../js/draft/config.js';
 import {
   SCHEMA_VERSION, createDraft, addPick, undoLastPick, editPick, derive, needsFor,
   slotForPick, roundForPick, finishDraft, finalPools, save, load, clear, migrateLegacy,
@@ -92,10 +93,20 @@ ok('the near-term horizon is configurable', DRAFT_CONFIG.nearTermHorizon === 5);
 ok('every weight is a finite number',
   ['rosWeight', 'nearTermWeight', 'vorpWeight', 'scarcityWeight', 'urgencyWeight',
     'rosterNeedWeight', 'riskWeight'].every((k) => Number.isFinite(DRAFT_CONFIG[k])));
-// The basis is chosen by evidence, not preference — the head-to-head simulation
-// later in this suite asserts the configured value matches what actually wins.
-ok('the replacement basis is one of the two supported values',
-  ['demand', 'starters'].includes(DRAFT_CONFIG.replacementBasis));
+// The basis is chosen by evidence, not preference. It is no longer one constant:
+// which basis wins depends on league size, and the head-to-head later in this
+// suite asserts the rule still matches what actually wins.
+ok('the basis override is off by default, so the league-size rule applies',
+  DRAFT_CONFIG.replacementBasis === null);
+ok('the rule returns a supported basis at every selectable league size',
+  Array.from({ length: LEAGUE_SIZE_MAX - LEAGUE_SIZE_MIN + 1 }, (_, i) => i + LEAGUE_SIZE_MIN)
+    .every((n) => ['demand', 'starters'].includes(replacementBasisForLeagueSize(n))));
+ok('the default league size gets the basis the evidence supports',
+  replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT) === 'demand',
+  `got ${replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT)} for ${LEAGUE_SIZE_DEFAULT} managers`);
+ok('an unusable league size falls back rather than throwing',
+  ['demand', 'starters'].includes(replacementBasisForLeagueSize(undefined))
+  && ['demand', 'starters'].includes(replacementBasisForLeagueSize('nonsense')));
 ok('the survival model is deterministic by default', Number.isFinite(DRAFT_CONFIG.survivalSeed));
 
 console.log('\nDraft state — snake order');
@@ -641,48 +652,132 @@ if (boardFile) {
 }
 
 console.log('\nReplacement basis head-to-head: demand vs starters');
-// The owner's spec favours a demand basis by default, but a diagnostic run
-// showed it puts the forward baseline (87 pts) so shallow it lets marginal
-// forwards outrank elite defenders, while board.js's own STARTER_QUOTA
-// comment records starters roughly doubling the board's edge over
-// best-available across 40 simulated drafts. Settle it here with the same
-// engine under each basis, same seeds and slots, so neither run gets an
-// opponent-behaviour advantage the other didn't have.
+/*
+ * Neither basis wins everywhere. This runs the real engine under each basis on
+ * the same board, seed and slot — so both arms face identical opponents and the
+ * only difference is my own strategy — and asserts that
+ * replacementBasisForLeagueSize() still names the winner.
+ *
+ * Sizes either side of both boundaries, kept small enough to stay a test rather
+ * than a benchmark. The full sweep behind the rule is documented in config.js.
+ */
 if (boardFile) {
   const pool = projectBoard(boardFile.players, fixturesFile, boardFile.teams);
-  const LEAGUE = 8;
-  const SEEDS = 8;
+  const SEEDS = 6;
   const originalBasis = DRAFT_CONFIG.replacementBasis;
-
-  let startersWins = 0; let demandWins = 0; let ties = 0; let marginSum = 0;
-  let n = 0;
-  for (let seed = 1; seed <= SEEDS; seed++) {
-    for (let slot = 1; slot <= LEAGUE; slot++) {
-      DRAFT_CONFIG.replacementBasis = 'demand';
-      const demand = runDraft(pool, { leagueSize: LEAGUE, mySlot: slot, strategy: STRATEGIES.value, seed });
-      DRAFT_CONFIG.replacementBasis = 'starters';
-      const starters = runDraft(pool, { leagueSize: LEAGUE, mySlot: slot, strategy: STRATEGIES.value, seed });
-
-      const margin = starters.total - demand.total;
-      marginSum += margin;
-      n++;
-      if (margin > 1e-9) startersWins++;
-      else if (margin < -1e-9) demandWins++;
-      else ties++;
+  const headToHead = (leagueSize) => {
+    let startersWins = 0; let demandWins = 0; let ties = 0; let marginSum = 0; let n = 0;
+    for (let seed = 1; seed <= SEEDS; seed++) {
+      for (let slot = 1; slot <= leagueSize; slot++) {
+        DRAFT_CONFIG.replacementBasis = 'demand';
+        const demand = runDraft(pool, { leagueSize, mySlot: slot, strategy: STRATEGIES.value, seed });
+        DRAFT_CONFIG.replacementBasis = 'starters';
+        const starters = runDraft(pool, { leagueSize, mySlot: slot, strategy: STRATEGIES.value, seed });
+        const margin = starters.total - demand.total;
+        marginSum += margin; n++;
+        if (margin > 1e-9) startersWins++;
+        else if (margin < -1e-9) demandWins++;
+        else ties++;
+      }
     }
+    return { startersWins, demandWins, ties, n, avg: marginSum / n };
+  };
+
+  for (const leagueSize of [6, 12]) {
+    const r = headToHead(leagueSize);
+    const winner = r.startersWins > r.demandWins ? 'starters' : 'demand';
+    const rule = replacementBasisForLeagueSize(leagueSize);
+    console.log(`  ${leagueSize} managers, ${r.n} paired drafts: starters ${r.startersWins}, demand ${r.demandWins}, ties ${r.ties}`
+      + `  avg margin ${r.avg >= 0 ? '+' : ''}${r.avg.toFixed(2)} -> ${winner}, rule says ${rule}`);
+    ok(`the ${leagueSize}-manager head-to-head produced a clear winner`,
+      r.startersWins !== r.demandWins, `${r.startersWins} vs ${r.demandWins}`);
+    ok(`the rule matches the evidence at ${leagueSize} managers`,
+      rule === winner, `rule=${rule} evidence=${winner}`);
   }
   DRAFT_CONFIG.replacementBasis = originalBasis;
+  ok('the head-to-head restored the override it borrowed', DRAFT_CONFIG.replacementBasis === null);
+}
 
-  const avgMargin = marginSum / n;
-  console.log(`  ${n} paired drafts (${SEEDS} seeds x ${LEAGUE} slots), same seed and slot compared across bases`);
-  console.log(`  starters wins: ${startersWins}   demand wins: ${demandWins}   ties: ${ties}`);
-  console.log(`  average margin, starters minus demand: ${avgMargin >= 0 ? '+' : ''}${avgMargin.toFixed(2)} pts per squad`);
-  ok('the head-to-head produced a clear majority for one basis',
-    startersWins !== demandWins, `${startersWins} starters vs ${demandWins} demand (${ties} ties)`);
-  ok('the configured default matches the basis the evidence supports',
-    (startersWins > demandWins && DRAFT_CONFIG.replacementBasis === 'starters')
-    || (demandWins > startersWins && DRAFT_CONFIG.replacementBasis === 'demand'),
-    `starters=${startersWins} demand=${demandWins} configured default=${DRAFT_CONFIG.replacementBasis}`);
+console.log('\nReplacement basis by league size');
+{
+  ok('a six-manager league uses demand', replacementBasisForLeagueSize(6) === 'demand');
+  ok('a twelve-manager league uses starters', replacementBasisForLeagueSize(12) === 'starters');
+  ok('the rule switches exactly at the measured lower boundary',
+    replacementBasisForLeagueSize(DEMAND_BASIS_SIZES.min - 1) === 'starters'
+    && replacementBasisForLeagueSize(DEMAND_BASIS_SIZES.min) === 'demand');
+  ok('the rule switches exactly at the measured upper boundary',
+    replacementBasisForLeagueSize(DEMAND_BASIS_SIZES.max) === 'demand'
+    && replacementBasisForLeagueSize(DEMAND_BASIS_SIZES.max + 1) === 'starters');
+  ok('demand applies over a contiguous band, not scattered sizes',
+    Array.from({ length: LEAGUE_SIZE_MAX - LEAGUE_SIZE_MIN + 1 }, (_, i) => i + LEAGUE_SIZE_MIN)
+      .filter((n) => replacementBasisForLeagueSize(n) === 'demand')
+      .every((n, i, a) => i === 0 || n === a[i - 1] + 1));
+
+  if (boardFile) {
+    const pool = projectBoard(boardFile.players, fixturesFile, boardFile.teams);
+    const noDemand = outstandingDemand(new Map(), 6, new Map());
+
+    // The rule has to actually reach replacementLevel(), not just exist.
+    const auto6 = replacementLevel(pool, noDemand, { leagueSize: 6 });
+    const forced6 = replacementLevel(pool, noDemand, { basis: 'demand', leagueSize: 6 });
+    ok('replacementLevel applies the rule for the league size it is given',
+      JSON.stringify(auto6) === JSON.stringify(forced6));
+
+    const d12 = outstandingDemand(new Map(), 12, new Map());
+    const auto12 = replacementLevel(pool, d12, { leagueSize: 12 });
+    const forced12 = replacementLevel(pool, d12, { basis: 'starters', leagueSize: 12 });
+    ok('a twelve-manager league really gets the starters baseline',
+      JSON.stringify(auto12) === JSON.stringify(forced12));
+
+    // An explicit basis must still beat the rule, or the diagnostics lie.
+    const override = replacementLevel(pool, noDemand, { basis: 'starters', leagueSize: 6 });
+    ok('an explicit basis overrides the rule',
+      JSON.stringify(override) !== JSON.stringify(auto6));
+
+    // Determinism and legality under the rule, at both bases.
+    for (const leagueSize of [6, 12]) {
+      const a = runDraft(pool, { leagueSize, mySlot: 2, strategy: STRATEGIES.value, seed: 4242 });
+      const b = runDraft(pool, { leagueSize, mySlot: 2, strategy: STRATEGIES.value, seed: 4242 });
+      ok(`a ${leagueSize}-manager draft under the rule is reproducible`, a.total === b.total,
+        `${a.total} vs ${b.total}`);
+      ok(`a ${leagueSize}-manager roster is fifteen players`, a.roster.length === 15);
+      const byPos = a.roster.reduce((acc, p) => { acc[p.element_type] = (acc[p.element_type] || 0) + 1; return acc; }, {});
+      ok(`a ${leagueSize}-manager roster respects the 2/5/5/3 quota`,
+        [1, 2, 3, 4].every((t) => byPos[t] === QUOTA[t]), JSON.stringify(byPos));
+      ok(`a ${leagueSize}-manager draft picks nobody twice`,
+        new Set(a.roster.map((p) => p.id)).size === 15);
+    }
+
+    // Draft is a no-money game. Nothing price-shaped may reach a recommendation.
+    const demand6 = outstandingDemand(new Map(), 6, new Map());
+    const ranked = evaluate(attachVorp(pool, replacementLevel(pool, demand6, { leagueSize: 6 })), {
+      replacement: replacementLevel(pool, demand6, { leagueSize: 6 }),
+      demand: demand6,
+      scarcity: scarcityByPosition(attachVorp(pool, replacementLevel(pool, demand6, { leagueSize: 6 })), demand6, { leagueSize: 6 }),
+      needs: { 1: 2, 2: 5, 3: 5, 4: 3 },
+      picksRemaining: 15, opponentPicksBeforeMyNext: 5, round: 1, leagueSize: 6,
+    });
+    /* Draft is a no-money game. `now_cost` rides along for display, so asserting
+       it is absent would be wrong — assert instead that it cannot influence a
+       decision: scramble every price and the ranking must not move at all. */
+    const scrambled = pool.map((r, i) => ({ ...r, now_cost: ((i * 37) % 120) + 40 }));
+    const scrRep = replacementLevel(scrambled, demand6, { leagueSize: 6 });
+    const scrRanked = evaluate(attachVorp(scrambled, scrRep), {
+      replacement: scrRep,
+      demand: demand6,
+      scarcity: scarcityByPosition(attachVorp(scrambled, scrRep), demand6, { leagueSize: 6 }),
+      needs: { 1: 2, 2: 5, 3: 5, 4: 3 },
+      picksRemaining: 15, opponentPicksBeforeMyNext: 5, round: 1, leagueSize: 6,
+    });
+    ok('scrambling every price does not move the draft ranking',
+      ranked.length === scrRanked.length
+      && ranked.every((r, i) => r.id === scrRanked[i].id),
+      `first divergence at ${ranked.findIndex((r, i) => r.id !== scrRanked[i]?.id)}`);
+    ok('no js/draft module reads a price, budget or bank field',
+      !['price', 'budget', 'bank'].some((k) => k in (ranked[0] || {})));
+    ok('the recommendation is sane — a real player with a finite score',
+      Number.isFinite(ranked[0].proj) && Number.isFinite(ranked[0].vorp) && !!ranked[0].web_name);
+  }
 }
 
 console.log('\nA draft travels between devices by link');

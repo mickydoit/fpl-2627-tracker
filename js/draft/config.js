@@ -59,6 +59,60 @@ export const LEAGUE_SIZE_DEFAULT = 6;
 export const LEAGUE_SIZE_MIN = 2;
 export const LEAGUE_SIZE_MAX = 16;
 
+/**
+ * Which replacement basis to measure VORP against, by league size.
+ *
+ * The two bases place the baseline at different depths in the available pool:
+ * `starters` at STARTER_QUOTA[t] * size, a fixed index; `demand` at the
+ * league's outstanding roster slots, which starts deeper (QUOTA is 2/5/5/3
+ * against a starting 1/4/4/2) and decays to zero as the draft fills up.
+ *
+ * Neither wins everywhere, and the reason is depth. Measured over paired
+ * drafts — same board, same seed, same slot, only my own strategy differing,
+ * so both arms face identical opponents (`starters` minus `demand`, so a
+ * negative margin means demand won):
+ *
+ *   size   pairs   startersW  demandW  ties   mean margin
+ *      3     120        95        0      25       +7.96
+ *      4     160        84       66      10       -0.87
+ *      5     200        22      157      21      -12.67
+ *      6      96         0       95       1      -21.13
+ *      7     112         9       93      10      -15.70
+ *      8     128        27       55      46       -4.25
+ *      9     360        12      223     125      -11.66
+ *     10     400       291       88      21      +14.73
+ *     11     440       438        2       0      +66.56
+ *     12     192       192        0       0      +73.26
+ *     14     224       224        0       0      +68.86
+ *     16     256       236        0      20      +45.98
+ *
+ * Five through nine go to `demand`, ten and up to `starters`, and the upper
+ * boundary has a mechanism behind it: `demand`'s index runs past the usable
+ * depth of the shallow positions in a big league. At sixteen managers the
+ * keeper baseline collapses to 55.7 projected points against `starters`' 126.1,
+ * which inflates VORP for every keeper and forward on the board. The distortion
+ * shows up in the squads — at twelve, `demand` starts 5 DEF and the minimum
+ * 2 MID, despite its own numbers saying midfield is the deeper position.
+ *
+ * Below five the margins are small and the evidence is thinner: three is a
+ * clear `starters` win (95-0), four is a coin flip at 0.04% of a squad total,
+ * two is noise. They are grouped with `starters` because three says so and
+ * four does not care. A two- or three-manager league is a degenerate draft
+ * anyway — almost nothing is scarce, which is exactly the quantity `demand`
+ * exists to measure.
+ *
+ * Reproduce with the head-to-head in scripts/test-draft.mjs, which runs this
+ * comparison and fails if the rule stops matching the evidence.
+ */
+export const DEMAND_BASIS_SIZES = { min: 5, max: 9 };
+
+/** @returns {'demand'|'starters'} */
+export function replacementBasisForLeagueSize(leagueSize = LEAGUE_SIZE_DEFAULT) {
+  const n = Number(leagueSize);
+  if (!Number.isFinite(n)) return replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT);
+  return n >= DEMAND_BASIS_SIZES.min && n <= DEMAND_BASIS_SIZES.max ? 'demand' : 'starters';
+}
+
 export const DRAFT_CONFIG = {
   /* --- horizons --- */
   /** Gameweeks in the near-term projection. Matches the classic model default. */
@@ -96,13 +150,14 @@ export const DRAFT_CONFIG = {
 
   /* --- replacement level --- */
   /**
-   * 'demand'   — replacement is the player at the edge of the league's
-   *              OUTSTANDING roster demand at that position. Responds to the
-   *              draft as it happens.
-   * 'starters' — replacement is measured against starting slots only.
-   * The two are compared in scripts/draft-diagnostics.mjs.
+   * Force a basis, overriding the league-size rule below. `null` means use
+   * `replacementBasisForLeagueSize()`, which is what the board does.
+   *
+   * Only the head-to-head in scripts/test-draft.mjs and the diagnostics set
+   * this; it exists so both arms of a comparison can be pinned. A basis passed
+   * explicitly to `replacementLevel()` still wins over it.
    */
-  replacementBasis: 'starters',
+  replacementBasis: null,
 
   /* --- tiers and scarcity --- */
   /** Standard deviations above the mean gap that constitute a cliff. */
