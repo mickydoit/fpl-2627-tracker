@@ -4,3 +4,8 @@ node_modules/
 .vscode/
 .idea/
 .superpowers/
+
+# Claude Code local state. Deliberately not committed: this repo is public, and
+# launch.json carries absolute paths to other projects on the machine. RESUME.md
+# is transient session state that means nothing to anyone else.
+.claude/
