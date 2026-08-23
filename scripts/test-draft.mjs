@@ -102,7 +102,7 @@ ok('the rule returns a supported basis at every selectable league size',
   Array.from({ length: LEAGUE_SIZE_MAX - LEAGUE_SIZE_MIN + 1 }, (_, i) => i + LEAGUE_SIZE_MIN)
     .every((n) => ['demand', 'starters'].includes(replacementBasisForLeagueSize(n))));
 ok('the default league size gets the basis the evidence supports',
-  replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT) === 'demand',
+  replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT) === 'starters',
   `got ${replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT)} for ${LEAGUE_SIZE_DEFAULT} managers`);
 ok('an unusable league size falls back rather than throwing',
   ['demand', 'starters'].includes(replacementBasisForLeagueSize(undefined))
@@ -618,9 +618,12 @@ ok('a well-evidenced player still tracks their own estimate regardless of positi
 console.log('\nBonus does not dominate');
 if (boardFile) {
   const projected2 = projectBoard(boardFile.players, fixturesFile);
+  /* parts.bonus is the contribution summed over the projected horizon, so a
+     season estimate needs the per-match average rather than the total. It used
+     to be a single fixture's value, which is why this once read `* 38`. */
   const shares = projected2
-    .filter((r) => r.minutes > 1500 && r.parts && r.rosValue > 0)
-    .map((r) => (r.parts.bonus * 38) / r.rosValue);
+    .filter((r) => r.minutes > 1500 && r.parts?.fixtures > 0 && r.rosValue > 0)
+    .map((r) => ((r.parts.bonus / r.parts.fixtures) * 38) / r.rosValue);
   const worst = Math.max(...shares);
   ok('no regular starter is bonus-dominated', worst < 0.35, `worst share ${worst.toFixed(2)}`);
   const top20 = [...projected2].sort((a, b) => b.rosValue - a.rosValue).slice(0, 20);
@@ -700,18 +703,18 @@ if (boardFile) {
 
 console.log('\nReplacement basis by league size');
 {
-  ok('a six-manager league uses demand', replacementBasisForLeagueSize(6) === 'demand');
+  /* Re-measured after the defensive-contribution fix moved the answer. The band
+     that used to sit at five-to-nine is gone; starters wins everywhere with a
+     stable signal. config.js carries the corrected table and the one anomaly. */
+  ok('a six-manager league uses starters', replacementBasisForLeagueSize(6) === 'starters');
   ok('a twelve-manager league uses starters', replacementBasisForLeagueSize(12) === 'starters');
-  ok('the rule switches exactly at the measured lower boundary',
-    replacementBasisForLeagueSize(DEMAND_BASIS_SIZES.min - 1) === 'starters'
-    && replacementBasisForLeagueSize(DEMAND_BASIS_SIZES.min) === 'demand');
-  ok('the rule switches exactly at the measured upper boundary',
-    replacementBasisForLeagueSize(DEMAND_BASIS_SIZES.max) === 'demand'
-    && replacementBasisForLeagueSize(DEMAND_BASIS_SIZES.max + 1) === 'starters');
-  ok('demand applies over a contiguous band, not scattered sizes',
-    Array.from({ length: LEAGUE_SIZE_MAX - LEAGUE_SIZE_MIN + 1 }, (_, i) => i + LEAGUE_SIZE_MIN)
-      .filter((n) => replacementBasisForLeagueSize(n) === 'demand')
-      .every((n, i, a) => i === 0 || n === a[i - 1] + 1));
+  ok('no league size is currently on the demand basis',
+    DEMAND_BASIS_SIZES === null
+    && Array.from({ length: LEAGUE_SIZE_MAX - LEAGUE_SIZE_MIN + 1 }, (_, i) => i + LEAGUE_SIZE_MIN)
+      .every((n) => replacementBasisForLeagueSize(n) === 'starters'));
+  ok('if a band is ever restored the rule reads it, rather than hardcoding',
+    typeof replacementBasisForLeagueSize === 'function'
+    && replacementBasisForLeagueSize(6) === replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT));
 
   if (boardFile) {
     const pool = projectBoard(boardFile.players, fixturesFile, boardFile.teams);
@@ -719,7 +722,7 @@ console.log('\nReplacement basis by league size');
 
     // The rule has to actually reach replacementLevel(), not just exist.
     const auto6 = replacementLevel(pool, noDemand, { leagueSize: 6 });
-    const forced6 = replacementLevel(pool, noDemand, { basis: 'demand', leagueSize: 6 });
+    const forced6 = replacementLevel(pool, noDemand, { basis: 'starters', leagueSize: 6 });
     ok('replacementLevel applies the rule for the league size it is given',
       JSON.stringify(auto6) === JSON.stringify(forced6));
 
@@ -730,7 +733,7 @@ console.log('\nReplacement basis by league size');
       JSON.stringify(auto12) === JSON.stringify(forced12));
 
     // An explicit basis must still beat the rule, or the diagnostics lie.
-    const override = replacementLevel(pool, noDemand, { basis: 'starters', leagueSize: 6 });
+    const override = replacementLevel(pool, noDemand, { basis: 'demand', leagueSize: 6 });
     ok('an explicit basis overrides the rule',
       JSON.stringify(override) !== JSON.stringify(auto6));
 

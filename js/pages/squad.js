@@ -1,5 +1,5 @@
 import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
-import { projectAll, POS, SQUAD_RULES } from '../model.js';
+import { projectAll, POS, SQUAD_RULES, actionableEvent } from '../model.js';
 import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI, scoreSquad } from '../optimiser.js';
 import { squadPitch, playerCard } from '../squadview.js';
 import { fdrLegend, horizonBadge } from '../ui.js';
@@ -375,7 +375,11 @@ function actionableCard(mine, mineIds) {
   const freeTransfers = cstate.freeTransfers ?? 1;
 
   const rec = recommendedHorizon({ squad: mine, freeTransfers });
-  const rowsFor = (h) => projectAll(d.boot, d.fixtures, { horizon: h, riskAversion }).rows;
+  /* A transfer decided now cannot score from a gameweek whose deadline has
+     already gone, so its value is measured from the first one it can affect —
+     not from wherever the live projection happens to start. */
+  const fromEvent = actionableEvent(d.boot.events) ?? undefined;
+  const rowsFor = (h) => projectAll(d.boot, d.fixtures, { horizon: h, riskAversion, fromEvent }).rows;
   const cache = new Map();
   const at = (h) => {
     if (!cache.has(h)) cache.set(h, rowsFor(h));

@@ -232,21 +232,38 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
   /* keeper saves */
   const saves = pos === 1 ? (num(p.saves_per_90) / 3) * minsFactor : 0;
 
-  /* defensive contribution */
+  /* defensive contribution
+   *
+   * Threshold scoring, so it is a probability question, not a rate one:
+   * two points if the player reaches the threshold in a match, nothing below
+   * it, nothing extra above it.
+   *
+   * `defensive_contribution_per_90` is the volume of qualifying actions per 90,
+   * and FPL already counts the right actions per position — CBIT for defenders,
+   * CBIRT for midfielders and forwards, which is verifiable by reconstructing
+   * it from the raw columns. So it feeds the threshold directly.
+   *
+   * It was previously read as if it were scoring occurrences and clamped into
+   * [0,1], which handed every outfielder the full two points: the rates run
+   * from about 3 to 16, so the clamp saturated for 100% of players and the
+   * component discriminated between nobody. Haaland scored the same defensive
+   * contribution as a centre-back.
+   *
+   * Expected minutes belong inside the rate, not outside the probability. A
+   * player who lasts an hour accumulates two thirds of the actions, and his
+   * chance of reaching ten is far below two thirds of a full game's chance —
+   * scaling the probability afterwards would model a different, easier game.
+   */
   let defcon = 0;
   if (pos >= 2) {
-    const dcRate = num(p.defensive_contribution_per_90);
-    if (dcRate > 0) {
-      // Already expressed as scoring occurrences per 90 — the cap is inherent.
-      defcon = clamp(dcRate, 0, 1) * DEFCON_PTS * minsFactor;
-    } else if (mins > 0) {
+    const per90 = num(p.defensive_contribution_per_90) || (mins > 0
       // Older or partial data: rebuild from the raw action counts.
-      const per90 = (v) => (num(v) / mins) * 90;
-      const actions =
-        per90(p.clearances_blocks_interceptions) +
-        per90(p.tackles) +
-        (pos >= 3 ? per90(p.recoveries) : 0);
-      defcon = poissonAtLeast(actions, DEFCON_THRESHOLD[pos]) * DEFCON_PTS * minsFactor;
+      ? ((num(p.clearances_blocks_interceptions) + num(p.tackles)
+        + (pos >= 3 ? num(p.recoveries) : 0)) / mins) * 90
+      : 0);
+    if (per90 > 0) {
+      const expectedActions = per90 * minsFactor;
+      defcon = poissonAtLeast(expectedActions, DEFCON_THRESHOLD[pos]) * DEFCON_PTS;
     }
   }
 
@@ -283,8 +300,29 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
   const riskMult = 1 - o.riskAversion * (1 - avail);
   const total = Math.max(0, blended * avail * riskMult);
 
+  /* The breakdown has to add up to the number it explains, or it is decoration.
+     Each modelled route survives into the total only after the prior blend and
+     the availability/risk discount, so the contribution of a route is its raw
+     value times those same factors. What the prior supplies is a route in its
+     own right — without it the components would silently fall short of the
+     total by exactly the prior's share. */
+  const k = avail * riskMult;
+  const share = total > 0 ? w * k : 0;
+  const contrib = {
+    appearance: appearance * share,
+    attack: attack * share,
+    cleanSheet: cleanSheet * share,
+    conceded: conceded * share,
+    saves: saves * share,
+    defcon: defcon * share,
+    bonus: bonus * share,
+    cards: cards * share,
+    prior: total > 0 ? (1 - w) * prior * k : 0,
+  };
+
   return {
     total,
+    contrib,
     parts: {
       appearance, attack, cleanSheet, conceded, saves, defcon, bonus, cards,
       expMins, pCS, xgcMatch, attMult, availability: avail,
@@ -306,14 +344,71 @@ export function projectHorizon(p, ctx, opts = {}) {
   }
   let total = 0;
   const perGW = {};
-  let firstParts = null;
+  const sum = { appearance: 0, attack: 0, cleanSheet: 0, conceded: 0, saves: 0, defcon: 0, bonus: 0, cards: 0, prior: 0 };
+  const acc = { expMins: 0, pCS: 0, attMult: 0, availability: 0, evidence: 0 };
+  let last = null;
   for (const f of fixtures) {
     const r = projectFixture(p, f, ctx, o);
     total += r.total;
     perGW[f.event] = (perGW[f.event] || 0) + r.total;
-    if (!firstParts) firstParts = r.parts;
+    if (r.contrib) for (const k of Object.keys(sum)) sum[k] += r.contrib[k] || 0;
+    if (r.parts) {
+      for (const k of Object.keys(acc)) acc[k] += r.parts[k] ?? 0;
+      last = r.parts;
+    }
   }
-  return { total, perGW, count: fixtures.length, parts: firstParts };
+  const n = fixtures.length || 1;
+  /* Components are summed over the whole horizon, so they add up to the number
+     on the card. The per-match context around them is averaged instead — an
+     expected-minutes figure summed over five fixtures would be meaningless. */
+  return {
+    total,
+    perGW,
+    count: fixtures.length,
+    parts: {
+      ...sum,
+      expMins: acc.expMins / n,
+      pCS: acc.pCS / n,
+      attMult: acc.attMult / n,
+      availability: acc.availability / n,
+      evidence: acc.evidence / n,
+      isPrior: (acc.evidence / n) < 0.5,
+      fixtures: fixtures.length,
+      perFixture: last,
+    },
+  };
+}
+
+/**
+ * The first gameweek a transfer made right now can actually affect.
+ *
+ * Not the same question as "what will this player score from here". Once a
+ * gameweek's deadline passes its squads are locked, so a transfer made during
+ * it earns nothing from any of its remaining matches — not even from clubs
+ * that have yet to kick off. Projecting a transfer over a window that includes
+ * those fixtures credits the incoming player with points he cannot deliver.
+ *
+ * That is not hypothetical: mid-GW1 it made Tavernier look 4.4 points better
+ * than Schade purely because Bournemouth had not played yet, when Schade was
+ * the better player per match.
+ *
+ * Keyed on event deadlines rather than on fixture kickoffs, because the
+ * deadline is what locks the squad. Blank and double gameweeks therefore keep
+ * their real shape: this decides WHERE the window starts, never how many
+ * fixtures a gameweek contains.
+ *
+ * @returns {number|null} event id, or null once the season has no deadlines left
+ */
+export function actionableEvent(events, now = Date.now()) {
+  const t = now instanceof Date ? now.getTime() : now;
+  let best = null;
+  for (const e of events || []) {
+    if (!e?.deadline_time) continue;
+    const d = new Date(e.deadline_time).getTime();
+    if (!Number.isFinite(d) || d <= t) continue;
+    if (best === null || e.id < best) best = e.id;
+  }
+  return best;
 }
 
 /**
@@ -343,6 +438,10 @@ export function buildContext(boot, fixtures, opts = {}) {
     fromEvent: from,
     currentEvent: current,
     nextEvent: next,
+    // Where a transfer decided now can start earning. Callers projecting the
+    // value of a transfer should pass this as fromEvent; callers projecting
+    // what a player will score from here should not.
+    actionableEvent: actionableEvent(events),
     horizon: o.horizon,
   };
 }

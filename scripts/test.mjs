@@ -7,6 +7,7 @@ import { readJSON } from './lib/io.mjs';
 import {
   projectAll, poissonAtLeast, availability, inferGamesPlayed,
   teamDefence, upcomingByTeam, SQUAD_RULES, projectFixture, buildContext,
+  actionableEvent, DEFCON_THRESHOLD, DEFCON_PTS,
 } from '../js/model.js';
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
 import { snakePicks, replacementRank, buildBoard, assignTiers } from '../js/draft/board.js';
@@ -731,6 +732,118 @@ console.log('\nTeam defence eligibility');
   const solid = [1, 2, 3].map((i) => def(i, { minutes: 900, modelMinutes: 1800, evidenceMinutes: 1800 }));
   const d2 = teamDefence(solid, teams);
   ok('a club with real evidence is rated from its own numbers', near(d2[1], 0.5, 1e-9), `got ${d2[1]}`);
+}
+
+
+/* ------------------------------------------------------------------ *
+ * defensive contribution — threshold, not rate
+ * ------------------------------------------------------------------ */
+console.log('\nDefensive contribution');
+{
+  const mk = (over) => ({ id: 1, code: 1, element_type: 2, team: 1, now_cost: 50, status: 'a',
+    chance_of_playing_next_round: null, minutes: 1800, modelMinutes: 1800, evidenceMinutes: 1800,
+    bps: 0, yellow_cards: 0, saves: 0, expected_goals_per_90: 0, expected_assists_per_90: 0,
+    expected_goals_conceded_per_90: 1.2, saves_per_90: 0, defensive_contribution_per_90: 0,
+    clearances_blocks_interceptions: 0, tackles: 0, recoveries: 0, ...over });
+  const ctx = { games: 20, defence: { 1: 1.2 }, teams: { 1: {} } };
+  const fx = { event: 2, opponent: 2, home: true, difficulty: 3 };
+  const dc = (over) => projectFixture(mk(over), fx, ctx, { riskAversion: 0 }).parts.defcon;
+
+  ok('a forward who barely defends scores no defensive contribution',
+    dc({ element_type: 4, defensive_contribution_per_90: 3.17 }) < 0.01,
+    `${dc({ element_type: 4, defensive_contribution_per_90: 3.17 }).toFixed(3)}`);
+  ok('a defender at the threshold scores about half of it',
+    Math.abs(dc({ defensive_contribution_per_90: 10 }) - 1) < 0.25,
+    `${dc({ defensive_contribution_per_90: 10 }).toFixed(2)}`);
+  ok('defensive contribution never exceeds the two points on offer',
+    dc({ defensive_contribution_per_90: 40 }) <= DEFCON_PTS + 1e-9);
+  ok('it is never negative', dc({ defensive_contribution_per_90: 0.1 }) >= 0);
+  ok('more actions is always worth at least as much',
+    dc({ defensive_contribution_per_90: 12 }) > dc({ defensive_contribution_per_90: 8 }));
+  ok('the defender threshold is easier than the midfielder one',
+    dc({ element_type: 2, defensive_contribution_per_90: 10 })
+      > dc({ element_type: 3, defensive_contribution_per_90: 10 }),
+    'DEF needs 10, MID needs 12');
+  ok('a keeper is ineligible', dc({ element_type: 1, defensive_contribution_per_90: 12 }) === 0);
+  ok('fewer minutes means fewer actions and a lower chance of the threshold',
+    dc({ defensive_contribution_per_90: 10, modelMinutes: 900 })
+      < dc({ defensive_contribution_per_90: 10, modelMinutes: 1800 }));
+  // The old bug: rates run 3-16, so clamping into [0,1] gave everyone the max.
+  ok('two very different defenders no longer score identically',
+    Math.abs(dc({ defensive_contribution_per_90: 4 }) - dc({ defensive_contribution_per_90: 11 })) > 0.5);
+}
+
+/* ------------------------------------------------------------------ *
+ * the actionable horizon
+ * ------------------------------------------------------------------ *
+ * A transfer made after a deadline cannot score from that gameweek, however
+ * many of its fixtures are still to be played.
+ */
+console.log('\nActionable horizon');
+{
+  const ev = (id, iso) => ({ id, deadline_time: iso });
+  const events = [ev(1, '2026-08-21T17:30:00Z'), ev(2, '2026-08-28T17:30:00Z'), ev(3, '2026-09-12T17:30:00Z')];
+
+  ok('before the deadline, the current gameweek is still actionable',
+    actionableEvent(events, Date.parse('2026-08-21T12:00:00Z')) === 1);
+  ok('after the deadline, it is locked and the next one is actionable',
+    actionableEvent(events, Date.parse('2026-08-21T18:00:00Z')) === 2);
+  ok('a team that has not kicked off yet does not reopen a locked gameweek',
+    actionableEvent(events, Date.parse('2026-08-23T10:00:00Z')) === 2);
+  ok('exactly on the deadline counts as locked',
+    actionableEvent(events, Date.parse('2026-08-21T17:30:00Z')) === 2);
+  ok('with no deadlines left it reports nothing rather than guessing',
+    actionableEvent(events, Date.parse('2027-06-01T00:00:00Z')) === null);
+  ok('missing or malformed deadlines are skipped, not crashed on',
+    actionableEvent([{ id: 1 }, { id: 2, deadline_time: 'nonsense' }, ev(3, '2026-09-12T17:30:00Z')],
+      Date.parse('2026-08-23T10:00:00Z')) === 3);
+
+  /* Blanks and doubles are a property of the gameweek, not of the window. The
+     window decides where to start; it must never flatten them. */
+  const f = (id, event, h, a, over = {}) => ({ id, event, team_h: h, team_a: a,
+    team_h_difficulty: 3, team_a_difficulty: 3, started: false, finished: false,
+    finished_provisional: false, ...over });
+  const sched = [
+    f(1, 2, 1, 2), f(2, 2, 3, 4),          // gw2 normal
+    f(3, 3, 1, 3), f(4, 3, 1, 4),          // gw3 DOUBLE for team 1, BLANK for team 2
+    f(5, 4, 2, 3),                          // gw4: team 4 blank
+    f(6, 1, 1, 2, { started: true, finished_provisional: true }), // gw1 already played
+  ];
+  const up = upcomingByTeam(sched, 2, 3);
+  ok('a double gameweek gives that team two fixtures', (up[1] || []).filter((x) => x.event === 3).length === 2);
+  ok('a blank gameweek gives that team none', !(up[2] || []).some((x) => x.event === 3));
+  ok('the totals reflect the real fixture counts, not a normalised one',
+    (up[1] || []).length === 3 && (up[2] || []).length === 2,
+    `team1 ${(up[1] || []).length}, team2 ${(up[2] || []).length}`);
+  ok('a locked gameweek contributes nothing even when starting there',
+    !upcomingByTeam(sched, 1, 3)[1]?.some((x) => x.event === 1));
+  ok('a postponed fixture with no event is ignored',
+    upcomingByTeam([...sched, f(7, null, 1, 2)], 2, 3)[1].length === 3);
+}
+
+/* ------------------------------------------------------------------ *
+ * the breakdown adds up
+ * ------------------------------------------------------------------ */
+console.log('\nHorizon component sum');
+{
+  const KEYS = ['appearance', 'attack', 'cleanSheet', 'conceded', 'saves', 'defcon', 'bonus', 'cards', 'prior'];
+  const boot = await readJSON('data/bootstrap.json');
+  const fixtures = await readJSON('data/fixtures.json', []);
+  if (boot?.elements?.length) {
+    for (const horizon of [1, 3, 5, 8]) {
+      const { rows } = projectAll(boot, fixtures, { horizon, riskAversion: 0.5 });
+      const worst = rows.reduce((m, r) => {
+        const s = KEYS.reduce((a, k) => a + (r.parts?.[k] || 0), 0);
+        return Math.max(m, Math.abs(s - r.proj));
+      }, 0);
+      ok(`the components sum to the projection over ${horizon} gameweeks`,
+        worst < 1e-6, `largest deviation ${worst.toExponential(2)}`);
+    }
+    const { rows } = projectAll(boot, fixtures, { horizon: 5 });
+    const played = rows.find((r) => r.parts?.fixtures > 0);
+    ok('the breakdown reports how many fixtures it covers', played.parts.fixtures > 0);
+    ok('per-match context is averaged, not summed', played.parts.expMins <= 90);
+  }
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);

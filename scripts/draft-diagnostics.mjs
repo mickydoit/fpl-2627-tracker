@@ -64,7 +64,7 @@ for (const [type, n] of [[1, 10], [2, 20], [3, 20], [4, 15]]) {
 }
 
 console.log(`\nReplacement basis in force: ${replacementBasisForLeagueSize(LEAGUE)} `
-  + `(${LEAGUE} managers; demand applies from ${DEMAND_BASIS_SIZES.min} to ${DEMAND_BASIS_SIZES.max})`);
+  + `(${LEAGUE} managers; ${DEMAND_BASIS_SIZES ? `demand applies from ${DEMAND_BASIS_SIZES.min} to ${DEMAND_BASIS_SIZES.max}` : 'no size currently uses demand'})`);
 console.log('  The rule and the simulation evidence behind it are in js/draft/config.js.');
 console.log('  Across every selectable size:');
 {

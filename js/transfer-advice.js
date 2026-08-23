@@ -63,6 +63,19 @@ export const TRANSFER_CONFIG = {
    */
   incumbentEdge: 0.75,
 
+  /**
+   * Below this share of evidence, the incoming player's projection is still
+   * mostly a price prior rather than his own numbers.
+   *
+   * `evidence` is the same 0-1 weight js/model.js blends on: minutes actually
+   * observed against `priorBlendMinutes`. A move can be arithmetically large
+   * and still rest on almost nothing — a promoted-club forward with one
+   * appearance projects from his price, not his football. That is a statement
+   * about confidence, not about size, so it lowers confidence and says so
+   * rather than quietly shrinking the gain.
+   */
+  evidenceFloor: 0.5,
+
   /** Horizons a move must survive to be trusted. */
   horizons: [3, 5, 8],
 };
@@ -113,7 +126,7 @@ function crossHorizon(gainAt, horizons) {
  * The order matters: a move is disqualified before it is praised. Size alone
  * never earns a recommendation — it has to survive the other horizons too.
  */
-export function classify({ gain, cross, hit = 0, incumbentRisk = 0, cfg = TRANSFER_CONFIG }) {
+export function classify({ gain, cross, hit = 0, incumbentRisk = 0, evidence = 1, cfg = TRANSFER_CONFIG }) {
   // The bar: the model's error, plus the value of the transfer being banked,
   // plus the incumbent's edge, plus any hit and its safety margin.
   const bar = cfg.bankedTransferValue + cfg.incumbentEdge + (hit ? hit + cfg.hitMargin : 0);
@@ -143,13 +156,20 @@ export function classify({ gain, cross, hit = 0, incumbentRisk = 0, cfg = TRANSF
   if (incumbentRisk > 0.3) reasons.push('the player being replaced is carrying an availability flag');
 
   const strong = gain >= cfg.strong && cross.allPositive;
-  return {
-    verdict: strong ? 'STRONG TRANSFER' : 'GOOD TRANSFER',
-    confidence: strong ? 'HIGH' : 'MEDIUM',
-    net,
-    bar,
-    reasons,
-  };
+  let verdict = strong ? 'STRONG TRANSFER' : 'GOOD TRANSFER';
+  let confidence = strong ? 'HIGH' : 'MEDIUM';
+
+  /* Evidence is a separate axis from size. It cannot rescue a small gain and it
+     does not shrink a large one — it decides how much to trust either. A move
+     the model cannot yet stand behind is never called STRONG. */
+  if (evidence < cfg.evidenceFloor) {
+    confidence = confidence === 'HIGH' ? 'MEDIUM' : 'LOW';
+    if (verdict === 'STRONG TRANSFER') verdict = 'GOOD TRANSFER';
+    reasons.push(`confidence reduced: the incoming player's projection still leans on a price prior `
+      + `(${Math.round(evidence * 100)}% of the evidence needed to stand on his own numbers)`);
+  }
+
+  return { verdict, confidence, net, bar, reasons, evidence };
 }
 
 /**
@@ -169,11 +189,13 @@ export function bestMove(singles, gainAt, { hit = 0, cfg = TRANSFER_CONFIG } = {
     const cross = crossHorizon((h) => gainAt(move, h), cfg.horizons);
     const planning = cross.gains.find((g) => g.horizon === 5)?.gain ?? move.gain;
     const incumbentRisk = 1 - (move.out.availability ?? 1);
+    // How far the incoming player's projection rests on his own football.
+    const evidence = move.in?.parts?.evidence ?? 1;
     return {
       move,
       cross,
       gain: planning,
-      ...classify({ gain: planning, cross, hit, incumbentRisk, cfg }),
+      ...classify({ gain: planning, cross, hit, incumbentRisk, evidence, cfg }),
     };
   });
 

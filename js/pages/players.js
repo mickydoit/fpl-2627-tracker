@@ -84,7 +84,7 @@ const columns = [
   { key: 'total_points', label: 'Pts', cls: 'num' },
   { key: 'selected_by_percent', label: 'Own %', cls: 'num', sortValue: (p) => parseFloat(p.selected_by_percent) || 0, render: (p) => `${p.selected_by_percent}%` },
   { key: 'xgi90', label: 'xGI/90', cls: 'num', title: 'Expected goal involvements per 90', sortValue: (p) => parseFloat(p.expected_goal_involvements_per_90) || 0, render: (p) => (parseFloat(p.expected_goal_involvements_per_90) || 0).toFixed(2) },
-  { key: 'dc90', label: 'DefCon/90', cls: 'num', title: 'Defensive contribution points scored per 90', sortValue: (p) => parseFloat(p.defensive_contribution_per_90) || 0, render: (p) => (parseFloat(p.defensive_contribution_per_90) || 0).toFixed(2) },
+  { key: 'dc90', label: 'DefCon/90', cls: 'num', title: 'Qualifying defensive actions per 90 — CBIT for defenders, CBIRT for midfielders and forwards. Volume, not points: the threshold is 10 or 12 in a match', sortValue: (p) => parseFloat(p.defensive_contribution_per_90) || 0, render: (p) => (parseFloat(p.defensive_contribution_per_90) || 0).toFixed(2) },
   { key: 'minutes', label: 'Mins', cls: 'num' },
   { key: 'fixtures', label: 'Fixtures', sortValue: (p) => p.fixtures.reduce((s, f) => s + f.difficulty, 0) / Math.max(1, p.fixtures.length), ascDefault: true, render: (p) => fdrTicker(p.fixtures, teams, Math.min(horizon, 6), ctx.fromEvent) },
 ];
@@ -134,7 +134,10 @@ function showPlayer(p) {
       stat('Pts / £m', fmt.pts(p.value)),
       stat('Owned', `${p.selected_by_percent}%`),
     ),
-    el('h3', {}, 'Projection per gameweek'),
+    // The components are summed over the whole horizon and add up to the
+    // projection above, so the heading has to say which window they cover.
+    el('h3', {}, `Projection over ${p.parts?.fixtures ?? horizon} `
+      + `${(p.parts?.fixtures ?? horizon) === 1 ? 'fixture' : 'fixtures'}`),
     breakdown(p.parts || {}),
     p.parts?.isPrior ? el('p', { class: 'hint' },
       `Only ${Math.round(p.evidenceMinutes ?? p.minutes)} minutes of evidence`

@@ -62,54 +62,61 @@ export const LEAGUE_SIZE_MAX = 16;
 /**
  * Which replacement basis to measure VORP against, by league size.
  *
- * The two bases place the baseline at different depths in the available pool:
- * `starters` at STARTER_QUOTA[t] * size, a fixed index; `demand` at the
- * league's outstanding roster slots, which starts deeper (QUOTA is 2/5/5/3
- * against a starting 1/4/4/2) and decays to zero as the draft fills up.
+ * `starters` places the baseline at STARTER_QUOTA[t] * size, a fixed index;
+ * `demand` places it at the league's outstanding roster slots, which starts
+ * deeper (QUOTA is 2/5/5/3 against a starting 1/4/4/2) and decays to zero as
+ * the draft fills up.
  *
- * Neither wins everywhere, and the reason is depth. Measured over paired
- * drafts — same board, same seed, same slot, only my own strategy differing,
- * so both arms face identical opponents (`starters` minus `demand`, so a
- * negative margin means demand won):
+ * **Re-measured after the defensive-contribution fix.** The earlier band —
+ * demand from five to nine — was derived on projections in which every
+ * outfielder received the full two defensive-contribution points, because a
+ * volume rate was being read as a scoring rate. That flattened the difference
+ * between positions, and the replacement baseline is a per-position quantity,
+ * so the comparison was measuring a distorted board. Correcting it moved the
+ * answer, which is the whole argument for fixing correctness before tuning.
+ *
+ * Paired drafts on corrected projections — same board, seed and slot, only my
+ * own strategy differing (starters minus demand, so negative means demand won):
  *
  *   size   pairs   startersW  demandW  ties   mean margin
- *      3     120        95        0      25       +7.96
- *      4     160        84       66      10       -0.87
- *      5     200        22      157      21      -12.67
- *      6      96         0       95       1      -21.13
- *      7     112         9       93      10      -15.70
- *      8     128        27       55      46       -4.25
- *      9     360        12      223     125      -11.66
- *     10     400       291       88      21      +14.73
- *     11     440       438        2       0      +66.56
- *     12     192       192        0       0      +73.26
- *     14     224       224        0       0      +68.86
- *     16     256       236        0      20      +45.98
+ *      2      24         5       10       9       -1.77
+ *      3      36        13       18       5       -3.54
+ *      4      48        21       18       9       +0.30
+ *      5     200       148       45       7      +12.07
+ *      6     240       208       17      15       +7.41
+ *      7     280       137      121      22       -2.47
+ *      8     320        51      269       0      -16.03
+ *      9     360       223      121      16       +4.33
+ *     10     120       117        3       0      +58.41
+ *     11     132       132        0       0      +70.01
+ *     12     144       144        0       0     +105.42
+ *     14     168       168        0       0     +114.20
+ *     16     192       192        0       0     +106.35
  *
- * Five through nine go to `demand`, ten and up to `starters`, and the upper
- * boundary has a mechanism behind it: `demand`'s index runs past the usable
- * depth of the shallow positions in a big league. At sixteen managers the
- * keeper baseline collapses to 55.7 projected points against `starters`' 126.1,
- * which inflates VORP for every keeper and forward on the board. The distortion
- * shows up in the squads — at twelve, `demand` starts 5 DEF and the minimum
- * 2 MID, despite its own numbers saying midfield is the deeper position.
+ * `starters` now wins everywhere that shows a stable signal, decisively from
+ * ten managers up and clearly at five, six and nine. Two and three lean demand
+ * by margins smaller than a single point of a squad total; four and seven are
+ * coin flips.
  *
- * Below five the margins are small and the evidence is thinner: three is a
- * clear `starters` win (95-0), four is a coin flip at 0.04% of a squad total,
- * two is noise. They are grouped with `starters` because three says so and
- * four does not care. A two- or three-manager league is a degenerate draft
- * anyway — almost nothing is scarce, which is exactly the quantity `demand`
- * exists to measure.
+ * **Eight managers is a genuine, unexplained exception.** Demand wins it 269-51
+ * over 320 paired drafts, worth about sixteen points — too large and too
+ * consistent to dismiss, but there is no mechanism that would make eight
+ * special while seven and nine both go the other way. Encoding a
+ * single-size exception would be fitting a point, not a rule, so the rule
+ * stays uniform and the anomaly is written down instead. Worth revisiting with
+ * a different opponent model, or once a real draft's worth of evidence exists.
  *
- * Reproduce with the head-to-head in scripts/test-draft.mjs, which runs this
- * comparison and fails if the rule stops matching the evidence.
+ * The seam is kept as a function rather than folded back into a constant: the
+ * head-to-head in scripts/test-draft.mjs asserts the rule still matches what
+ * wins, so if the balance shifts again the suite says so.
  */
-export const DEMAND_BASIS_SIZES = { min: 5, max: 9 };
+export const DEMAND_BASIS_SIZES = null;
 
 /** @returns {'demand'|'starters'} */
 export function replacementBasisForLeagueSize(leagueSize = LEAGUE_SIZE_DEFAULT) {
   const n = Number(leagueSize);
-  if (!Number.isFinite(n)) return replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT);
+  if (!Number.isFinite(n)) return 'starters';
+  if (!DEMAND_BASIS_SIZES) return 'starters';
   return n >= DEMAND_BASIS_SIZES.min && n <= DEMAND_BASIS_SIZES.max ? 'demand' : 'starters';
 }
 

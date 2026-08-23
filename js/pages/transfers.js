@@ -1,5 +1,5 @@
 import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
-import { projectAll, POS } from '../model.js';
+import { projectAll, POS, actionableEvent } from '../model.js';
 import { suggestTransfers, bestXI, scoreSquad } from '../optimiser.js';
 import { bestMove, recommendedHorizon, TRANSFER_CONFIG } from '../transfer-advice.js';
 import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown , setKids, addKids} from '../ui.js';
@@ -76,7 +76,18 @@ function run() {
   setKids(output, el('p', { class: 'loading' }, 'Evaluating every legal transfer…'));
 
   setTimeout(() => {
-    const res = suggestTransfers(squadIds, rows, {
+    /* Measured from the first gameweek a transfer made now can affect. Once a
+       deadline passes that gameweek is locked, so crediting an incoming player
+       with its remaining fixtures buys points that cannot be bought. The page's
+       own `rows` stay on the live window — they answer a different question. */
+    const fromEvent = actionableEvent(d.boot.events) ?? undefined;
+    const hcache = new Map();
+    const rowsAtH = (h) => {
+      if (!hcache.has(h)) hcache.set(h, projectAll(d.boot, d.fixtures, { horizon: h, riskAversion, fromEvent }).rows);
+      return hcache.get(h);
+    };
+
+    const res = suggestTransfers(squadIds, rowsAtH(horizon), {
       bank, freeTransfers, horizon, riskAversion, maxSuggestions: 25,
     });
     if (res.error) {
@@ -110,11 +121,6 @@ function run() {
      * answers no.
      */
     const rec = recommendedHorizon({ squad, freeTransfers });
-    const hcache = new Map();
-    const rowsAtH = (h) => {
-      if (!hcache.has(h)) hcache.set(h, projectAll(d.boot, d.fixtures, { horizon: h, riskAversion }).rows);
-      return hcache.get(h);
-    };
     const gainAt = (move, h) => {
       const byH = new Map(rowsAtH(h).map((r) => [r.id, r]));
       const sq = squadIds.map((id) => byH.get(id)).filter(Boolean);
