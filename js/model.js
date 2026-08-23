@@ -113,18 +113,39 @@ export function inferGamesPlayed(players) {
  * Expected minutes per match when the record does not say.
  *
  * Neither of the two wrong answers: no evidence is not ninety minutes, and it
- * is not zero either. It is a squad player until shown otherwise — someone who
- * features often enough to matter and rarely enough not to be assumed.
+ * is not zero either. It is what a player drawn from a Premier League squad
+ * plays on average, which is a genuinely conservative thing to assume about
+ * someone we cannot describe.
  *
- * Deliberately below the level at which clean-sheet and 60-minute points start
- * paying fully, so an unknown player cannot out-project a known rotation option
- * simply by being unknown. Keepers are the exception the position deserves:
- * a club's keeper either plays every minute or none, so the middle is the least
- * likely place for him to sit and the prior sits lower still.
+ * **Measured, not chosen.** These are the mean minutes per match by position
+ * across every player in the 2025/26 record — the season the prior stands in
+ * for — divided by a 38-game season:
+ *
+ *   GKP 24.3    DEF 30.4    MID 26.8    FWD 21.1
+ *
+ * An earlier version of this used 45 for outfielders on the reasoning that it
+ * sat "below a starter". It does, but it also sits near the 75th percentile of
+ * what squad members actually play: DEF p75 is 56 and MID p75 is 47, so 45 was
+ * assuming an unknown player featured more than three quarters of real ones.
+ * That is not conservative, it is optimistic with a conservative story attached.
+ *
+ * The distributions are heavily bimodal — every position has a p25 of zero, and
+ * keepers are the extreme case because a club's first choice plays every minute
+ * and his deputy plays none. The mean is the honest summary of that: it is not
+ * a claim that anyone plays 24 minutes, it is the expectation over not knowing
+ * which of the two he is.
+ *
+ * Position-dependent and nothing else. Price does not enter, draft rank does
+ * not enter, and availability does not enter here — status is applied
+ * separately and multiplicatively, so an unavailable player is suppressed by
+ * `availability()` rather than by a smaller minutes prior. A £4.0m defender and
+ * a £14m forward with equally empty records get the same opportunity
+ * assumption and are separated by their production priors, which is where price
+ * belongs.
  */
-const MINUTES_PRIOR = { 1: 30, 2: 45, 3: 45, 4: 42 };
+const MINUTES_PRIOR = { 1: 24, 2: 30, 3: 27, 4: 21 };
 function minutesPrior(p) {
-  return MINUTES_PRIOR[p.element_type] ?? 45;
+  return MINUTES_PRIOR[p.element_type] ?? 27;
 }
 
 /** Rough pts-per-90 prior from price alone, for players with no minutes yet. */

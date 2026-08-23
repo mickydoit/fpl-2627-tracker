@@ -80,26 +80,35 @@ export const LEAGUE_SIZE_MAX = 16;
  * means demand won):
  *
  *   size   pairs   startersW  demandW   mean margin
+ *      4      96        39       44        -0.07
  *      5     120        19      100        -6.05
  *      6     144         3      141       -19.64
- *      7     168         2      166       -21.51
- *      8     192         0      192       -35.35
- *      9     216        88      128        -6.59
- *     10     240       112      128        -0.95
- *     11     264       252       12       +26.01
- *     12     288       288        0       +46.26
- *     14     336       336        0       +53.68
- *     16     384       384        0       +57.97
+ *      7     168         4      164       -19.32
+ *      8     192         0      192       -34.41
+ *      9     216        88      128        -5.73
+ *     10     400       174      226        -4.11
+ *     11     440       410       30       +27.36
+ *     12     288       288        0       +38.57
+ *     14     336       336        0       +43.93
+ *     16     384       384        0       +54.06
  *
- * `demand` now wins everywhere up to ten and `starters` from eleven, with a
- * clean crossover and no isolated exceptions — the eight-manager anomaly that
- * had to be written up last time has resolved itself, which is what you would
- * expect if it was an artefact of the projection bugs rather than a real
- * property of an eight-team draft.
+ * `demand` wins everywhere up to ten and `starters` from eleven, with the
+ * crossover confirmed at 400 and 440 paired drafts either side of it. Four is a
+ * near-tie (-0.07) and sits inside the band on the sign of the mean; nothing
+ * else is close.
  *
- * Ten is nearly a tie (-0.95 mean, 112-128) and is assigned to `demand` on the
- * sign of both mean and median. It is the one size where the answer could
- * reasonably move again.
+ * **The eight-manager anomaly has resolved.** It previously stood out as
+ * `demand` winning at eight while `starters` won at seven and nine, which had
+ * no mechanism behind it and was recorded rather than encoded. On the corrected
+ * model eight is simply the strongest point of a contiguous demand band that
+ * runs from four to ten — exactly what you would expect if the earlier
+ * discontinuity was an artefact of the projection bugs rather than a property
+ * of an eight-team draft. No special case was ever added, and none is needed.
+ *
+ * Re-derived from scratch after the production/opportunity separation and the
+ * measured minutes prior. This comparison has now moved three times, once per
+ * projection correction, and has been stable across the last two. Treat the
+ * table as a property of the current model rather than of the game.
  */
 export const DEMAND_BASIS_SIZES = { min: LEAGUE_SIZE_MIN, max: 10 };
 
