@@ -1,5 +1,6 @@
 import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
 import { projectAll, POS, SQUAD_RULES, actionableEvent } from '../model.js';
+import { rateSquad } from '../rating.js';
 import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI, scoreSquad } from '../optimiser.js';
 import { squadPitch, playerCard } from '../squadview.js';
 import { fdrLegend, horizonBadge } from '../ui.js';
@@ -365,6 +366,8 @@ function renderResult(ms) {
  * list of five marginal swaps invites you to make all five, and you have one
  * transfer.
  */
+let lastAdvice = null;
+
 function actionableCard(mine, mineIds) {
   // Bank and free transfers are the Transfers page's controls, not this page's.
   // Read them from shared Classic state so both pages agree, and fall back to
@@ -404,6 +407,9 @@ function actionableCard(mine, mineIds) {
   }
   const hit = freeTransfers >= 1 ? 0 : 4;
   const best = bestMove(res.singles, gainAt, { hit });
+  /* Published so the rating card can state the same recommended action rather
+     than deriving a second, possibly contradictory one. */
+  lastAdvice = { advice: best, rowsAt: at, bank, freeTransfers };
 
   const head = el('div', {},
     el('h3', {}, 'This week'),
@@ -502,6 +508,105 @@ run();
  * nothing here is phrased as a recommendation — the Transfers page owns that,
  * and it has to clear a much higher bar before it says move.
  */
+/**
+ * The squad rating.
+ *
+ * Two headline numbers from one machinery, differing only in the window they
+ * are measured over. **Squad Quality** runs over eight actionable gameweeks, so
+ * a two-fixture swing cannot make a good squad look bad. **Next-5 Outlook**
+ * runs over five, which is the window a transfer is actually planned in. The
+ * gap between them is the fixture signal, and it is more useful than either
+ * number alone: a squad rated 88 for quality and 79 for outlook has good
+ * players in a bad run, which is a hold, not a rebuild.
+ *
+ * Every line shown here comes out of js/rating.js. Nothing is narrated that the
+ * model did not produce, and the recommended action is the transfer adviser's
+ * own verdict rather than a second opinion invented for the card.
+ */
+function ratingCard({ mine, rowsAt, bank, freeTransfers, advice }) {
+  const at = (h) => {
+    const m = new Map(rowsAt(h).map((r) => [r.id, r]));
+    return mine.map((p) => m.get(p.id)).filter(Boolean);
+  };
+  const short = at(5);
+  const long = at(8);
+  if (short.length !== 15 || long.length !== 15) return null;
+
+  const outlook = rateSquad(short, { pool: rowsAt(5), bank, freeTransfers });
+  const quality = rateSquad(long, { pool: rowsAt(8), bank, freeTransfers });
+  if (outlook.error || quality.error) return null;
+
+  const bar = (label, v, hint) => el('div', { class: 'ratebar' },
+    el('span', { class: 'k' }, label),
+    el('span', { class: 'track' }, el('span', { class: 'fill', style: `width:${v}%` })),
+    el('span', { class: 'v' }, String(v)),
+    hint ? el('span', { class: 's' }, hint) : null,
+  );
+
+  const d = outlook.dims;
+  const pos = outlook.parts.positional;
+  const cap = outlook.parts.captain;
+  const swing = outlook.overall - quality.overall;
+
+  return el('div', { class: 'card' },
+    el('div', { class: 'row between' }, el('h2', {}, 'Squad rating'), horizonBadge('next5')),
+    el('div', { class: 'tiles' },
+      el('div', { class: 'tile accent' },
+        el('span', { class: 'k' }, 'Squad quality'),
+        el('span', { class: 'v' }, `${quality.overall}`),
+        el('span', { class: 's' }, 'underlying, over 8 gameweeks')),
+      el('div', { class: 'tile' },
+        el('span', { class: 'k' }, 'Next-5 outlook'),
+        el('span', { class: 'v' }, `${outlook.overall}`),
+        el('span', { class: 's' }, swing === 0 ? 'fixtures are neutral'
+          : `fixtures ${swing > 0 ? 'help' : 'hurt'} by ${Math.abs(swing)}`)),
+      el('div', { class: 'tile' },
+        el('span', { class: 'k' }, 'Captain'),
+        el('span', { class: 'v' }, cap ? cap.web_name : '—'),
+        el('span', { class: 's' }, cap ? `${fmt.pts(cap.proj)} over 5 GW` : '')),
+    ),
+    el('div', { class: 'ratebars' },
+      bar('Best XI', d.xi),
+      bar('Captaincy', d.captaincy),
+      bar('GK', d.gk, `£${(pos.gk.spend / 10).toFixed(1)}m`),
+      bar('DEF', d.def, `£${(pos.def.spend / 10).toFixed(1)}m`),
+      bar('MID', d.mid, `£${(pos.mid.spend / 10).toFixed(1)}m`),
+      bar('FWD', d.fwd, `£${(pos.fwd.spend / 10).toFixed(1)}m`),
+      bar('Depth', d.depth, `${fmt.pts(outlook.parts.depth.perAbsence)} lost per absence`),
+      bar('Minutes security', d.minutes),
+      bar('Flexibility', d.flexibility, `£${(bank / 10).toFixed(1)}m banked`),
+    ),
+    el('p', { class: 'hint' },
+      `Each line is measured against the strongest legal alternative the same money could buy — `
+      + `100 means that money is already working as hard as it can. `
+      + `Positional scores compare each line with the best line available for what you spent on it.`),
+    el('div', { class: 'row between' },
+      el('p', {}, el('strong', {}, 'Biggest strength: '), `${outlook.strongest.label} (${outlook.strongest.score})`),
+      el('p', {}, el('strong', {}, 'Biggest weakness: '), `${outlook.weakest.label} (${outlook.weakest.score})`),
+    ),
+    /* The weakest line is called out separately from the weakest dimension.
+       They are different questions: flexibility is fixed with money, a weak
+       line is fixed with a transfer, and only one of those is a player problem. */
+    outlook.weakestLine.key !== outlook.weakest.key
+      ? el('p', { class: 'hint' },
+        `Weakest line: ${outlook.weakestLine.label} (${outlook.weakestLine.score}) — `
+        + `£${(pos[outlook.weakestLine.key].spend / 10).toFixed(1)}m returning `
+        + `${fmt.pts(pos[outlook.weakestLine.key].proj)} where the best line for that money returns `
+        + `${fmt.pts(pos[outlook.weakestLine.key].achievable)}.`)
+      : null,
+    /* The action comes from the adviser that already decided it, so the card
+       cannot recommend a move the transfer engine would have refused. */
+    advice && advice.verdict !== 'HOLD'
+      ? el('p', {},
+        el('strong', {}, 'Recommended action: '),
+        `${advice.verdict} — ${advice.move.out.web_name} → ${advice.move.in.web_name}, `
+        + `${fmt.signed(advice.gain)} over 5 GW, confidence ${advice.confidence.toLowerCase()}`)
+      : el('p', {},
+        el('strong', {}, 'Recommended action: HOLD. '),
+        `Weakest line is ${outlook.weakestLine.label} (${outlook.weakestLine.score}), but no move clears the bar this week.`),
+  );
+}
+
 function compareCard(result) {
   const { ids: mineIds, source } = resolveSquadIds(d.entry, getState());
   if (mineIds.length !== 15) {
@@ -570,6 +675,8 @@ function compareCard(result) {
         pitchFor(result.squad)),
     ),
     actionableCard(mine, mineIds),
+    /* After actionableCard, which is what publishes the adviser's verdict. */
+    lastAdvice ? ratingCard({ mine, ...lastAdvice }) : null,
     el('h3', {}, 'Every difference'),
     out.length
       ? el('div', { class: 'tablewrap' }, el('table', { class: 'players' },

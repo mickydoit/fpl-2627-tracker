@@ -3,6 +3,7 @@
  * after `node scripts/make-sample.mjs`. The refresh workflow runs derive.mjs,
  * which asserts squad legality on real data; this file covers the maths.
  */
+import fs from 'node:fs';
 import { readJSON } from './lib/io.mjs';
 import {
   projectAll, poissonAtLeast, availability, inferGamesPlayed,
@@ -17,6 +18,7 @@ import { recommend } from '../js/draft/advise.js';
 import { runDraft, STRATEGIES } from '../js/draft/compete.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
 import { hydrate, PRIOR_DEFAULTS } from '../js/prior.js';
+import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scoreRatio, RATING_WEIGHTS } from '../js/rating.js';
 
 let failures = 0;
 let checks = 0;
@@ -844,6 +846,158 @@ console.log('\nHorizon component sum');
     ok('the breakdown reports how many fixtures it covers', played.parts.fixtures > 0);
     ok('per-match context is averaged, not summed', played.parts.expMins <= 90);
   }
+}
+
+
+/* ------------------------------------------------------------------ *
+ * Classic squad rating
+ * ------------------------------------------------------------------ */
+console.log('\nClassic squad rating');
+{
+  let uid = 1000;
+  const mk = (type, proj, cost, over = {}) => ({
+    id: uid++, code: uid, element_type: type, team: (uid % 12) + 1, now_cost: cost,
+    web_name: `p${uid}`, status: 'a', chance_of_playing_next_round: null, proj,
+    selected_by_percent: '1.0',
+    parts: { availability: 1, expMins: 90, evidence: 1, isPrior: false, fixtures: 5 },
+    ...over,
+  });
+  // 2/5/5/3, all distinct clubs enough to stay legal
+  const build = (projs) => {
+    const sq = [];
+    const quota = { 1: 2, 2: 5, 3: 5, 4: 3 };
+    let i = 0;
+    for (const t of [1, 2, 3, 4]) for (let n = 0; n < quota[t]; n++) sq.push(mk(t, projs[i], 50, { team: (i++ % 15) + 1 }));
+    return sq;
+  };
+  const flat = build(Array(15).fill(10));
+
+  /* legal XI */
+  const xi = bestXI(flat);
+  ok('the rating rates a legal eleven', xi.xi.length === 11);
+  ok('exactly one keeper starts', xi.xi.filter((p) => p.element_type === 1).length === 1);
+  ok('the formation obeys the minimums',
+    xi.xi.filter((p) => p.element_type === 2).length >= 3
+    && xi.xi.filter((p) => p.element_type === 3).length >= 2
+    && xi.xi.filter((p) => p.element_type === 4).length >= 1);
+  ok('the bench is the other four', xi.bench.length === 4);
+  ok('the reserve keeper is benched, never started',
+    xi.bench.some((p) => p.element_type === 1));
+
+  /* captaincy */
+  const withStar = build([6, 4, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 30, 9, 9]);
+  const starXI = bestXI(withStar);
+  ok('the captain is the highest projected starter',
+    starXI.captain.proj === Math.max(...starXI.xi.map((p) => p.proj)));
+  ok('the vice is not the captain', starXI.vice.id !== starXI.captain.id);
+  ok('captaincy scores higher when the squad owns a standout',
+    rateSquad(withStar, { pool: withStar }).dims.captaincy
+      >= rateSquad(flat, { pool: flat }).dims.captaincy);
+
+  /* positional benchmark */
+  const pool = [
+    ...Array.from({ length: 8 }, (_, i) => mk(2, 20 - i, 50)),
+    ...Array.from({ length: 8 }, (_, i) => mk(2, 5 - i * 0.1, 40)),
+  ];
+  ok('the line benchmark is exact, never beaten by the squad it judges',
+    bestLineTotal(pool, 2, 2, 100) >= 20 + 19 - 1e-9,
+    `${bestLineTotal(pool, 2, 2, 100)}`);
+  ok('the line benchmark respects the money available',
+    bestLineTotal(pool, 2, 2, 80) < bestLineTotal(pool, 2, 2, 100));
+  ok('a line with nothing to spend benchmarks at nothing', bestLineTotal(pool, 2, 2, 0) === 0);
+  ok('scoreRatio floors at zero and caps at a hundred',
+    scoreRatio(1, 100) === 0 && scoreRatio(100, 100) === 100);
+
+  /* depth is measured, not asserted */
+  const strongBench = build([10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10]);
+  const weakBench = build([10, 1, 10, 10, 10, 10, 1, 10, 10, 10, 10, 1, 10, 10, 1]);
+  ok('depth is measured by rebuilding the eleven, not by counting the bench',
+    depthCost(strongBench).perAbsence < depthCost(weakBench).perAbsence,
+    `${depthCost(strongBench).perAbsence.toFixed(2)} vs ${depthCost(weakBench).perAbsence.toFixed(2)}`);
+  ok('depth names the costliest absence', depthCost(weakBench).worst?.player != null);
+  ok('an incomplete squad reports depth as unmeasurable', depthCost(flat.slice(0, 9)).measurable === false);
+
+  /* an expensive bench must not buy a good rating */
+  const benchHeavy = build([10, 10, 12, 12, 12, 4, 4, 12, 12, 12, 4, 4, 12, 12, 4]);
+  const benchHeavyPriced = benchHeavy.map((p) => (p.proj === 4 ? { ...p, now_cost: 100 } : p));
+  const cheapBench = benchHeavy.map((p) => (p.proj === 4 ? { ...p, now_cost: 40 } : p));
+  const rb = rateSquad(benchHeavyPriced, { pool: benchHeavyPriced, bank: 0 });
+  const rc = rateSquad(cheapBench, { pool: cheapBench, bank: 0 });
+  ok('money parked on the bench lowers flexibility rather than raising the rating',
+    rb.dims.flexibility <= rc.dims.flexibility,
+    `${rb.dims.flexibility} vs ${rc.dims.flexibility}`);
+  ok('a strong bench never outweighs the starting eleven in the headline',
+    RATING_WEIGHTS.xi + RATING_WEIGHTS.captaincy > RATING_WEIGHTS.depth + RATING_WEIGHTS.flexibility);
+
+  /* risk moves the rating */
+  const fit = build(Array(15).fill(10));
+  const doubtful = fit.map((p, i) => (i < 3
+    ? { ...p, status: 'd', parts: { ...p.parts, availability: 0.25, expMins: 30 } } : p));
+  ok('a squad with doubtful starters rates lower on minutes security',
+    minutesSecurity(doubtful).score < minutesSecurity(fit).score,
+    `${minutesSecurity(doubtful).score.toFixed(1)} vs ${minutesSecurity(fit).score.toFixed(1)}`);
+  ok('minutes security names its weakest link', minutesSecurity(doubtful).weakest?.player != null);
+  ok('a prior-heavy projection counts as less secure than an evidenced one',
+    minutesSecurity(fit.map((p) => ({ ...p, parts: { ...p.parts, evidence: 0 } }))).score
+      < minutesSecurity(fit).score);
+  ok('risk reaches the headline rating',
+    rateSquad(doubtful, { pool: doubtful }).overall < rateSquad(fit, { pool: fit }).overall);
+
+  /* determinism */
+  const a = rateSquad(flat, { pool: flat, bank: 5, freeTransfers: 2 });
+  const b = rateSquad(flat, { pool: flat, bank: 5, freeTransfers: 2 });
+  ok('the rating is deterministic', JSON.stringify(a.dims) === JSON.stringify(b.dims));
+  ok('a squad of the wrong size is refused, not rated', !!rateSquad(flat.slice(0, 14), { pool: flat }).error);
+  ok('every dimension lands between 0 and 100',
+    Object.values(a.dims).every((v) => v >= 0 && v <= 100 && Number.isFinite(v)));
+
+  /* quality and outlook must be able to disagree */
+  const real = await readJSON('data/bootstrap.json');
+  const fxs = await readJSON('data/fixtures.json', []);
+  if (real?.elements?.length) {
+    const short = projectAll(real, fxs, { horizon: 5, riskAversion: 0.5 }).rows;
+    const long = projectAll(real, fxs, { horizon: 8, riskAversion: 0.5 }).rows;
+    const pick = (rows) => {
+      const out = []; const q = { 1: 2, 2: 5, 3: 5, 4: 3 }; const clubs = {};
+      for (const t of [1, 2, 3, 4]) {
+        for (const p of rows.filter((r) => r.element_type === t).sort((x, y) => y.proj - x.proj)) {
+          if (out.filter((o) => o.element_type === t).length >= q[t]) break;
+          if ((clubs[p.team] || 0) >= 3) continue;
+          clubs[p.team] = (clubs[p.team] || 0) + 1; out.push(p);
+        }
+      }
+      return out;
+    };
+    const sq5 = pick(short);
+    const ids = new Set(sq5.map((p) => p.id));
+    const sq8 = long.filter((r) => ids.has(r.id));
+    if (sq5.length === 15 && sq8.length === 15) {
+      const outlook = rateSquad(sq5, { pool: short });
+      const quality = rateSquad(sq8, { pool: long });
+      ok('outlook and underlying quality are computed separately',
+        Number.isFinite(outlook.overall) && Number.isFinite(quality.overall));
+      ok('both headline scores stay in range',
+        outlook.overall >= 0 && outlook.overall <= 100 && quality.overall >= 0 && quality.overall <= 100);
+      ok('the rating names a strongest and a weakest dimension from its own numbers',
+        !!outlook.strongest.label && !!outlook.weakest.label
+        && outlook.dims[outlook.strongest.key] >= outlook.dims[outlook.weakest.key]);
+    }
+  }
+
+  /* Classic and Draft stay apart */
+  const ratingSrc = fs.readFileSync('js/rating.js', 'utf8');
+  // Import statements only — the file discusses Draft in prose, deliberately,
+  // to record why Classic does not reuse its rating.
+  const imports = [...ratingSrc.matchAll(/^import[^;]+from\s+['"]([^'"]+)['"]/gm)].map((m) => m[1]);
+  ok('the Classic rating imports nothing from Draft',
+    imports.every((i) => !i.includes('draft')), imports.join(', '));
+  ok('the Classic rating does not read Draft config or league size',
+    !/DRAFT_CONFIG|draftPrior|leagueSize|replacementBasis/.test(ratingSrc));
+  ok('no Draft module imports the Classic rating', (() => {
+    const files = fs.readdirSync('js/draft').filter((f) => f.endsWith('.js'));
+    return files.every((f) => !/from\s+['"][^'"]*\/rating\.js['"]/.test(fs.readFileSync(`js/draft/${f}`, 'utf8'))
+      || !fs.readFileSync(`js/draft/${f}`, 'utf8').includes("'../rating.js'"));
+  })());
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);

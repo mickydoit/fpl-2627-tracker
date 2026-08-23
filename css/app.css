@@ -886,3 +886,19 @@ select.hz-picker {
 }
 select.hz-picker:hover { border-color: currentColor; }
 select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text); }
+
+/* ---------- squad rating bars ---------- */
+/* One row per dimension. The track is the achievable ceiling and the fill is
+   how much of it the squad reaches, so a short bar reads as a gap rather than
+   as a failure. */
+.ratebars { display: flex; flex-direction: column; gap: 0.45rem; margin: 0.9rem 0; }
+.ratebar { display: grid; grid-template-columns: 8.5rem 1fr 2.2rem auto; align-items: center; gap: 0.6rem; }
+.ratebar .k { font-size: 0.82rem; color: var(--dim); }
+.ratebar .track { background: #2b2b2b; border-radius: 999px; height: 0.55rem; overflow: hidden; }
+.ratebar .fill { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+.ratebar .v { font-weight: 800; font-size: 0.9rem; text-align: right; }
+.ratebar .s { font-size: 0.72rem; color: var(--dim); }
+@media (max-width: 560px) {
+  .ratebar { grid-template-columns: 6.5rem 1fr 2rem; }
+  .ratebar .s { display: none; }
+}
