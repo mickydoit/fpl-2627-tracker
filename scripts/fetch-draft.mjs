@@ -10,6 +10,8 @@
  */
 import { getJSON } from './lib/http.mjs';
 import { readJSON, writeJSONIfChanged } from './lib/io.mjs';
+import { poolPlayerSeasons, PRIOR_DEFAULTS } from '../js/prior.js';
+import { inferGamesPlayed } from '../js/model.js';
 
 const DRAFT_API = 'https://draft.premierleague.com/api';
 const CLASSIC_API = 'https://fantasy.premierleague.com/api';
@@ -55,9 +57,28 @@ if (draftBoot?.settings) {
 // players have different ids in the two games, so joining on id is wrong.
 const draftByCode = new Map((draftBoot?.elements || []).map((p) => [p.code, p]));
 
+/* The board used to project from the frozen 2025/26 prior alone, which was
+   right on draft night and wrong from GW1 onward: this season's minutes and
+   returns simply never reached it, so Draft would have run all season on last
+   season's football while Classic moved on. The two seasons are pooled here,
+   through the same js/prior.js helper the Classic model uses, so there is one
+   blend rather than two that can drift apart. Done at fetch time because the
+   Draft pages read a committed board and do no hydration of their own. */
+const gamesThis = inferGamesPlayed(classicBoot.elements);
+const poolGames = gamesThis + PRIOR_DEFAULTS.lastSeasonWeight * PRIOR_DEFAULTS.lastSeasonGames;
+let pooledCount = 0;
+
 const players = classicBoot.elements.map((p) => {
   const d = draftByCode.get(p.code);
+  const model = poolPlayerSeasons(p, prior.players[p.code], {
+    gamesThis,
+    games: poolGames,
+    lastSeasonWeight: PRIOR_DEFAULTS.lastSeasonWeight,
+    lastSeasonGames: PRIOR_DEFAULTS.lastSeasonGames,
+  });
+  if (model) pooledCount += 1;
   return {
+    model,
     code: p.code,
     id: d?.id ?? p.id,
     element_type: p.element_type,
@@ -87,13 +108,24 @@ const teams = (classicBoot.teams || []).map((t) => ({
   strength_overall_away: num(t.strength_overall_away),
 }));
 
+/* Gameweek deadlines, so Draft season mode can tell which gameweek a waiver
+   claim can still affect. The Draft pages read this one file and never load the
+   Classic bootstrap, so the deadlines have to travel with the board. Ids and
+   deadlines only — nothing else here is a Draft concern. */
+const events = (classicBoot.events || []).map((e) => ({
+  id: e.id,
+  deadline_time: e.deadline_time ?? null,
+}));
+
 await writeJSONIfChanged(`${DIR}/players.json`, {
   builtAt: new Date().toISOString(),
   priorSeason: prior.season,
+  events,
   players,
   teams,
 });
 console.log(`✓ ${players.length} players on the board, ${teams.length} teams`);
+console.log(`  ${pooledCount} pooled with this season (${gamesThis} game${gamesThis === 1 ? '' : 's'} played, basis ${poolGames.toFixed(1)})`);
 
 /* ------------------------------------------------------------------ *
  * Live gameweek scoring

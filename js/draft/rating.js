@@ -90,6 +90,47 @@ export function squadVorp(roster, pool, value = (r) => r.proj) {
 }
 
 /**
+ * Positional strength, measured the way Draft actually works.
+ *
+ * Not "what could this money have bought" — Draft has no money. A position is
+ * strong when the players you start there are far better than the best player
+ * anyone could pick up off the wire to replace them. That is value above
+ * replacement, cut by position, and it is the number that answers "where is
+ * this roster weak" in a game with unique ownership.
+ *
+ * Reported as points above replacement AND as a share of what the starters
+ * produce, because the raw figure is not comparable between a two-slot keeper
+ * line and a five-slot midfield.
+ *
+ * @param {object[]} freeAgents unowned players — the genuine alternatives
+ */
+export function positionalStrength(roster, freeAgents, value = (r) => r.proj) {
+  const bestFree = {};
+  for (const p of freeAgents) {
+    const t = p.element_type;
+    if (!bestFree[t] || value(p) > value(bestFree[t])) bestFree[t] = p;
+  }
+  const { xi } = bestXI(roster, value);
+  const out = {};
+  for (const t of [1, 2, 3, 4]) {
+    const starters = xi.filter((p) => p.element_type === t);
+    const replacement = bestFree[t] ? value(bestFree[t]) : 0;
+    const produced = sum(starters, value);
+    const above = sum(starters, (p) => value(p) - replacement);
+    out[t] = {
+      starters: starters.length,
+      produced,
+      replacement,
+      aboveReplacement: above,
+      // What share of this line's output is genuinely irreplaceable.
+      share: produced > 0 ? above / produced : 0,
+      bestFree: bestFree[t] || null,
+    };
+  }
+  return out;
+}
+
+/**
  * Projection-weighted unavailability.
  *
  * A doubtful fifth defender barely matters; a doubtful captain does. Weighting
@@ -126,6 +167,10 @@ export function rateSquad(roster, { pool = [], horizon = 5, seasonLength = 38 } 
   const depth = depthCost(roster);
   const vorp = squadVorp(roster, pool);
   const risk = riskScore(roster);
+  /* `pool` here is whatever the caller treats as available. When that is the
+     free-agent wire this is a real replacement level; when it is the whole
+     board it is a theoretical one. Both are useful, so the caller decides. */
+  const positional = positionalStrength(roster, pool);
 
   const byPos = {};
   for (const t of [1, 2, 3, 4]) {
@@ -151,6 +196,7 @@ export function rateSquad(roster, { pool = [], horizon = 5, seasonLength = 38 } 
     depth,
     vorp,
     risk,
+    positional,
     fixtures: fixtureOutlook(roster, horizon, seasonLength),
   };
 }

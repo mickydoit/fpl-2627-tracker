@@ -27,6 +27,11 @@ const per90 = (total, minutes) => (minutes > 0 ? (num(total) / minutes) * 90 : 0
 export function toModelRow(p) {
   const prior = p.prior || {};
   const mins = num(prior.minutes);
+  /* `model` is both seasons pooled, written by scripts/fetch-draft.mjs through
+     the same helper the Classic model uses. Boards built before that existed
+     carry only `prior`, and still work — they simply project from last season,
+     which is what the whole board did until this shipped. */
+  const pooled = p.model || null;
   return {
     ...prior,
     id: p.id,
@@ -46,6 +51,10 @@ export function toModelRow(p) {
     expected_goals_conceded_per_90: per90(prior.expected_goals_conceded, mins),
     saves_per_90: per90(prior.saves, mins),
     defensive_contribution_per_90: per90(prior.defensive_contribution, mins),
+    // Pooled fields last, so they win where they exist. modelMinutes and
+    // evidenceMinutes come with them, which is what lets the shared model tell
+    // playing time apart from confidence on the Draft board too.
+    ...(pooled || {}),
   };
 }
 

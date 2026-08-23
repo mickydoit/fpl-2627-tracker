@@ -61,6 +61,60 @@ export const PRIOR_DEFAULTS = {
 };
 
 /**
+ * Pool one player's two seasons into the fields js/model.js reads.
+ *
+ * Extracted so there is exactly one implementation of the blend. `hydrate()`
+ * uses it for the Classic bootstrap; scripts/fetch-draft.mjs uses it to build
+ * the Draft board, which otherwise would have projected from a frozen 2025/26
+ * snapshot for the whole season while Classic moved on.
+ *
+ * @param {object} current this season's counting stats (may be empty)
+ * @param {object} prior   last season's, from prior-2526.json
+ * @param {object} opts    gamesThis, games (the shared basis), and the weights
+ * @returns {object|null}  model fields, or null when there is nothing on record
+ */
+export function poolPlayerSeasons(current, prior, { gamesThis, games, lastSeasonWeight, lastSeasonGames }) {
+  const lambda = lastSeasonWeight;
+  const mThis = num(current?.minutes);
+  const mLast = num(prior?.minutes);
+  const wLast = lambda * mLast;
+  const pooled = mThis + wLast;
+  if (pooled <= 0) return null;
+
+  const rate = (a, b) => ((num(a) + lambda * num(b)) / pooled) * 90;
+  const mpgThis = gamesThis > 0 ? mThis / gamesThis : 0;
+  const mpgLast = lastSeasonGames > 0 ? mLast / lastSeasonGames : 0;
+  const mpg = clamp((mThis * mpgThis + wLast * mpgLast) / pooled, 0, 90);
+  const minutes = mpg * games;
+  const count = (per90) => (per90 * minutes) / 90;
+
+  const xg90 = rate(current?.expected_goals, prior?.expected_goals);
+  const xa90 = rate(current?.expected_assists, prior?.expected_assists);
+  const bps90 = rate(current?.bps, prior?.bps);
+  const yc90 = rate(current?.yellow_cards, prior?.yellow_cards);
+  const cbi90 = rate(current?.clearances_blocks_interceptions, prior?.clearances_blocks_interceptions);
+  const tkl90 = rate(current?.tackles, prior?.tackles);
+  const rec90 = rate(current?.recoveries, prior?.recoveries);
+
+  return {
+    modelMinutes: minutes,
+    evidenceMinutes: pooled,
+    expected_goals_per_90: xg90,
+    expected_assists_per_90: xa90,
+    expected_goal_involvements_per_90: rate(current?.expected_goal_involvements, prior?.expected_goal_involvements),
+    expected_goals_conceded_per_90: rate(current?.expected_goals_conceded, prior?.expected_goals_conceded),
+    saves_per_90: rate(current?.saves, prior?.saves),
+    defensive_contribution_per_90: rate(current?.defensive_contribution, prior?.defensive_contribution),
+    bps: count(bps90),
+    yellow_cards: count(yc90),
+    clearances_blocks_interceptions: count(cbi90),
+    tackles: count(tkl90),
+    recoveries: count(rec90),
+    priorBlend: { thisSeasonMinutes: mThis, lastSeasonMinutes: mLast, weight: lambda },
+  };
+}
+
+/**
  * Rebuild a bootstrap payload with last season pooled in.
  *
  * Pure: neither argument is mutated. Returns the input unchanged when there is
@@ -83,72 +137,17 @@ export function hydrate(boot, prior, opts = {}) {
   const elements = boot.elements.map((e) => {
     const pr = prior.players[e.code];
     if (!pr) return e;
-
-    const mThis = num(e.minutes);
-    const mLast = num(pr.minutes);
-    const wLast = lambda * mLast;
-    const pooled = mThis + wLast;
+    const pooled = poolPlayerSeasons(e, pr, {
+      gamesThis, games, lastSeasonWeight: lambda, lastSeasonGames: o.lastSeasonGames,
+    });
     // Nothing on record in either season: leave the row exactly as it came.
-    if (pooled <= 0) return e;
-
-    /** Pooled per-90 rate for a counting stat. */
-    const rate = (thisSeason, lastSeason) =>
-      ((num(thisSeason) + lambda * num(lastSeason)) / pooled) * 90;
-
-    // Minutes per game, pooled on the same weights, then put back on the shared
-    // games basis so `minutes / ctx.games` recovers it.
-    const mpgThis = gamesThis > 0 ? mThis / gamesThis : 0;
-    const mpgLast = o.lastSeasonGames > 0 ? mLast / o.lastSeasonGames : 0;
-    const mpg = clamp((mThis * mpgThis + wLast * mpgLast) / pooled, 0, 90);
-    const minutes = mpg * games;
-
-    const xg90 = rate(e.expected_goals, pr.expected_goals);
-    const xa90 = rate(e.expected_assists, pr.expected_assists);
-    // The model works from xG and xA separately, but the Players table shows the
-    // combined rate — pooled from its own total rather than added, so it stays
-    // whatever FPL means by it.
-    const xgi90 = rate(e.expected_goal_involvements, pr.expected_goal_involvements);
-    const xgc90 = rate(e.expected_goals_conceded, pr.expected_goals_conceded);
-    const saves90 = rate(e.saves, pr.saves);
-    const defcon90 = rate(e.defensive_contribution, pr.defensive_contribution);
-    const bps90 = rate(e.bps, pr.bps);
-    const yc90 = rate(e.yellow_cards, pr.yellow_cards);
-    const cbi90 = rate(e.clearances_blocks_interceptions, pr.clearances_blocks_interceptions);
-    const tkl90 = rate(e.tackles, pr.tackles);
-    const rec90 = rate(e.recoveries, pr.recoveries);
-
-    /* The model reads some stats as per-90 fields and rebuilds others from a
-       count over `minutes`. Both have to agree with the minutes above, so the
-       counts are written back from the pooled rate rather than carried over. */
-    const count = (per90) => (per90 * minutes) / 90;
-
-    return {
-      ...e,
-      /* `minutes` is deliberately left alone: it is what he actually played
-         this season, it is what the Players table shows, and quietly replacing
-         it with a blended figure would read as a bug in August. The model takes
-         its playing time from `modelMinutes` instead. */
-      modelMinutes: minutes,
-      /* Minutes genuinely observed, which is a different question from how much
-         he plays. `modelMinutes` is on the shared games basis so expected
-         minutes come out right; using it to measure confidence would read one
-         75-minute appearance by a player with no prior season as a fully
-         evidenced regular. The price-prior blend runs on this figure. */
-      evidenceMinutes: pooled,
-      expected_goals_per_90: xg90,
-      expected_assists_per_90: xa90,
-      expected_goal_involvements_per_90: xgi90,
-      expected_goals_conceded_per_90: xgc90,
-      saves_per_90: saves90,
-      defensive_contribution_per_90: defcon90,
-      bps: count(bps90),
-      yellow_cards: count(yc90),
-      clearances_blocks_interceptions: count(cbi90),
-      tackles: count(tkl90),
-      recoveries: count(rec90),
-      // Provenance, so a page can say where a number came from.
-      priorBlend: { thisSeasonMinutes: mThis, lastSeasonMinutes: mLast, weight: lambda },
-    };
+    if (!pooled) return e;
+    /* `minutes` is deliberately left alone: it is what he actually played this
+       season, it is what the Players table shows, and quietly replacing it with
+       a blended figure would read as a bug in August. The model takes its
+       playing time from `modelMinutes` and its confidence from
+       `evidenceMinutes`, both of which poolPlayerSeasons supplies. */
+    return { ...e, ...pooled };
   });
 
   return { ...boot, elements };

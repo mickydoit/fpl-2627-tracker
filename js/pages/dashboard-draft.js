@@ -13,8 +13,10 @@
 import { el, setKids, fmt, horizonBadge, horizonPicker } from '../ui.js';
 import { readSnapshot } from '../data.js';
 import { projectBoard, projectBoardAt } from '../draft/project.js';
+import { actionableEvent } from '../model.js';
 import { rateLeague, bestXI } from '../draft/rating.js';
 import { DRAFT_CONFIG } from '../draft/config.js';
+import { bestWaiver } from '../draft/waiver.js';
 import { squadPitch, playerCard, activityRings, enableSwapping, legalDraftXI } from '../squadview.js';
 
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
@@ -81,6 +83,22 @@ export async function renderDraftDashboard(host) {
   const mine = rostersBySlot.get(mySlot) || [];
   const ownedIds = new Set([...rostersBySlot.values()].flat().map((r) => r.id));
   const pool = projected.filter((r) => !ownedIds.has(r.id)).sort((a, b) => b.proj - a.proj);
+
+  /* A waiver claim made now cannot score from a gameweek whose deadline has
+     already gone, so the adviser measures from the first one it can affect.
+     Deliberately not applied to the live draft board, which is a different
+     decision: scarcity there is about who survives to the next pick, not about
+     transaction deadlines. */
+  const actionable = actionableEvent(board.events) ?? undefined;
+  const horizonCache = new Map();
+  const rowsAt = (h) => {
+    if (!horizonCache.has(h)) {
+      const projAt = projectBoardAt(board.players, fixtures, board.teams, h, { fromEvent: actionable });
+      const byIdNow = new Map(projected.map((r) => [r.id, r]));
+      horizonCache.set(h, new Map([...projAt].map(([id, proj]) => [id, { ...byIdNow.get(id), proj }])));
+    }
+    return horizonCache.get(h);
+  };
 
   const rated = rateLeague(rostersBySlot, {
     pool, horizon: DRAFT_CONFIG.nearTermHorizon, seasonLength: DRAFT_CONFIG.rosHorizon,
@@ -250,7 +268,7 @@ export async function renderDraftDashboard(host) {
     squadCard,
 
     riskCard(mine, openPlayer),
-    waiverCard(mine, pool, teams, openPlayer),
+    waiverCard(mine, pool, teams, openPlayer, rowsAt),
   );
 }
 
@@ -287,32 +305,32 @@ function riskCard(mine, openPlayer) {
  * Only gaps of at least `minimumImprovement` rest-of-season points are shown,
  * and the wording never implies the move is obligatory.
  */
-function waiverCard(mine, pool, teams, openPlayer) {
-  const suggestions = [];
-  for (const type of [1, 2, 3, 4]) {
-    const owned = mine.filter((p) => p.element_type === type).sort((a, b) => a.proj - b.proj);
-    const free = pool.filter((p) => p.element_type === type);
-    if (!owned.length || !free.length) continue;
-    const weakest = owned[0];
-    const best = free[0];
-    const gain = best.proj - weakest.proj;
-    if (gain >= WAIVER_MIN_GAIN) suggestions.push({ out: weakest, in: best, gain });
-  }
-  suggestions.sort((a, b) => b.gain - a.gain);
-
+function waiverCard(mine, pool, teams, openPlayer, rowsAt) {
+  /* Was a player-to-player comparison: the best free agent at a position
+     against your weakest player there. That answers the wrong question. It
+     ignored what the move does to the rest of the roster, agreed with itself at
+     only one horizon, and could not tell a proven player from a projection made
+     mostly of prior. It now runs the season adviser, which evaluates the whole
+     roster over four horizons and is allowed to say no. */
+  const advice = rowsAt ? bestWaiver(mine, pool, rowsAt) : null;
+  const isMove = advice && (advice.verdict === 'STRONG ADD' || advice.verdict === 'GOOD ADD');
   return el('div', { class: 'card' },
     el('h2', {}, 'Waiver watch'),
     el('p', { class: 'hint' },
-      `Free agents projecting at least ${WAIVER_MIN_GAIN} points above your weakest player in that position, `
-      + 'rest of season. Anything smaller is inside the model\'s own error and is not shown.'),
-    suggestions.length
-      ? el('div', { class: 'tablewrap' }, el('table', { class: 'players' },
-        el('thead', {}, el('tr', {}, ...['Pos', 'Consider dropping', 'For', 'ROS gain'].map((h) => el('th', {}, h)))),
-        el('tbody', {}, suggestions.map((s) => el('tr', {},
-          el('td', {}, POS[s.out.element_type]),
-          el('td', { onClick: () => openPlayer(s.out) }, `${s.out.web_name} (${teams[s.out.team]?.short_name || ''})`),
-          el('td', { onClick: () => openPlayer(s.in) }, `${s.in.web_name} (${teams[s.in.team]?.short_name || ''})`),
-          el('td', {}, el('strong', { class: 'up' }, `+${s.gain.toFixed(1)}`)))))))
-      : el('p', { class: 'hint' }, 'Nothing on the wire is a clear enough upgrade to be worth a claim.'),
+      'Every legal add-drop, scored on what it does to the whole roster over 1, 3, 5 and 8 '
+      + 'gameweeks. A Draft drop is permanent — unique ownership means there is no buying him '
+      + 'back — so a move has to beat the player you already own by a real margin, not a rounding one.'),
+    advice
+      ? el('div', { class: `advice ${isMove ? 'good' : 'hold'}` },
+        el('p', { class: 'advice-verdict' }, advice.verdict),
+        el('p', { class: 'advice-move' },
+          el('span', { onClick: () => openPlayer(advice.move.out) }, `${advice.move.out.web_name} (${teams[advice.move.out.team]?.short_name || ''})`),
+          ' → ',
+          el('span', { onClick: () => openPlayer(advice.move.in) }, `${advice.move.in.web_name} (${teams[advice.move.in.team]?.short_name || ''})`)),
+        el('div', { class: 'tiles' }, advice.cross.gains.map((g) => el('div', { class: 'tile' },
+          el('span', { class: 'k' }, `Next ${g.horizon}`),
+          el('span', { class: 'v' }, `${g.gain >= 0 ? '+' : ''}${g.gain.toFixed(1)}`)))),
+        el('p', { class: 'hint' }, `Confidence ${advice.confidence}. ${advice.reasons.join('; ')}.`))
+      : el('p', { class: 'hint' }, 'Nothing on the wire improves this roster.'),
   );
 }

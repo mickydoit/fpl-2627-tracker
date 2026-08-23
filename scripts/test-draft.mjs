@@ -20,7 +20,10 @@ import { projectBoard, toModelRow } from '../js/draft/project.js';
 import { teamDefence } from '../js/model.js';
 import { estimateBps90, bonusFromBps90, draftBonusModel } from '../js/draft/scoring.js';
 import { runDraft, STRATEGIES } from '../js/draft/compete.js';
-import { bestXI, depthCost, squadVorp, riskScore, rateSquad, rateLeague } from '../js/draft/rating.js';
+import fs from 'node:fs';
+import { bestXI, depthCost, squadVorp, riskScore, rateSquad, rateLeague, positionalStrength } from '../js/draft/rating.js';
+import { draftXI, rosterValue, positionScarcity, classifyWaiver, bestWaiver, WAIVER_CONFIG } from '../js/draft/waiver.js';
+import { actionableEvent, upcomingByTeam } from '../js/model.js';
 
 let failures = 0;
 let checks = 0;
@@ -909,6 +912,135 @@ console.log('\nA finished draft becomes a rateable league');
   ok('positional ranks are assigned for every position',
     mixed.every((r) => [1, 2, 3, 4].every((t) => r.posRank[t] >= 1 && r.posRank[t] <= 3)));
   ok('an empty league rates to nothing', rateLeague(new Map(), { pool: [] }).length === 0);
+}
+
+/* ------------------------------------------------------------------ *
+ * Draft season transactions
+ * ------------------------------------------------------------------ *
+ * The post-draft adviser. Separate from draft night on purpose: this one is
+ * allowed to say HOLD, and draft night never is.
+ */
+console.log('\nDraft season transactions');
+{
+  let uid = 5000;
+  const mk = (type, proj, over = {}) => ({
+    id: uid++, element_type: type, team: 1, web_name: `w${uid}`, proj,
+    availability: 1, parts: { evidence: 1 }, ...over,
+  });
+  const roster = [
+    mk(1, 40), mk(1, 20),
+    mk(2, 60), mk(2, 55), mk(2, 50), mk(2, 30), mk(2, 25),
+    mk(3, 80), mk(3, 70), mk(3, 60), mk(3, 30), mk(3, 20),
+    mk(4, 75), mk(4, 50), mk(4, 20),
+  ];
+
+  const xi = draftXI(roster);
+  ok('the draft XI is eleven players', xi.xi.length === 11);
+  ok('exactly one keeper starts', xi.xi.filter((p) => p.element_type === 1).length === 1);
+  ok('the XI obeys the formation minimums',
+    xi.xi.filter((p) => p.element_type === 2).length >= 3
+    && xi.xi.filter((p) => p.element_type === 3).length >= 2
+    && xi.xi.filter((p) => p.element_type === 4).length >= 1);
+  ok('there is no captain in Draft', !('captain' in xi) && !('vice' in xi));
+  ok('roster value does not double any player the way a captain would',
+    rosterValue(roster, (r) => r.proj, 0) === xi.xi.reduce((s, p) => s + p.proj, 0));
+
+  const deepWire = [mk(3, 78), mk(3, 70)];
+  const bareWire = [mk(4, 5)];
+  ok('a deep wire at a position reads as low scarcity',
+    positionScarcity(deepWire, roster, 3) < 0.2);
+  ok('a bare wire reads as high scarcity',
+    positionScarcity(bareWire, roster, 4) > 0.8);
+  ok('no free agent at all is maximum scarcity', positionScarcity([], roster, 4) === 1);
+
+  const good = { gains: [{ horizon: 1, gain: 2 }, { horizon: 3, gain: 6 }, { horizon: 5, gain: 14 }, { horizon: 8, gain: 20 }],
+    allPositive: true, anyNegative: false, agreement: 1 };
+  const wobbly = { gains: [{ horizon: 1, gain: 0.3 }, { horizon: 3, gain: 0.6 }, { horizon: 5, gain: 0.6 }, { horizon: 8, gain: -0.7 }],
+    allPositive: false, anyNegative: true, agreement: 0.75 };
+  ok('a marginal move is HOLD', classifyWaiver({ gain: 0.6, cross: wobbly }).verdict === 'HOLD');
+  ok('a move that reverses at a longer horizon is HOLD',
+    classifyWaiver({ gain: 6, cross: wobbly }).verdict === 'HOLD');
+  ok('a large, agreeing, well-evidenced move is recommended',
+    classifyWaiver({ gain: 14, cross: good, evidence: 1 }).verdict === 'STRONG ADD');
+  ok('the incumbent advantage has to be cleared',
+    classifyWaiver({ gain: 2.5, cross: good, evidence: 1 }).verdict === 'HOLD');
+  ok('scarcity raises the bar further', (() => {
+    const easy = classifyWaiver({ gain: 6, cross: good, scarcity: 0, evidence: 1 });
+    const hard = classifyWaiver({ gain: 6, cross: good, scarcity: 1, evidence: 1 });
+    return hard.bar > easy.bar;
+  })());
+
+  ok('a prior-heavy add is never claimed, only watched',
+    classifyWaiver({ gain: 14, cross: good, evidence: 0 }).verdict === 'WATCH');
+  ok('a prior-heavy add is reported as low confidence',
+    classifyWaiver({ gain: 14, cross: good, evidence: 0 }).confidence === 'LOW');
+  ok('an evidenced add of the same size is not capped',
+    classifyWaiver({ gain: 14, cross: good, evidence: 1 }).verdict !== 'WATCH');
+  ok('the reason says why it was held',
+    classifyWaiver({ gain: 14, cross: good, evidence: 0 }).reasons.some((r) => /prior/.test(r)));
+  ok('risk is not counted twice — evidence changes the verdict, never the gain', (() => {
+    const a = classifyWaiver({ gain: 14, cross: good, evidence: 1 });
+    const b = classifyWaiver({ gain: 14, cross: good, evidence: 0 });
+    return a.net === b.net;
+  })());
+
+  const upgrade = mk(3, 95, { id: 9001 });
+  const rowsAt = () => new Map([...roster, upgrade].map((p) => [p.id, p]));
+  const best = bestWaiver(roster, [upgrade], rowsAt);
+  ok('the adviser evaluates the whole roster, not two players',
+    !!best && best.move.in.id === 9001);
+  ok('a swap keeps the roster shape', !!best && best.move.out.element_type === best.move.in.element_type);
+  ok('a free agent who is actually owned is never offered', (() => {
+    const owned = roster[7];
+    const r = bestWaiver(roster, [owned], () => new Map(roster.map((p) => [p.id, p])));
+    return r === null || r.move.in.id !== owned.id;
+  })());
+  ok('nothing on the wire means no recommendation', bestWaiver(roster, [], rowsAt) === null);
+  ok('an empty roster is refused', bestWaiver([], [upgrade], rowsAt) === null);
+
+  const ps = positionalStrength(roster, [mk(3, 78), mk(2, 10), mk(4, 8), mk(1, 8)]);
+  ok('a position with a strong replacement available scores low above replacement',
+    ps[3].share < ps[2].share,
+    `MID ${ps[3].share.toFixed(2)} vs DEF ${ps[2].share.toFixed(2)}`);
+  ok('positional strength names the replacement it measured against', !!ps[3].bestFree);
+  ok('positional strength covers every line', [1, 2, 3, 4].every((t) => ps[t] && ps[t].starters > 0));
+
+  const src = fs.readFileSync('js/draft/waiver.js', 'utf8');
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  ok('the Draft adviser has no budget, price or captain logic',
+    !/now_cost|budget|bank|captain|freeTransfer|sell/i.test(code));
+  const imports = [...src.matchAll(/^import[^;]+from\s+['"]([^'"]+)['"]/gm)].map((m) => m[1]);
+  ok('the Draft adviser imports no Classic optimiser or rating',
+    imports.every((i) => !/optimiser|\.\.\/rating/.test(i)), imports.join(', '));
+}
+
+/* ------------------------------------------------------------------ *
+ * Draft season horizons
+ * ------------------------------------------------------------------ */
+console.log('\nDraft season horizons');
+{
+  const ev = (id, iso) => ({ id, deadline_time: iso });
+  const events = [ev(1, '2026-08-21T17:30:00Z'), ev(2, '2026-08-28T17:30:00Z')];
+  ok('a locked gameweek is excluded from waiver evaluation',
+    actionableEvent(events, Date.parse('2026-08-23T10:00:00Z')) === 2);
+  ok('an open gameweek is still claimable',
+    actionableEvent(events, Date.parse('2026-08-21T09:00:00Z')) === 1);
+
+  const f = (id, event, h, a, over = {}) => ({ id, event, team_h: h, team_a: a,
+    team_h_difficulty: 3, team_a_difficulty: 3, started: false, finished: false,
+    finished_provisional: false, ...over });
+  const sched = [f(1, 2, 1, 2), f(2, 3, 1, 3), f(3, 3, 1, 4), f(4, 4, 2, 3)];
+  const up = upcomingByTeam(sched, 2, 3);
+  ok('a Draft double gameweek keeps both fixtures', (up[1] || []).filter((x) => x.event === 3).length === 2);
+  ok('a Draft blank gameweek keeps none', !(up[4] || []).some((x) => x.event === 4));
+  ok('next five gameweeks does not mean exactly five fixtures',
+    (up[1] || []).length === 3 && (up[2] || []).length === 2);
+
+  const boardFile2 = await readJSON('data/draft/players.json');
+  if (boardFile2?.events?.length) {
+    ok('the board carries gameweek deadlines so Draft can find the actionable one',
+      boardFile2.events.every((e) => 'id' in e) && boardFile2.events.some((e) => e.deadline_time));
+  }
 }
 
 console.log(`\n${failures ? '✗' : '✓'} ${checks - failures}/${checks} draft checks passed`);
