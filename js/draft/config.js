@@ -63,54 +63,45 @@ export const LEAGUE_SIZE_MAX = 16;
  * Which replacement basis to measure VORP against, by league size.
  *
  * `starters` places the baseline at STARTER_QUOTA[t] * size, a fixed index;
- * `demand` places it at the league's outstanding roster slots, which starts
- * deeper (QUOTA is 2/5/5/3 against a starting 1/4/4/2) and decays to zero as
- * the draft fills up.
+ * `demand` at the league's outstanding roster slots, which starts deeper and
+ * decays to zero as the draft fills.
  *
- * **Re-measured after the defensive-contribution fix.** The earlier band —
- * demand from five to nine — was derived on projections in which every
- * outfielder received the full two defensive-contribution points, because a
- * volume rate was being read as a scoring rate. That flattened the difference
- * between positions, and the replacement baseline is a per-position quantity,
- * so the comparison was measuring a distorted board. Correcting it moved the
- * answer, which is the whole argument for fixing correctness before tuning.
+ * **Re-measured after the production/opportunity separation.** This is the
+ * third time this comparison has moved, and the pattern is worth recording: it
+ * shifted after the defensive-contribution fix, and again after the prior was
+ * made to pass through expected minutes. That is not instability in the
+ * measurement — 240 to 384 paired drafts per size is plenty — it is the honest
+ * consequence of the comparison depending on the projections underneath it.
+ * The replacement baseline is a per-position quantity, so anything that changes
+ * the relative value of positions changes which basis wins. Treat this table as
+ * a property of the current model rather than of the game.
  *
- * Paired drafts on corrected projections — same board, seed and slot, only my
- * own strategy differing (starters minus demand, so negative means demand won):
+ * Paired drafts on corrected projections (starters minus demand, so negative
+ * means demand won):
  *
- *   size   pairs   startersW  demandW  ties   mean margin
- *      2      24         5       10       9       -1.77
- *      3      36        13       18       5       -3.54
- *      4      48        21       18       9       +0.30
- *      5     200       148       45       7      +12.07
- *      6     240       208       17      15       +7.41
- *      7     280       137      121      22       -2.47
- *      8     320        51      269       0      -16.03
- *      9     360       223      121      16       +4.33
- *     10     120       117        3       0      +58.41
- *     11     132       132        0       0      +70.01
- *     12     144       144        0       0     +105.42
- *     14     168       168        0       0     +114.20
- *     16     192       192        0       0     +106.35
+ *   size   pairs   startersW  demandW   mean margin
+ *      5     120        19      100        -6.05
+ *      6     144         3      141       -19.64
+ *      7     168         2      166       -21.51
+ *      8     192         0      192       -35.35
+ *      9     216        88      128        -6.59
+ *     10     240       112      128        -0.95
+ *     11     264       252       12       +26.01
+ *     12     288       288        0       +46.26
+ *     14     336       336        0       +53.68
+ *     16     384       384        0       +57.97
  *
- * `starters` now wins everywhere that shows a stable signal, decisively from
- * ten managers up and clearly at five, six and nine. Two and three lean demand
- * by margins smaller than a single point of a squad total; four and seven are
- * coin flips.
+ * `demand` now wins everywhere up to ten and `starters` from eleven, with a
+ * clean crossover and no isolated exceptions — the eight-manager anomaly that
+ * had to be written up last time has resolved itself, which is what you would
+ * expect if it was an artefact of the projection bugs rather than a real
+ * property of an eight-team draft.
  *
- * **Eight managers is a genuine, unexplained exception.** Demand wins it 269-51
- * over 320 paired drafts, worth about sixteen points — too large and too
- * consistent to dismiss, but there is no mechanism that would make eight
- * special while seven and nine both go the other way. Encoding a
- * single-size exception would be fitting a point, not a rule, so the rule
- * stays uniform and the anomaly is written down instead. Worth revisiting with
- * a different opponent model, or once a real draft's worth of evidence exists.
- *
- * The seam is kept as a function rather than folded back into a constant: the
- * head-to-head in scripts/test-draft.mjs asserts the rule still matches what
- * wins, so if the balance shifts again the suite says so.
+ * Ten is nearly a tie (-0.95 mean, 112-128) and is assigned to `demand` on the
+ * sign of both mean and median. It is the one size where the answer could
+ * reasonably move again.
  */
-export const DEMAND_BASIS_SIZES = null;
+export const DEMAND_BASIS_SIZES = { min: LEAGUE_SIZE_MIN, max: 10 };
 
 /** @returns {'demand'|'starters'} */
 export function replacementBasisForLeagueSize(leagueSize = LEAGUE_SIZE_DEFAULT) {

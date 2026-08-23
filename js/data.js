@@ -23,7 +23,7 @@ export async function load(name, fallback = null) {
 }
 
 export async function loadAll() {
-  const [meta, rawBoot, fixtures, live, entry, leagues, scoreboard, standings, news, notes, prices, setPieces, prior] =
+  const [meta, rawBoot, fixtures, live, entry, leagues, scoreboard, standings, news, notes, prices, setPieces, prior, espnHistory] =
     await Promise.all([
       load('meta', { source: 'missing' }),
       load('bootstrap'),
@@ -40,12 +40,15 @@ export async function loadAll() {
       // Last season, frozen before FPL zeroed it at the GW1 deadline. Static, so
       // it caches indefinitely. See js/prior.js for why the model needs it.
       load('draft/prior-2526', null),
+      // ESPN 2025/26 evidence for players the Premier League has never seen.
+      // Optional: absent or stale, the model falls back to its own priors.
+      load('espn-history', null),
     ]);
   // Every page projects from the pooled payload. `minutes`, price, ownership and
   // the rest are untouched — the blend only adds the fields js/model.js reads
   // for playing time and confidence, so anything displaying raw data is safe.
-  const boot = hydrate(rawBoot, prior);
-  return { meta, boot, rawBoot, prior, fixtures, live, entry, leagues, scoreboard, standings, news, notes, prices, setPieces };
+  const boot = hydrate(rawBoot, prior, {}, espnHistory);
+  return { meta, boot, rawBoot, prior, espnHistory, fixtures, live, entry, leagues, scoreboard, standings, news, notes, prices, setPieces };
 }
 
 /** Read one snapshot by name, e.g. 'draft/bootstrap'. */

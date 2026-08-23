@@ -17,7 +17,9 @@ import { makeRng, picksBetween, survival } from '../js/draft/simulate.js';
 import { recommend } from '../js/draft/advise.js';
 import { runDraft, STRATEGIES } from '../js/draft/compete.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
-import { hydrate, PRIOR_DEFAULTS } from '../js/prior.js';
+import { hydrate, PRIOR_DEFAULTS, poolPlayerSeasons, espnEvidence } from '../js/prior.js';
+import { ALLOWED_MODEL_SEASONS, CURRENT_SEASON, isAllowedSeason, seasonStartYear,
+  assertAllowedSeason, onlyAllowedSeasons } from '../js/seasons.js';
 import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scoreRatio, RATING_WEIGHTS } from '../js/rating.js';
 
 let failures = 0;
@@ -588,7 +590,9 @@ console.log('\nPrior blending');
     expected_goals_conceded_per_90: 0, saves_per_90: 0, defensive_contribution_per_90: 0,
     ...over,
   });
-  const priorOf = (over) => ({ players: { 100: { code: 100, minutes: 0, expected_goals: 0,
+  // The season label is mandatory: hydrate() reads it and refuses anything
+  // outside the window, including an unlabelled prior.
+  const priorOf = (over) => ({ season: '2025/26', players: { 100: { code: 100, minutes: 0, expected_goals: 0,
     expected_assists: 0, expected_goals_conceded: 0, saves: 0, defensive_contribution: 0,
     bps: 0, yellow_cards: 0, clearances_blocks_interceptions: 0, tackles: 0, recoveries: 0,
     ...over } } });
@@ -628,7 +632,7 @@ console.log('\nPrior blending');
       el({ id: 2, code: 101, minutes: 0 })],
     teams: [{ id: 1 }, { id: 2 }],
   };
-  const twoPrior = { players: {
+  const twoPrior = { season: '2025/26', players: {
     100: { code: 100, minutes: 0, expected_goals: 0, expected_assists: 0, bps: 0 },
     101: { code: 101, minutes: 3420, expected_goals: 19, expected_assists: 6, bps: 760 },
   } };
@@ -654,7 +658,7 @@ console.log('\nPrior blending');
       expected_goals_per_90: 0, expected_assists_per_90: 0, expected_goals_conceded_per_90: 0,
       saves_per_90: 0, defensive_contribution_per_90: 0,
     })) };
-    const built = { players: Object.fromEntries(sampleBoot.elements.map((e) => [e.code, {
+    const built = { season: '2025/26', players: Object.fromEntries(sampleBoot.elements.map((e) => [e.code, {
       code: e.code, minutes: Number(e.minutes) || 0, expected_goals: parseFloat(e.expected_goals) || 0,
       expected_assists: parseFloat(e.expected_assists) || 0,
       expected_goals_conceded: parseFloat(e.expected_goals_conceded) || 0,
@@ -998,6 +1002,148 @@ console.log('\nClassic squad rating');
     return files.every((f) => !/from\s+['"][^'"]*\/rating\.js['"]/.test(fs.readFileSync(`js/draft/${f}`, 'utf8'))
       || !fs.readFileSync(`js/draft/${f}`, 'utf8').includes("'../rating.js'"));
   })());
+}
+
+/* ------------------------------------------------------------------ *
+ * the season boundary
+ * ------------------------------------------------------------------ *
+ * Performance data older than 2025/26 may not reach a projection. Enforced at
+ * ingestion rather than remembered downstream, so these tests push old seasons
+ * at every door and prove each one is shut.
+ */
+console.log('\nSeason boundary');
+{
+  ok('the window is exactly the current season and the one before',
+    ALLOWED_MODEL_SEASONS.length === 2 && ALLOWED_MODEL_SEASONS.includes(CURRENT_SEASON)
+    && ALLOWED_MODEL_SEASONS.includes(CURRENT_SEASON - 1));
+
+  ok('2025/26 is allowed', isAllowedSeason(2025) && isAllowedSeason('2025/26') && isAllowedSeason('2025-26'));
+  ok('2026/27 is allowed', isAllowedSeason(2026) && isAllowedSeason('2026/27'));
+  ok('2024/25 is refused', !isAllowedSeason(2024) && !isAllowedSeason('2024/25'));
+  ok('2023/24 is refused', !isAllowedSeason(2023) && !isAllowedSeason('2023/24'));
+  ok('2019/20 is refused', !isAllowedSeason(2019));
+  ok('nonsense is refused', !isAllowedSeason(null) && !isAllowedSeason('last year') && !isAllowedSeason(undefined));
+
+  ok('a season label reduces to its starting year',
+    seasonStartYear('2025/26') === 2025 && seasonStartYear('2025-2026') === 2025 && seasonStartYear(2025) === 2025);
+
+  let threw = false;
+  try { assertAllowedSeason(2024, 'test'); } catch { threw = true; }
+  ok('the ingestion guard throws rather than dropping quietly', threw);
+  ok('the guard passes a permitted season through', assertAllowedSeason('2025/26') === 2025);
+
+  ok('a discovery list is filtered down to permitted seasons', (() => {
+    const kept = onlyAllowedSeasons([{ season: 2019 }, { season: 2024 }, { season: 2025 }, { season: 2026 }]);
+    return kept.length === 2 && kept.every((r) => r.season >= 2025);
+  })());
+
+  /* The pooling door: a prior labelled with a stale season must contribute
+     nothing, not merely be weighted down. */
+  const cur = { minutes: 90, expected_goals: 0.5, bps: 30 };
+  const old = { minutes: 3000, expected_goals: 25, bps: 900 };
+  const base = { gamesThis: 1, games: 20, lastSeasonWeight: 0.5, lastSeasonGames: 38 };
+  const allowed = poolPlayerSeasons(cur, old, { ...base, priorSeason: 2025 });
+  const refused = poolPlayerSeasons(cur, old, { ...base, priorSeason: 2024 });
+  ok('a permitted prior is pooled', allowed.evidenceMinutes > 1000);
+  ok('a stale prior contributes no evidence minutes', refused.evidenceMinutes === 90);
+  ok('a stale prior contributes no production either',
+    Math.abs(refused.expected_goals_per_90 - (0.5 / 90) * 90) < 1e-9,
+    `${refused.expected_goals_per_90}`);
+  /* Rejecting the prior leaves one game of 90 minutes, which really does read
+     as a full-time role — the protection is not a smaller number but a much
+     smaller sample behind it, which is what the model weighs. */
+  ok('a stale prior leaves far less role evidence behind it',
+    refused.minutesEvidenceMinutes < allowed.minutesEvidenceMinutes / 5,
+    `${refused.minutesEvidenceMinutes} vs ${allowed.minutesEvidenceMinutes}`);
+  ok('and that thin evidence pulls expected minutes toward the conservative prior', (() => {
+    const ctxL = { games: 20, defence: { 1: 1.2 }, teams: { 1: {} } };
+    const fxL = { event: 2, opponent: 2, home: true, difficulty: 3 };
+    const row = (pooled) => projectFixture({ id: 1, code: 7, element_type: 3, team: 1, now_cost: 60,
+      status: 'a', chance_of_playing_next_round: null, saves: 0, ...pooled }, fxL, ctxL, { riskAversion: 0 });
+    return row(refused).parts.expMins < row(allowed).parts.expMins;
+  })());
+
+  /* hydrate() reads the label off the frozen file rather than assuming it. */
+  const bootLike = { elements: [{ id: 1, code: 7, element_type: 3, team: 1, now_cost: 60, minutes: 90 }], teams: [{ id: 1 }] };
+  const priorFile = { season: '2025/26', players: { 7: old } };
+  ok('hydrate pools a prior inside the window',
+    hydrate(bootLike, priorFile).elements[0].modelMinutes !== undefined);
+  ok('hydrate refuses a prior outside the window, rather than blending it',
+    hydrate(bootLike, { ...priorFile, season: '2024/25' }).elements[0].modelMinutes === undefined);
+  ok('hydrate refuses an unlabelled prior', hydrate(bootLike, { players: priorFile.players }).elements[0].modelMinutes === undefined);
+
+  /* ESPN evidence: discovery may see old seasons, ingestion may not keep them. */
+  const espnRec = { seasons: [
+    { season: 2025, competition: 'esp.1', minutes: 2000, appearances: 30, starts: 28, goals: 10, assists: 5 },
+    { season: 2024, competition: 'esp.1', minutes: 3000, appearances: 38, starts: 38, goals: 25, assists: 10 },
+  ] };
+  const ev = espnEvidence(espnRec, 4);
+  ok('ESPN evidence counts only the permitted season', ev.minutes === 2000, `${ev.minutes}`);
+  ok('ESPN evidence ignores the older season entirely', ev.apps === 30 && ev.starts === 28);
+  ok('an ESPN record with only stale seasons yields nothing',
+    espnEvidence({ seasons: [{ season: 2024, minutes: 3000, appearances: 38, starts: 38 }] }, 4) === null);
+  ok('an empty ESPN record yields nothing', espnEvidence({ seasons: [] }, 4) === null);
+
+  /* And the committed cache itself must hold nothing older. */
+  const cached = await readJSON('data/espn-history.json', null);
+  if (cached?.players) {
+    const seasons = [...new Set(Object.values(cached.players).flatMap((p) => (p.seasons || []).map((s) => s.season)))];
+    ok('the committed ESPN cache contains no season outside the window',
+      seasons.every((y) => isAllowedSeason(y)), `seasons present: ${seasons.join(', ')}`);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * production and opportunity are separate
+ * ------------------------------------------------------------------ */
+console.log('\nProduction vs opportunity');
+{
+  const mk = (over) => ({ id: 1, code: 1, element_type: 3, team: 1, now_cost: 65, status: 'a',
+    chance_of_playing_next_round: null, bps: 0, yellow_cards: 0, saves: 0,
+    expected_goals_per_90: 0.5, expected_assists_per_90: 0.3, expected_goals_conceded_per_90: 1.2,
+    saves_per_90: 0, defensive_contribution_per_90: 6,
+    clearances_blocks_interceptions: 0, tackles: 0, recoveries: 0, ...over });
+  const ctx = { games: 20, defence: { 1: 1.2 }, teams: { 1: {} } };
+  const fx = { event: 2, opponent: 2, home: true, difficulty: 3 };
+  const proj = (over) => projectFixture(mk(over), fx, ctx, { riskAversion: 0 });
+
+  /* The bug this replaces: with the prior applied per fixture, a player with
+     less expected playing time scored MORE, because the modelled half shrank
+     while the prior half did not. */
+  const at = (mm) => proj({ modelMinutes: mm, evidenceMinutes: 0, minutesEvidenceMinutes: 2000 }).total;
+  ok('a nailed starter outscores a rotation player on the same rate', at(1800) > at(900));
+  ok('a rotation player outscores a fringe player', at(900) > at(450));
+  ok('a fringe player outscores a player who barely features', at(450) > at(90));
+  ok('nobody scores anything on zero expected minutes', at(0) === 0);
+  ok('knowing less never raises the projection', (() => {
+    let prev = -1;
+    for (const mm of [0, 90, 450, 900, 1800]) { const v = at(mm); if (v < prev - 1e-9) return false; prev = v; }
+    return true;
+  })());
+
+  /* Neither wrong answer for an unknown player. */
+  const unknown = proj({ modelMinutes: 0, evidenceMinutes: 0, minutesEvidenceMinutes: 0 });
+  ok('an unknown player is not assumed to play ninety minutes', unknown.parts.expMins < 70);
+  ok('an unknown player is not assumed to play nothing', unknown.parts.expMins > 15);
+  ok('an unknown player still projects something', unknown.total > 0);
+  ok('an unknown player projects below an equivalent known starter',
+    unknown.total < proj({ modelMinutes: 1800, evidenceMinutes: 1800, minutesEvidenceMinutes: 1800 }).total);
+
+  /* The two confidences are independent. */
+  const newSigning = proj({ modelMinutes: 1600, evidenceMinutes: 500, minutesEvidenceMinutes: 1700 });
+  const veteran = proj({ modelMinutes: 1600, evidenceMinutes: 1800, minutesEvidenceMinutes: 1700 });
+  ok('production confidence tracks production evidence',
+    newSigning.parts.productionConfidence < veteran.parts.productionConfidence);
+  ok('minutes confidence is unchanged by production evidence',
+    Math.abs(newSigning.parts.minutesConfidence - veteran.parts.minutesConfidence) < 1e-9);
+  const impactSub = proj({ modelMinutes: 600, evidenceMinutes: 1800, minutesEvidenceMinutes: 200 });
+  ok('a thin ROLE sample lowers minutes confidence without touching production',
+    impactSub.parts.minutesConfidence < veteran.parts.minutesConfidence
+    && impactSub.parts.productionConfidence === veteran.parts.productionConfidence);
+
+  /* Availability still suppresses everything, however good the prior. */
+  const injured = proj({ modelMinutes: 1800, evidenceMinutes: 1800, minutesEvidenceMinutes: 1800, status: 'i' });
+  ok('an unavailable player projects nothing however strong his history', injured.total === 0);
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);

@@ -62,6 +62,18 @@ jobs:
       # once per match anyway. continue-on-error because ESPN has no contract:
       # if it 403s, the previously committed map stays in place and every FPL
       # projection carries on untouched.
+      # ESPN 2025/26 evidence for players the Premier League has never seen.
+      # Rides the daily deep slot: the cache is permanent per player per season,
+      # so this is a slowly-filling backlog rather than a per-refresh cost.
+      # continue-on-error because ESPN has no contract — a failure leaves the
+      # previous cache and every projection falls back to its own prior.
+      - name: Fetch ESPN player history (2025/26 only)
+        if: ${{ inputs.deep || github.event.schedule == '15 4 * * *' }}
+        env:
+          ESPN_HISTORY_MAX: '80'
+        run: node scripts/fetch-espn-history.mjs
+        continue-on-error: true
+
       - name: Rebuild player identity map
         if: ${{ inputs.deep || github.event.schedule == '15 4 * * *' }}
         run: node scripts/build-identity.mjs

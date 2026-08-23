@@ -10,7 +10,7 @@
  */
 import { getJSON } from './lib/http.mjs';
 import { readJSON, writeJSONIfChanged } from './lib/io.mjs';
-import { poolPlayerSeasons, PRIOR_DEFAULTS } from '../js/prior.js';
+import { poolPlayerSeasons, PRIOR_DEFAULTS, espnEvidence } from '../js/prior.js';
 import { inferGamesPlayed } from '../js/model.js';
 
 const DRAFT_API = 'https://draft.premierleague.com/api';
@@ -64,9 +64,11 @@ const draftByCode = new Map((draftBoot?.elements || []).map((p) => [p.code, p]))
    through the same js/prior.js helper the Classic model uses, so there is one
    blend rather than two that can drift apart. Done at fetch time because the
    Draft pages read a committed board and do no hydration of their own. */
+const espnHistory = await readJSON('data/espn-history.json').catch(() => null);
 const gamesThis = inferGamesPlayed(classicBoot.elements);
 const poolGames = gamesThis + PRIOR_DEFAULTS.lastSeasonWeight * PRIOR_DEFAULTS.lastSeasonGames;
 let pooledCount = 0;
+let espnApplied = 0;
 
 const players = classicBoot.elements.map((p) => {
   const d = draftByCode.get(p.code);
@@ -77,8 +79,21 @@ const players = classicBoot.elements.map((p) => {
     lastSeasonGames: PRIOR_DEFAULTS.lastSeasonGames,
   });
   if (model) pooledCount += 1;
+  /* Same Tier 3 rule as Classic, through the same helper — Draft must not grow
+     its own historical-data policy. Role only, and only where the Premier
+     League has too little to say. */
+  const espn = espnHistory?.players?.[p.code] ? espnEvidence(espnHistory.players[p.code], p.element_type) : null;
+  const thin = !model || model.evidenceMinutes < PRIOR_DEFAULTS.espnAppliesBelowMinutes;
+  if (espn && thin && espn.minutesEvidence > (model?.minutesEvidenceMinutes ?? 0)) {
+    if (model) {
+      model.modelMinutes = espn.mpg * poolGames;
+      model.minutesEvidenceMinutes = espn.minutesEvidence;
+    }
+    espnApplied += 1;
+  }
   return {
     model,
+    espn: espn ? { mpg: espn.mpg, minutes: espn.minutes, starts: espn.starts, competitions: espn.competitions } : null,
     code: p.code,
     id: d?.id ?? p.id,
     element_type: p.element_type,
@@ -125,6 +140,7 @@ await writeJSONIfChanged(`${DIR}/players.json`, {
   teams,
 });
 console.log(`✓ ${players.length} players on the board, ${teams.length} teams`);
+console.log(`  ${espnApplied} given a role from permitted ESPN 2025/26 evidence`);
 console.log(`  ${pooledCount} pooled with this season (${gamesThis} game${gamesThis === 1 ? '' : 's'} played, basis ${poolGames.toFixed(1)})`);
 
 /* ------------------------------------------------------------------ *

@@ -37,6 +37,12 @@ export const DEFAULTS = {
   bonusSpread: 6,
   benchWeight: 0.12,   // how much a bench slot is worth when optimising
   priorBlendMinutes: 900, // minutes of evidence before we fully trust the data
+  /**
+   * Minutes of ROLE evidence before expected minutes are taken at face value.
+   * Lower than the production bar: how much a player features is visible far
+   * sooner than how productive he is, because every appearance reports it.
+   */
+  minutesBlendMinutes: 450,
   riskAversion: 0,     // 0..1, penalises players with injury/rotation doubt
   prior: null,          // (player) => pts/appearance; defaults to pricePrior
   bonusModel: null,     // (player) => expected bonus per appearance; defaults to the BPS logistic
@@ -103,7 +109,25 @@ export function inferGamesPlayed(players) {
   return Math.max(1, Math.round(max / 90));
 }
 
-/** Rough pts-per-game prior from price alone, for players with no minutes yet. */
+/**
+ * Expected minutes per match when the record does not say.
+ *
+ * Neither of the two wrong answers: no evidence is not ninety minutes, and it
+ * is not zero either. It is a squad player until shown otherwise — someone who
+ * features often enough to matter and rarely enough not to be assumed.
+ *
+ * Deliberately below the level at which clean-sheet and 60-minute points start
+ * paying fully, so an unknown player cannot out-project a known rotation option
+ * simply by being unknown. Keepers are the exception the position deserves:
+ * a club's keeper either plays every minute or none, so the middle is the least
+ * likely place for him to sit and the prior sits lower still.
+ */
+const MINUTES_PRIOR = { 1: 30, 2: 45, 3: 45, 4: 42 };
+function minutesPrior(p) {
+  return MINUTES_PRIOR[p.element_type] ?? 45;
+}
+
+/** Rough pts-per-90 prior from price alone, for players with no minutes yet. */
 function pricePrior(p) {
   const m = num(p.now_cost) / 10;
   switch (p.element_type) {
@@ -202,7 +226,20 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
   const avail = availability(p);
   if (avail <= 0) return { total: 0, parts: { unavailable: true } };
 
-  const expMins = clamp(mins / games, 0, 90);
+  /* ---- opportunity ----
+   *
+   * How much a player plays is a different question from how productive he is,
+   * and it is answered by different evidence: every appearance reports minutes,
+   * while a shooting rate takes a season to become trustworthy. So the two
+   * carry separate confidences and are blended separately.
+   *
+   * `minutesEvidence` is the minutes actually observed for ROLE purposes. It
+   * falls back to the production evidence when a caller does not distinguish
+   * them, which keeps older payloads working. */
+  const minutesEvidence = num(p.minutesEvidenceMinutes) || num(p.evidenceMinutes) || mins;
+  const wMin = clamp(minutesEvidence / o.minutesBlendMinutes, 0, 1);
+  const observedMpg = clamp(mins / games, 0, 90);
+  const expMins = clamp(wMin * observedMpg + (1 - wMin) * minutesPrior(p), 0, 90);
   const minsFactor = expMins / 90;
   const pPlay = clamp(expMins / 20, 0, 0.99);
   const p60 = clamp((expMins - 25) / 45, 0, 0.97);
@@ -294,7 +331,16 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
    * how far we move off the price prior. */
   const evidence = num(p.evidenceMinutes) || mins;
   const w = clamp(evidence / o.priorBlendMinutes, 0, 1);
-  const prior = (o.prior || pricePrior)(p) * attMult;
+  /* The prior is a RATE — points per ninety on the pitch — and every rate in
+     this model passes through the opportunity layer above. It used to be added
+     as a finished per-fixture figure, which made the two halves of the blend
+     different units and let a player's expected minutes fall while his prior
+     stayed whole. That inverted the model: at 23 expected minutes a no-evidence
+     player scored 2.44, at 5 minutes 2.73, and at zero minutes 2.99 — knowing
+     less made him better. Multiplying by minsFactor is not a patch here; it is
+     what makes both sides points-per-fixture. */
+  const priorRate = (o.prior || pricePrior)(p) * attMult;
+  const prior = priorRate * minsFactor;
   const blended = w * modelled + (1 - w) * prior;
 
   const riskMult = 1 - o.riskAversion * (1 - avail);
@@ -326,7 +372,14 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
     parts: {
       appearance, attack, cleanSheet, conceded, saves, defcon, bonus, cards,
       expMins, pCS, xgcMatch, attMult, availability: avail,
-      evidence: w, prior, modelled, isPrior: w < 0.5,
+      evidence: w, prior, priorRate, modelled, isPrior: w < 0.5,
+      /* Kept apart on purpose. A new signing can be well understood as a
+         footballer and poorly understood as a selection — 2,600 minutes last
+         season says what he does, and says nothing about whether his new
+         manager will play him. */
+      productionConfidence: w,
+      minutesConfidence: wMin,
+      minutesEvidence,
     },
   };
 }
@@ -345,7 +398,7 @@ export function projectHorizon(p, ctx, opts = {}) {
   let total = 0;
   const perGW = {};
   const sum = { appearance: 0, attack: 0, cleanSheet: 0, conceded: 0, saves: 0, defcon: 0, bonus: 0, cards: 0, prior: 0 };
-  const acc = { expMins: 0, pCS: 0, attMult: 0, availability: 0, evidence: 0 };
+  const acc = { expMins: 0, pCS: 0, attMult: 0, availability: 0, evidence: 0, productionConfidence: 0, minutesConfidence: 0, minutesEvidence: 0 };
   let last = null;
   for (const f of fixtures) {
     const r = projectFixture(p, f, ctx, o);
@@ -372,6 +425,11 @@ export function projectHorizon(p, ctx, opts = {}) {
       attMult: acc.attMult / n,
       availability: acc.availability / n,
       evidence: acc.evidence / n,
+      // The two confidences stay apart all the way to the card: a new signing
+      // can be well understood as a footballer and poorly as a selection.
+      productionConfidence: acc.productionConfidence / n,
+      minutesConfidence: acc.minutesConfidence / n,
+      minutesEvidence: acc.minutesEvidence / n,
       isPrior: (acc.evidence / n) < 0.5,
       fixtures: fixtures.length,
       perFixture: last,

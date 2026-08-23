@@ -105,7 +105,7 @@ ok('the rule returns a supported basis at every selectable league size',
   Array.from({ length: LEAGUE_SIZE_MAX - LEAGUE_SIZE_MIN + 1 }, (_, i) => i + LEAGUE_SIZE_MIN)
     .every((n) => ['demand', 'starters'].includes(replacementBasisForLeagueSize(n))));
 ok('the default league size gets the basis the evidence supports',
-  replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT) === 'starters',
+  replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT) === 'demand',
   `got ${replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT)} for ${LEAGUE_SIZE_DEFAULT} managers`);
 ok('an unusable league size falls back rather than throwing',
   ['demand', 'starters'].includes(replacementBasisForLeagueSize(undefined))
@@ -709,12 +709,15 @@ console.log('\nReplacement basis by league size');
   /* Re-measured after the defensive-contribution fix moved the answer. The band
      that used to sit at five-to-nine is gone; starters wins everywhere with a
      stable signal. config.js carries the corrected table and the one anomaly. */
-  ok('a six-manager league uses starters', replacementBasisForLeagueSize(6) === 'starters');
+  ok('a six-manager league uses demand', replacementBasisForLeagueSize(6) === 'demand');
   ok('a twelve-manager league uses starters', replacementBasisForLeagueSize(12) === 'starters');
-  ok('no league size is currently on the demand basis',
-    DEMAND_BASIS_SIZES === null
-    && Array.from({ length: LEAGUE_SIZE_MAX - LEAGUE_SIZE_MIN + 1 }, (_, i) => i + LEAGUE_SIZE_MIN)
-      .every((n) => replacementBasisForLeagueSize(n) === 'starters'));
+  ok('demand applies over a contiguous band, not scattered sizes',
+    Array.from({ length: LEAGUE_SIZE_MAX - LEAGUE_SIZE_MIN + 1 }, (_, i) => i + LEAGUE_SIZE_MIN)
+      .filter((n) => replacementBasisForLeagueSize(n) === 'demand')
+      .every((n, i, a) => i === 0 || n === a[i - 1] + 1));
+  ok('the crossover sits where the evidence puts it',
+    replacementBasisForLeagueSize(DEMAND_BASIS_SIZES.max) === 'demand'
+    && replacementBasisForLeagueSize(DEMAND_BASIS_SIZES.max + 1) === 'starters');
   ok('if a band is ever restored the rule reads it, rather than hardcoding',
     typeof replacementBasisForLeagueSize === 'function'
     && replacementBasisForLeagueSize(6) === replacementBasisForLeagueSize(LEAGUE_SIZE_DEFAULT));
@@ -725,7 +728,7 @@ console.log('\nReplacement basis by league size');
 
     // The rule has to actually reach replacementLevel(), not just exist.
     const auto6 = replacementLevel(pool, noDemand, { leagueSize: 6 });
-    const forced6 = replacementLevel(pool, noDemand, { basis: 'starters', leagueSize: 6 });
+    const forced6 = replacementLevel(pool, noDemand, { basis: 'demand', leagueSize: 6 });
     ok('replacementLevel applies the rule for the league size it is given',
       JSON.stringify(auto6) === JSON.stringify(forced6));
 
@@ -736,7 +739,7 @@ console.log('\nReplacement basis by league size');
       JSON.stringify(auto12) === JSON.stringify(forced12));
 
     // An explicit basis must still beat the rule, or the diagnostics lie.
-    const override = replacementLevel(pool, noDemand, { basis: 'demand', leagueSize: 6 });
+    const override = replacementLevel(pool, noDemand, { basis: 'starters', leagueSize: 6 });
     ok('an explicit basis overrides the rule',
       JSON.stringify(override) !== JSON.stringify(auto6));
 

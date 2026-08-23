@@ -16,7 +16,8 @@ const fixtures = await readJSON('data/fixtures.json', []);
 // Last season, frozen before the GW1 deadline zeroed the live totals.
 // The browser pools the same file in js/data.js, so both must agree.
 const prior = await readJSON('data/draft/prior-2526.json', null);
-const boot = hydrate(rawBoot, prior);
+const espnHistory = await readJSON('data/espn-history.json', null);
+const boot = hydrate(rawBoot, prior, {}, espnHistory);
 
 if (!rawBoot?.elements?.length) {
   console.error('No bootstrap data — run scripts/fetch-all.mjs first.');
