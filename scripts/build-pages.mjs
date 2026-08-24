@@ -177,7 +177,7 @@ const page = (p, modules, v, cssV, lazy = []) => `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#202123" />
 <title>${p.title} · LBH FPL 26/27</title>
-<link rel="icon" type="image/svg+xml" href="img/logo-fpl.svg" />
+<link rel="icon" type="image/svg+xml" href="img/logo-fpl.svg?v=${cssV}" />
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
 <link rel="manifest" href="manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -203,7 +203,7 @@ ${modules.map((m) => `<link rel="modulepreload" href="${m}?v=${v}" />`).join('\n
 ${PRODUCTS.map((pr) => `    <a href="${pr.home}.html"${pr.id === p.product ? ' class="active" aria-current="true"' : ''}>${pr.label}</a>`).join('\n')}
   </nav>
   <a class="brand" href="${PRODUCTS.find((pr) => pr.id === p.product).home}.html">
-    <img class="brand-logo" src="img/logo-fpl.svg" alt="" />
+    <img class="brand-logo" src="img/logo-fpl.svg?v=${cssV}" alt="" />
     <span class="brand-text">FPL<br />Tracker</span>
   </a>
 </header>
@@ -226,7 +226,10 @@ ${pagesOf(p.product).map((q) => `  <a href="${href(q)}"${q.slug === p.slug ? ' c
 // Stylesheets need the same treatment as modules, and for the same reason: a
 // cached app.css against fresh JS renders new markup with no rules for it,
 // which looks like a layout bug rather than a caching one.
-const cssV = await graphHash(['css/base.css', 'css/app.css']);
+/* The shell's own assets, versioned together. The logo used to be requested
+   without a version, so replacing the mark left every returning browser showing
+   the old one — the same class of bug the JS versioning fixed. */
+const cssV = await graphHash(['css/base.css', 'css/app.css', 'img/logo-fpl.svg']);
 
 for (const p of PAGES) {
   const entry = entryFor(p);

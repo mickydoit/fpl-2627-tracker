@@ -62,10 +62,33 @@ const liveById = new Map((d.live?.elements || []).map((e) => [e.id, e]));
 /* ------------------------------------------------------------------ *
  * small shared pieces
  * ------------------------------------------------------------------ */
-/** A section name. Small, quiet, and never a heading inside a box. */
-const label = (text, hint) => el('div', { class: 'seclabel', title: hint || '' }, text);
+/**
+ * A section: a named group with its own control, and a body that visibly
+ * belongs to it.
+ *
+ * The previous pass floated a label at the left and its picker at the far right
+ * of the same line, with the content flowing loose beneath. Nothing said which
+ * picker drove which numbers, or where one section ended and the next began.
+ * Here the header and the body share one border, so ownership is structural
+ * rather than a matter of proximity.
+ *
+ * The label is a cyan pill on ink — the treatment Figma uses for exactly this
+ * job (`Golden Boot` at 83:324, `Transfer` at 236:99), rather than the
+ * accent-coloured caps this had before.
+ */
+const section = (name, { control = null, hint = '', flush = false } = {}) => {
+  const body = el('div', { class: `secbody ${flush ? 'flush' : ''}` });
+  const wrap = el('section', { class: 'sec' },
+    el('div', { class: 'sechead' },
+      el('span', { class: 'seclabel', title: hint }, name),
+      control ? el('div', { class: 'secctl' }, control) : null),
+    body);
+  return { wrap, body };
+};
 
 /** One cell of a metrics strip: value over caption. */
+const compact = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(0)}k` : String(n));
+
 const metric = (value, caption, { tone = '', hint = '' } = {}) =>
   el('div', { class: `metric ${tone}`, title: hint },
     el('span', { class: 'mv' }, value),
@@ -91,17 +114,21 @@ const openPlayer = (p) => playerCard(p, {
  * ------------------------------------------------------------------ */
 const entry = d.entry?.entry;
 const gwStrip = el('div', { class: 'metrics' });
-const cdCell = metric('—', `GW${ctx.nextEvent} deadline`, { tone: 'accent' });
+const cdCell = metric('—', `GW${ctx.nextEvent}`, { tone: 'accent', hint: 'Deadline' });
 addKids(gwStrip, cdCell);
 countdown(cdCell.querySelector('.mv'), nextEvent?.deadline_time);
 if (entry) {
   addKids(gwStrip,
-    metric(String(entry.summary_overall_points ?? '—'), 'Total points'),
-    metric(entry.summary_overall_rank ? entry.summary_overall_rank.toLocaleString('en-GB') : '—', 'Overall rank',
-      { hint: d.meta?.total_players ? `of ${d.meta.total_players.toLocaleString('en-GB')}` : '' }),
-    metric(entry.last_deadline_value ? fmt.price(entry.last_deadline_value) : '—', 'Squad value',
+    metric(String(entry.summary_overall_points ?? '—'), 'Points'),
+    /* Abbreviated: a seven-digit rank cannot fit a pill this size, and "4.3M"
+       is the figure anyone actually reads. The exact number is the tooltip. */
+    metric(entry.summary_overall_rank ? compact(entry.summary_overall_rank) : '—', 'Rank',
+      { hint: entry.summary_overall_rank
+        ? `${entry.summary_overall_rank.toLocaleString('en-GB')}${d.meta?.total_players ? ` of ${d.meta.total_players.toLocaleString('en-GB')}` : ''}`
+        : '' }),
+    metric(entry.last_deadline_value ? fmt.price(entry.last_deadline_value) : '—', 'Value',
       { hint: `${fmt.price(bank)} in the bank` }),
-    metric(String(freeTransfers), 'Free transfers'),
+    metric(String(freeTransfers), 'Transfers'),
   );
 }
 addKids(app, gwStrip);
@@ -110,11 +137,12 @@ addKids(app, gwStrip);
  * the squad
  * ------------------------------------------------------------------ */
 if (squadIds.length !== SQUAD_RULES.size) {
-  addKids(app,
-    label('Squad'),
+  const noSquad = section('Squad');
+  addKids(noSquad.body,
     el('p', { class: 'empty' }, entry?.name
       ? 'FPL has not published your picks yet — they appear after the first deadline.'
       : 'Set FPL_ENTRY_ID, or build a squad on the Players page, and it will appear here.'));
+  addKids(app, noSquad.wrap);
 } else {
   const squad = squadIds.map((id) => byId(5).get(id)).filter(Boolean);
   const picks = d.entry?.picks?.picks || [];
@@ -176,28 +204,28 @@ if (squadIds.length !== SQUAD_RULES.size) {
   const liveTotal = () => chosenXi.map((id) => byId(5).get(id)).filter(Boolean)
     .reduce((t, p) => t + (livePts(p) ?? 0), 0);
 
-  const pitchHead = el('div', { class: 'row between tight' });
-  const paintHead = () => setKids(pitchHead,
-    label(isLiveGW ? `GW${currentEvent.id} live` : 'My squad',
-      source === 'fpl' ? 'From your FPL team' : 'From your saved squad'),
-    el('div', { class: 'row tight' },
-      el('span', { class: 'inline-metric' },
-        el('b', {}, isLiveGW ? String(Math.round(liveTotal())) : fmt.pts(xiTotal())),
-        el('i', {}, isLiveGW ? 'pts' : `over ${lineupH === 1 ? 'GW' : `${lineupH} GW`}`)),
-      horizonPicker(lineupH, (n) => {
-        lineupH = n;
-        setState({ [LINEUP_HZ]: n });
-        paintPitch(); paintHead();
-      }, { options: [1, 3, 5, 8] })));
+  const squadSec = section(isLiveGW ? `GW${currentEvent.id} live` : 'My squad', {
+    hint: source === 'fpl' ? 'From your FPL team' : 'From your saved squad',
+    flush: true,
+  });
+  const paintHead = () => setKids(squadSec.wrap.querySelector('.secctl'),
+    el('span', { class: 'inline-metric' },
+      el('b', {}, isLiveGW ? String(Math.round(liveTotal())) : fmt.pts(xiTotal())),
+      el('i', {}, isLiveGW ? 'pts' : `over ${lineupH === 1 ? 'GW' : `${lineupH} GW`}`)),
+    horizonPicker(lineupH, (n) => {
+      lineupH = n;
+      setState({ [LINEUP_HZ]: n });
+      paintPitch(); paintHead();
+    }, { options: [1, 3, 5, 8] }));
+  addKids(squadSec.wrap.querySelector('.sechead'), el('div', { class: 'secctl' }));
   paintHead();
+  addKids(squadSec.body, pitchHost);
 
   /* Two columns from 900px: the pitch holds its shape on the left while the
      numbers that read as a list — rating, suggestion, this week's move — stack
      beside it. Widening the pitch instead would just inflate the kits. */
   const sideCol = el('div', { class: 'sidecol' });
-  addKids(app, el('div', { class: 'pitch-and-side' },
-    el('div', {}, pitchHead, pitchHost),
-    sideCol));
+  addKids(app, el('div', { class: 'pitch-and-side' }, squadSec.wrap, sideCol));
 
   /* ---------------- rating + summary strip ---------------- */
   const RATING_HZ = 'ratingHorizon';
@@ -211,13 +239,15 @@ if (squadIds.length !== SQUAD_RULES.size) {
     const r = rateSquad(mine, { pool: rows, bank, freeTransfers });
     if (r.error) { setKids(ratingHost, el('p', { class: 'empty' }, r.error)); return; }
     const cap = r.parts.captain;
-    setKids(ratingHost,
-      el('div', { class: 'row between tight' },
-        label('Rating', 'How much of what your money could buy you are actually getting'),
-        horizonPicker(ratingH, (n) => { ratingH = n; setState({ [RATING_HZ]: n }); paintRating(); },
-          { options: RATING_HORIZONS })),
-      /* The summary strip, straight from Figma 236:198 — one bordered surface,
-         a rule under the labels, four cells. */
+    const sec = section('Rating', {
+      hint: 'How much of what your money could buy you are actually getting',
+      control: horizonPicker(ratingH, (n) => { ratingH = n; setState({ [RATING_HZ]: n }); paintRating(); },
+        { options: RATING_HORIZONS }),
+      flush: true,
+    });
+    addKids(sec.body,
+      /* The summary strip, straight from Figma 236:198 — a rule under the
+         labels, one cell per fact. */
       el('div', { class: 'summary' },
         el('div', { class: 'sc' }, el('span', { class: 'sl' }, 'Rating'),
           el('span', { class: 'sv accent' }, String(r.overall))),
@@ -234,6 +264,7 @@ if (squadIds.length !== SQUAD_RULES.size) {
           el('span', { class: 'sl' }, 'Best cap'),
           el('span', { class: `sv ${cap && cap.id !== captain?.id ? 'accent' : ''}` }, cap ? cap.web_name : '—')),
       ));
+    setKids(ratingHost, sec.wrap);
   };
   paintRating();
   addKids(sideCol, ratingHost);
@@ -248,19 +279,22 @@ if (squadIds.length !== SQUAD_RULES.size) {
       bank, transfers: plannedTransfers, horizon: 8, riskAversion,
     });
     if (reach.error) { setKids(suggestHost, el('p', { class: 'empty' }, reach.error)); return; }
-    setKids(suggestHost,
-      el('div', { class: 'row between tight' },
-        label('Suggested squad', 'The best squad reachable with the transfers you have — no hits'),
-        el('div', { class: 'row tight' },
-          el('span', { class: 'inline-metric' },
-            el('b', { class: reach.gain > 0 ? 'up' : '' }, reach.gain > 0 ? fmt.signed(reach.gain) : '—'),
-            el('i', {}, 'over 8 GW')),
-          el('select', {
-            class: 'hz hz-picker hz-next5',
-            title: 'Transfers to spend',
-            onChange: (e) => { plannedTransfers = +e.target.value; setState({ [OPT_HZ]: plannedTransfers }); paintSuggest(); },
-          }, [0, 1, 2, 3, 4, 5].map((n) => el('option', { value: String(n), selected: n === plannedTransfers },
-            `${n} FT`))))),
+    const sec = section('Suggested squad', {
+      hint: 'The best squad reachable with the transfers you have — no hits',
+      control: [
+        el('span', { class: 'inline-metric' },
+          el('b', { class: reach.gain > 0 ? 'up' : '' }, reach.gain > 0 ? fmt.signed(reach.gain) : '—'),
+          el('i', {}, 'over 8 GW')),
+        el('select', {
+          class: 'hz hz-picker hz-next5',
+          title: 'Transfers to spend',
+          onChange: (e) => { plannedTransfers = +e.target.value; setState({ [OPT_HZ]: plannedTransfers }); paintSuggest(); },
+        }, [0, 1, 2, 3, 4, 5].map((n) => el('option', { value: String(n), selected: n === plannedTransfers },
+          `${n} FT`))),
+      ],
+      flush: true,
+    });
+    addKids(sec.body,
       reach.moves.length
         ? el('div', { class: 'rowlist' }, reach.moves.map((m) => el('div', { class: 'lrow' },
             el('span', { class: 'lo' }, m.out.web_name,
@@ -270,6 +304,7 @@ if (squadIds.length !== SQUAD_RULES.size) {
               el('i', {}, teams[m.in.team]?.short_name || '')),
             el('span', { class: 'lv up' }, fmt.signed(m.in.proj - m.out.proj)))))
         : el('p', { class: 'empty tight' }, 'Nothing worth doing with those transfers.'));
+    setKids(suggestHost, sec.wrap);
   };
   paintSuggest();
   addKids(sideCol, suggestHost);
@@ -289,10 +324,12 @@ if (squadIds.length !== SQUAD_RULES.size) {
       return scoreSquad(sq.filter((p) => p.id !== move.out.id).concat(inc), { horizon: h, riskAversion }) - base;
     };
     const best = bestMove(sug.singles, gainAt, { hit: freeTransfers >= 1 ? 0 : 4 });
-    addKids(sideCol,
-      el('div', { class: 'row between tight' },
-        label('This week', rec.why),
-        el('span', { class: `verdict ${best?.move ? 'go' : 'hold'}` }, best?.verdict || 'HOLD')),
+    const wk = section('This week', {
+      hint: rec.why,
+      control: el('span', { class: `verdict ${best?.move ? 'go' : 'hold'}` }, best?.verdict || 'HOLD'),
+      flush: true,
+    });
+    addKids(wk.body,
       best?.move
         ? el('div', { class: 'rowlist' }, el('div', { class: 'lrow' },
             el('span', { class: 'lo' }, best.move.out.web_name, el('i', {}, teams[best.move.out.team]?.short_name || '')),
@@ -301,6 +338,7 @@ if (squadIds.length !== SQUAD_RULES.size) {
             el('span', { class: 'lv up' }, fmt.signed(best.gain))))
         : el('p', { class: 'empty tight' }, 'No move clears the bar this week.'),
       el('p', { class: 'seemore' }, el('a', { href: 'transfers.html' }, 'Every legal move →')));
+    addKids(sideCol, wk.wrap);
   }
 }
 
@@ -331,5 +369,7 @@ if (matches.length) {
         el('div', { class: 't a' }, m.away.logo ? el('img', { src: m.away.logo, alt: '', loading: 'lazy' }) : null, m.away.short || m.away.name),
       ));
   }
-  addKids(app, label('Matches'), wrap);
+  const ms = section('Matches', { flush: true });
+  addKids(ms.body, wrap);
+  addKids(app, ms.wrap);
 }

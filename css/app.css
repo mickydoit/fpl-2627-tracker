@@ -345,26 +345,23 @@ table.players .proj { color: var(--accent); font-weight: 900; }
    Off the turf and visibly secondary, but the same component — a bench player
    is one substitution from being a starter and should be readable as the same
    kind of thing. */
+/* The label goes above the row rather than beside it. Inline, it competed for
+   the same horizontal space as four shirts and they overlapped it on a phone. */
 .bench-strip {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
   gap: 0.3rem;
-  flex-wrap: wrap;
-  padding: 0.5rem 0.4rem;
+  padding: 0.45rem 0.5rem 0.55rem;
   background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-top: 1px solid var(--border);
 }
 .bench-label {
-  font-family: var(--font-display);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
-  align-self: center;
-  padding-right: 0.15rem;
 }
-.bench-strip .shirt { opacity: 0.8; width: 3.9rem; }
+.bench-row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0.25rem; }
+.bench-strip .shirt { opacity: 0.82; width: auto; max-width: 100%; }
 .bench-strip .shirt .kit img,
 .bench-strip .shirt .kit-fallback { width: 2.2rem; height: 2.2rem; }
 .bench-strip .shirt:hover { opacity: 1; }
@@ -1007,52 +1004,97 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
    set at a readable size here rather than reproduced literally.
    ========================================================================== */
 
-/* Section name. Replaces `h2` inside a card — quiet, and it never opens a box. */
-.seclabel {
-  font-family: var(--font-display);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin: var(--s-md) 0 var(--s-sm);
-}
-.row.tight { gap: var(--s-sm); align-items: center; }
-.row.between.tight { margin: var(--s-md) 0 var(--s-sm); }
-.row.between.tight .seclabel { margin: 0; }
-.empty.tight { margin: 0 0 var(--s-md); font-size: 0.82rem; }
+/* ---------- a section ----------
+   The unit of hierarchy on this page. A named header bar joined to its body by
+   a shared border, so "which control drives which numbers" and "where does this
+   group end" are answered by structure rather than by proximity.
 
-/* Compact metric strip. Figma 82:138 runs these at 72x39 with an 8px caption;
-   this keeps the proportion and the caption-under-value order. */
+   The name is a cyan pill on ink — Figma's own treatment for a section label
+   (`Golden Boot` 83:324, `Transfer` 236:99 are both #8bffec with #202123 text).
+   It replaces the accent-coloured caps this had, which floated free and gave
+   every section the same voice. */
+.sec {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: var(--s-lg) 0 0;
+}
+.sec:first-child { margin-top: 0; }
+
+.sechead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-sm);
+  flex-wrap: wrap;
+  padding: 0.42rem 0.55rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.seclabel {
+  background: var(--cyan);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 0.26rem 0.5rem;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+/* Controls live in the header of the section they drive. */
+.secctl { display: flex; align-items: center; gap: var(--s-sm); flex-wrap: wrap; }
+.secbody { padding: 0.6rem; }
+.secbody.flush { padding: 0; }
+.secbody.flush > .rowlist,
+.secbody.flush > .matches,
+.secbody.flush > .summary { border: none; border-radius: 0; }
+.secbody.flush > .pitchwrap .pitch { border: none; border-radius: 0; }
+.secbody.flush > p { padding: 0.6rem; margin: 0; }
+.secbody > :first-child { margin-top: 0; }
+.secbody > :last-child { margin-bottom: 0; }
+
+.row.tight { gap: var(--s-sm); align-items: center; }
+.empty.tight { margin: 0; font-size: 0.82rem; }
+
+/* Compact metric strip. Figma 82:138 runs these at 72x39 with an 8px caption.
+   The colours are its own: the standout is a gold-to-sage gradient (83:357),
+   the rest flat cyan (83:227). */
+/* Five across, always. Figma runs them at 72x39 in a 440 frame — about 16% of
+   the width and a third the height these had, which is why a strip of five
+   small pills reads as context while five big boxes competed with the pitch
+   for first look. */
 .metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(5.4rem, 1fr));
-  gap: var(--s-xs);
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.2rem;
   margin: var(--s-sm) 0 0;
 }
 .metric {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--cyan);
   border-radius: 8px;
-  padding: 0.4rem 0.5rem;
+  padding: 0.24rem 0.3rem;
   display: grid;
-  gap: 0.1rem;
+  gap: 0;
   min-width: 0;
+  color: var(--ink);
+  text-align: center;
 }
-.metric.accent { background: linear-gradient(115deg, var(--yellow), var(--sage)); border-color: transparent; }
-.metric.accent .mv, .metric.accent .mc { color: var(--ink); }
+.metric.accent { background: linear-gradient(to bottom, var(--gold-2), var(--sage)); }
 .metric .mv {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 0.82rem;
   line-height: 1.1;
-  color: var(--text);
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .metric .mc {
-  font-size: 0.58rem;
+  font-size: 0.46rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: rgba(32, 33, 35, 0.72);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
@@ -1079,7 +1121,7 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
 .summary .sc:last-child { border-right: none; }
 .summary .sv { white-space: normal; overflow-wrap: anywhere; }
 .summary .sl {
-  font-size: 0.56rem;
+  font-size: 0.58rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--muted);
@@ -1144,6 +1186,5 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
   }
   .pitch-and-side .row.between.tight:first-child { margin-top: 0; }
   .sidecol > :first-child .row.between.tight { margin-top: 0; }
-  .metrics { grid-template-columns: repeat(5, 1fr); }
   .summary { grid-template-columns: repeat(5, 1fr); }
 }

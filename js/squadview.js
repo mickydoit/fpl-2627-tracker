@@ -156,7 +156,7 @@ export function squadPitch({ xi, bench = [], teams, captain, vice, value, sub, o
     bench.length
       ? el('div', { class: 'bench-strip' },
           el('span', { class: 'bench-label' }, 'Bench'),
-          bench.map((p) => shirt(p, opts)))
+          el('div', { class: 'bench-row' }, bench.map((p) => shirt(p, opts))))
       : null,
   );
 }
