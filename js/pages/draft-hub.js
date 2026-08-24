@@ -7,11 +7,20 @@
  * optional league mirror is missing, managers are "Slot 3" instead of a name
  * and everything else is identical.
  */
-import { el, setKids, horizonBadge } from '../ui.js';
+import { el, setKids, horizonBadge, section } from '../ui.js';
 import { squadPitch } from '../squadview.js';
 import { bestXI } from '../draft/rating.js';
 import { rateLeague } from '../draft/rating.js';
 import { DRAFT_CONFIG } from '../draft/config.js';
+
+/** section(), in the shape the builders below already use: one call, children
+ *  as trailing arguments. Keeps the conversion from card to section a rename
+ *  rather than a restructure of every body. */
+const sectionOf = (name, opts, ...kids) => {
+  const sec = section(name, opts);
+  setKids(sec.body, ...kids.filter(Boolean));
+  return sec.wrap;
+};
 
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 const one = (n, d = 0) => (Number.isFinite(n) ? n.toFixed(d) : '—');
@@ -57,8 +66,7 @@ function myTeamCard(me, league, mySlot, total) {
     .map((t) => ({ t, rank: me.posRank[t] }))
     .sort((a, b) => a.rank - b.rank || a.t - b.t)[0];
 
-  return el('div', { class: 'card hub-me' },
-    el('h2', {}, 'My team'),
+  return sectionOf('My team', { hint: 'Your standing in this league' },
     el('div', { class: 'hub-headline' },
       el('div', { class: 'hh-rating' },
         el('span', { class: 'hh-num' }, String(me.rating)),
@@ -108,8 +116,7 @@ const ordinal = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'st'
  * power rankings
  * ------------------------------------------------------------------ */
 function powerTable(rated, league, mySlot, onOpen) {
-  return el('div', { class: 'card' },
-    el('div', { class: 'row between' }, el('h2', {}, 'League power rankings'), horizonBadge('ros')),
+  return sectionOf('League power rankings', { flush: true, hint: 'Rest of season' },
     el('p', { class: 'hint' },
       'Rating blends best XI, rest-of-season strength, depth, value over free agents and injury risk — '
       + 'each as a percentile within this league. Every column behind it is shown, so a rank is always explainable.'),
@@ -191,8 +198,7 @@ function freeAgents(pool, state) {
       el('td', {}, p.availability < 1 ? (p.news || 'doubt') : ''))));
   fill();
 
-  return el('div', { class: 'card' },
-    el('div', { class: 'row between' }, el('h2', {}, 'Free agents'), horizonBadge('ros')),
+  return sectionOf('Free agents', { flush: true, hint: 'Rest of season' },
     el('p', { class: 'hint' },
       `${pool.length} players went undrafted. Ranked by rest-of-season projection — `
       + 'the waiver engine that compares these against your own squad comes next.'),
@@ -230,8 +236,7 @@ function transactionsCard(log, byId, league, mySlot, teams, onPlayer) {
     return m ? (m.teamName || m.manager) : 'free agents';
   };
 
-  return el('div', { class: 'card' },
-    el('h2', {}, 'League transfers'),
+  return sectionOf('League transfers', { flush: true },
     events.length
       ? el('div', { class: 'tablewrap' }, el('table', { class: 'players' },
         el('thead', {}, el('tr', {}, ...['When', 'Player', 'From', 'To'].map((h) => el('th', { class: 'col-l' }, h)))),
@@ -280,8 +285,7 @@ export function renderHub({ rostersBySlot, pool, league, mySlot, teams = {}, tra
       powerTable(rated, league, mySlot, (slot) => { open = slot === open ? null : slot; paint(); }),
       freeAgents(pool),
       transactionsCard(transactions, new Map(pool.concat([...rostersBySlot.values()].flat()).map((p) => [p.id, p])), league, mySlot, teams, onPlayer),
-      el('div', { class: 'card' },
-        el('h2', {}, 'Source'),
+      sectionOf('Source', {},
         el('p', { class: 'hint' }, source === 'league'
           ? 'Rosters come from your Draft league, refreshed automatically — so they stay correct through waivers and trades, not just draft night.'
           : 'Rosters are derived from the pick log entered on this device. Every pick is kept, in order.'),

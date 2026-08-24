@@ -2,7 +2,15 @@ import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
 import { projectAll, POS, actionableEvent } from '../model.js';
 import { suggestTransfers, bestXI, scoreSquad } from '../optimiser.js';
 import { bestMove, recommendedHorizon, TRANSFER_CONFIG } from '../transfer-advice.js';
-import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown , setKids, addKids} from '../ui.js';
+import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown, setKids, addKids, section, metric } from '../ui.js';
+
+/** section(), in the shape the builders below already use: one call, children
+ *  as trailing arguments. */
+const sectionOf = (name, opts, ...kids) => {
+  const sec = section(name, opts);
+  setKids(sec.body, ...kids.filter(Boolean));
+  return sec.wrap;
+};
 
 const app = $('#app');
 const d = await loadAll();
@@ -30,9 +38,10 @@ recompute();
 
 const { ids: squadIds, source } = resolveSquadIds(d.entry, state);
 
-const controls = el('div', { class: 'card' });
+const controlsSec = section('Filters', { hint: 'Bank, free transfers and the window the adviser plans over' });
+const controls = controlsSec.body;
 const output = el('div', {});
-setKids(app, controls, output);
+setKids(app, controlsSec.wrap, output);
 
 function renderControls() {
   setKids(controls, 
@@ -52,20 +61,22 @@ function renderControls() {
             el('option', { value: v, selected: +v === riskAversion }, l)))),
       el('button', { class: 'primary', onClick: run }, 'Find transfers'),
     ),
-    el('p', { class: 'hint' },
-      source === 'fpl' ? 'Using the squad pulled from your FPL team. '
-        : source === 'manual' ? 'Using the squad you saved in the Squad page. '
-        : 'No squad found. ',
-      'You can bank up to 5 free transfers in 2026/27; extras cost 4 points each.'),
   );
+  /* Where the squad came from, and the banking rule, live on the section label
+     rather than as a paragraph under the controls. Both are worth knowing once,
+     not on every visit. */
+  controlsSec.head.querySelector('.seclabel').title =
+    (source === 'fpl' ? 'Squad pulled from your FPL team. '
+      : source === 'manual' ? 'Squad you saved in the Squad page. '
+      : 'No squad found. ')
+    + 'Up to 5 free transfers bank in 2026/27; extras cost 4 points each.';
 }
 renderControls();
 
 function run() {
   if (squadIds.length !== 15) {
     setKids(output, 
-      el('div', { class: 'card' },
-        el('h2', {}, 'No squad to work from'),
+      sectionOf('No squad to work from', {},
         el('p', {}, 'Set the FPL_ENTRY_ID repository variable so the workflow pulls your real team, or build and save a squad on the Squad page.'),
         el('p', {}, el('a', { href: 'squad.html' }, 'Go to the Squad optimiser →')),
       ),
@@ -132,19 +143,23 @@ function run() {
     const advice = bestMove(res.singles, gainAt, { hit: freeTransfers >= 1 ? 0 : 4 });
     const isMove = advice && advice.verdict !== 'HOLD' && advice.verdict !== 'WATCH';
 
-    setKids(output,
+    /* The verdict is the page's headline, so it keeps its own emphasis — but it
+       sits inside a named section like everything else, with the planning window
+       on the label rather than in a paragraph above it. */
+    const verdictSec = section('This week', {
+      hint: `Planning over ${rec.horizon} gameweeks. ${rec.why}`,
+    });
+    setKids(verdictSec.body,
       el('div', { class: `advice ${isMove ? (advice.verdict === 'STRONG TRANSFER' ? 'strong' : 'good') : 'hold'}` },
-        el('h3', {}, 'This week'),
-        el('p', { class: 'hint' }, `Planning over ${rec.horizon} gameweeks. ${rec.why}`),
         el('p', { class: 'advice-verdict' }, advice ? advice.verdict : 'HOLD'),
         isMove
           ? el('div', {},
             el('p', { class: 'advice-move' },
               el('strong', {}, advice.move.out.web_name), ' → ', el('strong', {}, advice.move.in.web_name),
               el('span', { class: 'dim' }, `  ${advice.move.hit ? `−${advice.move.hit} hit` : 'free transfer'}`)),
-            el('div', { class: 'tiles' }, advice.cross.gains.map((g) => el('div', { class: 'tile' },
-              el('span', { class: 'k' }, `Next ${g.horizon}`),
-              el('span', { class: 'v' }, `${g.gain >= 0 ? '+' : ''}${g.gain.toFixed(1)}`)))),
+            el('div', { class: 'metrics' }, advice.cross.gains.map((g) =>
+              metric(`${g.gain >= 0 ? '+' : ''}${g.gain.toFixed(1)}`, `${g.horizon} GW`,
+                { tone: g.horizon === rec.horizon ? 'accent' : '' }))),
             el('p', { class: 'hint' }, `Confidence ${advice.confidence}. ${advice.reasons.join('; ')}.`))
           : el('div', {},
             el('p', {}, advice
@@ -153,31 +168,24 @@ function run() {
               : 'No legal move improves this squad.'),
             el('p', { class: 'hint' }, 'A free transfer can be banked, so a move has to beat the player you own, '
               + `the model's error and the value of keeping the transfer. Nothing clears that bar this week.`)),
-      ),
-      el('div', { class: 'tiles' },
-        el('div', { class: 'tile' },
-          el('span', { class: 'k' }, `Squad projection`),
-          el('span', { class: 'v' }, fmt.pts(scoreSquad(squad, { horizon, riskAversion }))),
-          el('span', { class: 's' }, `over ${horizon} gameweeks`),
-        ),
-        el('div', { class: 'tile' },
-          el('span', { class: 'k' }, 'Current captain pick'),
-          el('span', { class: 'v', style: 'font-size:1.1rem' }, captain?.web_name || '—'),
-          el('span', { class: 's' }, captain ? `${fmt.pts(captain.projPerGW)} per GW` : ''),
-        ),
-        el('div', { class: 'tile' },
-          el('span', { class: 'k' }, 'Flagged in squad'),
-          el('span', { class: 'v' }, squad.filter((p) => p.status !== 'a').length),
-          el('span', { class: 's' }, squad.filter((p) => p.status !== 'a').map((p) => p.web_name).join(', ') || 'all fit'),
-        ),
+      ));
+
+    setKids(output,
+      verdictSec.wrap,
+      el('div', { class: 'metrics' },
+        metric(fmt.pts(scoreSquad(squad, { horizon, riskAversion })), `${horizon} GW`,
+          { tone: 'accent', hint: 'Squad projection over the chosen window' }),
+        metric(captain?.web_name || '—', 'Captain',
+          { hint: captain ? `${fmt.pts(captain.projPerGW)} per GW` : '' }),
+        metric(String(squad.filter((p) => p.status !== 'a').length), 'Flagged',
+          { hint: squad.filter((p) => p.status !== 'a').map((p) => p.web_name).join(', ') || 'all fit' }),
       ),
 
-      el('div', { class: 'card' },
-        el('h2', {}, 'Every legal move'),
-        el('p', { class: 'hint' }, `For reference, not recommendation — the verdict above is the one to act on. `
-          + `Net gain over ${horizon} gameweeks after any hit, for moves you can afford with ${fmt.price(bank)} in the bank `
-          + `and that keep you within 3 per club. Anything under +${TRANSFER_CONFIG.meaningful.toFixed(1)} is inside the `
-          + `model's own error and should not move a squad on its own.`),
+      sectionOf('Every legal move', {
+        flush: true,
+        hint: `Reference, not recommendation. Net gain over ${horizon} GW after any hit, affordable with `
+          + `${fmt.price(bank)} and inside 3 per club. Under +${TRANSFER_CONFIG.meaningful.toFixed(1)} is inside the model's own error.`,
+      },
         res.singles.length
           ? el('div', {}, res.singles.map((s) => {
               const node = swapRow(s);
@@ -189,9 +197,10 @@ function run() {
       ),
 
       res.pairs.length
-        ? el('div', { class: 'card' },
-            el('h2', {}, 'Two-transfer combinations'),
-            el('p', { class: 'hint' }, freeTransfers >= 2 ? 'Both free.' : `Costs a −${Math.max(0, 2 - freeTransfers) * 4} hit.`),
+        ? sectionOf('Two-transfer combinations', {
+            flush: true,
+            hint: freeTransfers >= 2 ? 'Both free.' : `Costs a −${Math.max(0, 2 - freeTransfers) * 4} hit.`,
+          },
             el('div', {}, res.pairs.map((pair) =>
               el('div', { style: 'border-bottom:1px solid var(--border-soft);padding-bottom:0.4rem;margin-bottom:0.4rem' },
                 pair.moves.map((m) => swapRow({ ...m, hit: 0, net: m.gain })),
@@ -204,8 +213,7 @@ function run() {
           )
         : null,
 
-      el('div', { class: 'card' },
-        el('h2', {}, 'Your squad'),
+      sectionOf('Your squad', { flush: true },
         el('div', { class: 'tablewrap' },
           el('table', { class: 'players' },
             el('thead', {}, el('tr', {}, ['Pos', 'Player', 'Price', `Proj ${horizon}GW`, 'Pts/£m', 'Fixtures'].map((h) => el('th', {}, h)))),

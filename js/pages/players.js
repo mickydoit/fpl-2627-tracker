@@ -1,6 +1,14 @@
 import { loadAll, getState, setState } from '../data.js';
 import { projectAll, POS } from '../model.js';
-import { $, el, fmt, dataBar, sortableTable, statusBadge, penBadge, posPill, fdrTicker, modal, breakdown , setKids, addKids} from '../ui.js';
+import { $, el, fmt, dataBar, sortableTable, statusBadge, penBadge, posPill, fdrTicker, modal, breakdown, setKids, addKids, section } from '../ui.js';
+
+/** section(), in the shape the builders below already use: one call, children
+ *  as trailing arguments. */
+const sectionOf = (name, opts, ...kids) => {
+  const sec = section(name, opts);
+  setKids(sec.body, ...kids.filter(Boolean));
+  return sec.wrap;
+};
 
 const app = $('#app');
 const d = await loadAll();
@@ -48,8 +56,8 @@ const posChips = el('div', { class: 'chiprow' },
   ),
 );
 
-setKids(app, 
-  el('div', { class: 'card' },
+setKids(app,
+  sectionOf('Filters', { hint: 'Narrow the board before you sort it' },
     el('div', { class: 'filters' },
       el('label', {}, 'Search', search),
       el('label', {}, 'Club', teamSel),
@@ -62,8 +70,11 @@ setKids(app,
   ),
 );
 
-const tableCard = el('div', { class: 'card' });
-addKids(app, tableCard);
+/* The table is the page, so it gets the page's one named group rather than an
+   anonymous box — "which heading does this belong to" was the complaint. */
+const rankSec = section('Rankings', { flush: true });
+const tableCard = rankSec.body;
+addKids(app, rankSec.wrap);
 
 /* ---------- columns ---------- */
 const columns = [

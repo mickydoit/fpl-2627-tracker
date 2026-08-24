@@ -10,7 +10,7 @@
  * transfers or the Classic optimiser. The two dashboards share a tab strip and
  * nothing else.
  */
-import { el, setKids, fmt, horizonPicker } from '../ui.js';
+import { el, setKids, fmt, horizonPicker, section } from '../ui.js';
 import { readSnapshot } from '../data.js';
 import { projectBoard, projectBoardAt } from '../draft/project.js';
 import { actionableEvent } from '../model.js';
@@ -20,6 +20,14 @@ import { bestWaiver } from '../draft/waiver.js';
 import { squadPitch, playerCard, activityRings, enableSwapping, legalDraftXI } from '../squadview.js';
 
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
+
+/** section(), in the shape the card builders below already return: one call,
+ *  children as trailing arguments. */
+const sectionOf = (name, opts, ...kids) => {
+  const sec = section(name, opts);
+  setKids(sec.body, ...kids.filter(Boolean));
+  return sec.wrap;
+};
 
 /** Minimum rest-of-season edge before a waiver swap is worth raising at all. */
 const WAIVER_MIN_GAIN = DRAFT_CONFIG.minimumImprovement;
@@ -289,11 +297,13 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
     });
   };
 
-  const squadCard = el('div', { class: 'card' });
-  paintSquad(squadCard);
+  const squadSec = section('Squad', { flush: true });
+  const squadCard = squadSec.wrap;
+  paintSquad(squadSec.body);
 
   /* ---- headline: rings + gameweek ---- */
-  const headCard = el('div', { class: 'card' });
+  const headSec = section('My Draft team', { hint: 'Rated against every rival in your league' });
+  const headCard = headSec.wrap;
 
   /* The rings and the squad total are the only things the rating window moves.
      Live gameweek points are what was actually scored, and the flagged count is
@@ -303,16 +313,15 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
     me = rated.find((r) => r.slot === mySlot);
     const windowLabel = ratingH >= SEASON ? 'Rest of season'
       : ratingH === 1 ? 'Next gameweek' : `Next ${ratingH} gameweeks`;
-    setKids(headCard,
-      el('div', { class: 'row between' }, el('h2', {}, 'My Draft team'),
-        horizonPicker(ratingH, (n) => {
-          ratingH = n;
-          try { localStorage.setItem(RATING_HZ_KEY, String(n)); } catch { /* ignore */ }
-          paintHead();
-        }, { options: RATING_HORIZONS })),
-      el('p', { class: 'hint' },
-        `Rated against your ${rated.length - 1} rivals over ${windowLabel.toLowerCase()}`
-        + ' — every squad in the league is re-rated when you change the window.'),
+    setKids(headSec.ctl,
+      horizonPicker(ratingH, (n) => {
+        ratingH = n;
+        try { localStorage.setItem(RATING_HZ_KEY, String(n)); } catch { /* ignore */ }
+        paintHead();
+      }, { options: RATING_HORIZONS }));
+    headSec.head.querySelector('.seclabel').title =
+      `Rated against your ${rated.length - 1} rivals over ${windowLabel.toLowerCase()}`;
+    setKids(headSec.body,
       el('div', { class: 'dd-head' },
         me ? activityRings(
           [
@@ -367,8 +376,7 @@ function riskCard(mine, openPlayer) {
   const flagged = mine
     .filter((p) => (p.status && p.status !== 'a') || (p.availability ?? 1) < 1)
     .sort((a, b) => b.proj * (1 - (b.availability ?? 1)) - a.proj * (1 - (a.availability ?? 1)));
-  return el('div', { class: 'card' },
-    el('h2', {}, 'Risks'),
+  return sectionOf('Risks', { flush: true },
     flagged.length
       ? el('ul', { class: 'hub-list' }, flagged.map((p) => el('li', { class: 'hub-player', onClick: () => openPlayer(p) },
         el('span', { class: 'hp-pos' }, POS[p.element_type]),
@@ -399,12 +407,14 @@ function waiverCard(mine, pool, teams, openPlayer, rowsAt) {
      roster over four horizons and is allowed to say no. */
   const advice = rowsAt ? bestWaiver(mine, pool, rowsAt) : null;
   const isMove = advice && (advice.verdict === 'STRONG ADD' || advice.verdict === 'GOOD ADD');
-  return el('div', { class: 'card' },
-    el('h2', {}, 'Waiver watch'),
-    el('p', { class: 'hint' },
-      'Every legal add-drop, scored on what it does to the whole roster over 1, 3, 5 and 8 '
-      + 'gameweeks. A Draft drop is permanent — unique ownership means there is no buying him '
-      + 'back — so a move has to beat the player you already own by a real margin, not a rounding one.'),
+  /* The explanation moved to the label's tooltip: a Draft drop is permanent —
+     unique ownership means there is no buying him back — so a move has to beat
+     the player you own by a real margin. True, and not worth three lines of the
+     page every time you look at it. */
+  return sectionOf('Waiver watch', {
+    flush: true,
+    hint: 'Every legal add-drop over 1, 3, 5 and 8 gameweeks. A Draft drop is permanent, so a move must clear a real margin.',
+  },
     advice
       ? el('div', { class: `advice ${isMove ? 'good' : 'hold'}` },
         el('p', { class: 'advice-verdict' }, advice.verdict),

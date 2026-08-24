@@ -6,7 +6,7 @@
  * in localStorage, and every number on screen is recomputed in-browser the
  * instant a pick is entered.
  */
-import { $, el, fmt, setKids } from '../ui.js';
+import { $, el, fmt, setKids, section } from '../ui.js';
 import { readSnapshot } from '../data.js';
 import { projectBoard } from '../draft/project.js';
 import {
@@ -19,6 +19,15 @@ import { evaluate } from '../draft/value.js';
 import { LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX, QUOTA } from '../draft/config.js';
 import { pull, debouncedPush, syncConfigured, deviceName } from '../draft/sync.js';
 import { playerCard } from '../squadview.js';
+
+/** section(), in the shape the builders below already use: one call, children
+ *  as trailing arguments. */
+const sectionOf = (name, opts, ...kids) => {
+  const sec = section(name, opts);
+  setKids(sec.body, ...kids.filter(Boolean));
+  return sec.wrap;
+};
+
 
 const app = $('#app');
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
@@ -274,8 +283,7 @@ function renderSeason() {
      which is exactly the confusion this product split exists to remove. Draft
      Night keeps the pick log; the season view is one link away. */
   setKids(app,
-    el('div', { class: 'card' },
-      el('h2', {}, 'This draft is finished'),
+    sectionOf('This draft is finished', {},
       el('p', {}, 'Power rankings, every manager\u2019s roster and the free-agent pool have moved to '
         + 'their own page, alongside the rest of the season tools.'),
       el('p', {},
@@ -375,8 +383,7 @@ function render() {
     ),
 
     /* B — search and best available */
-    el('div', { class: 'card' },
-      el('h2', {}, 'Enter a pick'),
+    sectionOf('Enter a pick', {},
       searchBox,
       el('div', { class: 'posfilter' }, ...[0, 1, 2, 3, 4].map((t) => el('button', {
         class: posFilter === t ? 'pill active' : 'pill',
@@ -387,8 +394,7 @@ function render() {
     ),
 
     /* D — scarcity */
-    el('div', { class: 'card' },
-      el('h2', {}, 'Positional scarcity'),
+    sectionOf('Positional scarcity', {},
       el('div', { class: 'scarcity' }, ...[1, 2, 3, 4].map((t) => el('div', { class: `srow ${scarcity[t].label.toLowerCase()}` },
         el('span', { class: 'k' }, POS[t]),
         el('span', { class: 'v' }, scarcity[t].label),
@@ -397,8 +403,7 @@ function render() {
     ),
 
     /* C — my squad */
-    el('div', { class: 'card' },
-      el('h2', {}, 'My squad'),
+    sectionOf('My squad', {},
       d.myRoster.length
         ? el('ul', { class: 'mover-list' }, d.myRoster.map((id) => {
             const r = byId.get(id);
@@ -422,8 +427,7 @@ function render() {
     ),
 
     /* F — the draft log */
-    el('div', { class: 'card' },
-      el('h2', {}, 'Draft log'),
+    sectionOf('Draft log', {},
       el('div', { class: 'logactions' },
         el('button', { class: 'ghost', onClick: () => { persist(undoLastPick(state)); render(); } }, 'Undo last pick'),
         el('button', {

@@ -25,7 +25,7 @@ import { rateSquad, RATING_HORIZONS } from '../rating.js';
 import { bestMove, recommendedHorizon } from '../transfer-advice.js';
 import { squadPitch, playerCard, enableSwapping } from '../squadview.js';
 import { horizonPicker, SEASON_HORIZON } from '../ui.js';
-import { $, el, fmt, dataBar, countdown, setKids, addKids } from '../ui.js';
+import { $, el, fmt, dataBar, countdown, setKids, addKids, section, metric, compact } from '../ui.js';
 
 const app = $('#app');
 setKids(app); // clear the server-rendered loading state
@@ -62,38 +62,6 @@ const liveById = new Map((d.live?.elements || []).map((e) => [e.id, e]));
 /* ------------------------------------------------------------------ *
  * small shared pieces
  * ------------------------------------------------------------------ */
-/**
- * A section: a named group with its own control, and a body that visibly
- * belongs to it.
- *
- * The previous pass floated a label at the left and its picker at the far right
- * of the same line, with the content flowing loose beneath. Nothing said which
- * picker drove which numbers, or where one section ended and the next began.
- * Here the header and the body share one border, so ownership is structural
- * rather than a matter of proximity.
- *
- * The label is a cyan pill on ink — the treatment Figma uses for exactly this
- * job (`Golden Boot` at 83:324, `Transfer` at 236:99), rather than the
- * accent-coloured caps this had before.
- */
-const section = (name, { control = null, hint = '', flush = false } = {}) => {
-  const body = el('div', { class: `secbody ${flush ? 'flush' : ''}` });
-  const wrap = el('section', { class: 'sec' },
-    el('div', { class: 'sechead' },
-      el('span', { class: 'seclabel', title: hint }, name),
-      control ? el('div', { class: 'secctl' }, control) : null),
-    body);
-  return { wrap, body };
-};
-
-/** One cell of a metrics strip: value over caption. */
-const compact = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(0)}k` : String(n));
-
-const metric = (value, caption, { tone = '', hint = '' } = {}) =>
-  el('div', { class: `metric ${tone}`, title: hint },
-    el('span', { class: 'mv' }, value),
-    el('span', { class: 'mc' }, caption));
-
 const openPlayer = (p) => playerCard(p, {
   teams,
   fixturesFor: (q) => (d.fixtures || [])

@@ -334,3 +334,57 @@ export function horizonPicker(value, onChange, { options = [1, 3, 5, 8, 10] } = 
   }, options.map((n) => el('option', { value: String(n), selected: n === value }, label(n))));
   return sel;
 }
+
+
+/* ------------------------------------------------------------------ *
+ * page composition
+ * ------------------------------------------------------------------ */
+
+/**
+ * A section: a named group with its own control, and a body that visibly
+ * belongs to it.
+ *
+ * The unit of hierarchy across the tracker. A header bar and its body share one
+ * border, so "which control drives which numbers" and "where does this group
+ * end" are answered by structure rather than by proximity — the previous build
+ * floated a label left and a picker right on a bare line and neither question
+ * had an answer.
+ *
+ * The name is a cyan pill on ink, which is Figma's own treatment for a section
+ * label (`Golden Boot` 83:324, `Transfer` 236:99).
+ *
+ * @param {string} name          shown in the pill
+ * @param {Node|Node[]} control  the control this section owns, if any
+ * @param {string} hint          tooltip; explanation belongs here, not on the page
+ * @param {boolean} flush        body has no padding — for pitches, tables, lists
+ * @returns {{wrap: Node, body: Node, head: Node}}
+ */
+export function section(name, { control = null, hint = '', flush = false } = {}) {
+  const body = el('div', { class: `secbody ${flush ? 'flush' : ''}` });
+  const ctl = el('div', { class: 'secctl' }, control);
+  const head = el('div', { class: 'sechead' },
+    el('span', { class: 'seclabel', title: hint }, name),
+    ctl);
+  return { wrap: el('section', { class: 'sec' }, head, body), body, head, ctl };
+}
+
+/**
+ * One cell of a metrics strip: value over caption.
+ *
+ * Figma runs these at 72x39 on a 440 canvas — small enough to read as context
+ * rather than compete with whatever the page is actually about. `accent` is the
+ * gold-to-sage gradient it reserves for the one that matters most (83:357);
+ * everything else is flat cyan (83:227).
+ */
+export function metric(value, caption, { tone = '', hint = '' } = {}) {
+  return el('div', { class: `metric ${tone}`, title: hint },
+    el('span', { class: 'mv' }, value),
+    el('span', { class: 'mc' }, caption));
+}
+
+/** 4,296,658 -> 4.3M. Seven digits do not fit a pill; this is what gets read. */
+export function compact(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '—';
+  return v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e4 ? `${(v / 1e3).toFixed(0)}k` : v.toLocaleString('en-GB');
+}

@@ -97,7 +97,10 @@
 
 body[data-accent='lime']   { --accent: var(--lime);   --accent-2: var(--cyan); }
 body[data-accent='cyan']   { --accent: var(--cyan);   --accent-2: var(--lime); }
-body[data-accent='yellow'] { --accent: var(--yellow); --accent-2: var(--purple-light); }
+/* Purple is the ladder gradient in the Figma file, not a UI accent — pairing it
+   with yellow put lilac form labels on a page whose palette is otherwise lime,
+   cyan, yellow and sage. */
+body[data-accent='yellow'] { --accent: var(--yellow); --accent-2: var(--cyan); }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }

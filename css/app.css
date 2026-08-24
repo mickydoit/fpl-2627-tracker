@@ -1188,3 +1188,19 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
   .sidecol > :first-child .row.between.tight { margin-top: 0; }
   .summary { grid-template-columns: repeat(5, 1fr); }
 }
+
+/* The transfer verdict. It is the page's headline so it keeps emphasis, but at
+   a size that leaves room for the move underneath it — it was running at the
+   display scale of a page title inside a section that already has a name. */
+.advice { border-left: 3px solid var(--accent-2); padding: 0.6rem 0.7rem; }
+.advice-verdict {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1;
+  margin: 0 0 0.3rem;
+  color: var(--accent-2);
+}
+.advice-move { margin: 0 0 0.5rem; font-size: 0.92rem; }
+.advice .metrics { margin: 0 0 0.4rem; }
+.advice .hint { margin: 0; font-size: 0.7rem; }
+.advice p { margin: 0 0 0.4rem; }

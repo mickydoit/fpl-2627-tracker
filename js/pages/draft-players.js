@@ -14,10 +14,19 @@
  * `squadVorp` in js/draft/rating.js exactly — see the note on `bestFree` below
  * for why the draft-night version of this number does not survive the draft.
  */
-import { $, el, fmt, setKids, dataBar, sortableTable, statusBadge, posPill } from '../ui.js';
+import { $, el, fmt, setKids, dataBar, sortableTable, statusBadge, posPill, section } from '../ui.js';
 import { readSnapshot } from '../data.js';
 import { projectBoard } from '../draft/project.js';
 import { playerCard } from '../squadview.js';
+
+/** section(), in the shape the builders below already use: one call, children
+ *  as trailing arguments. Keeps the conversion from card to section a rename
+ *  rather than a restructure of every body. */
+const sectionOf = (name, opts, ...kids) => {
+  const sec = section(name, opts);
+  setKids(sec.body, ...kids.filter(Boolean));
+  return sec.wrap;
+};
 
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 const app = $('#app');
@@ -116,11 +125,9 @@ if (!board?.players?.length) {
   });
 
   setKids(app,
-    el('div', { class: 'card' },
-      el('h2', {}, 'What the wire offers'),
-      el('p', { class: 'hint' },
-        'The best free agent at each position, and how many there are. This is the bar every '
-        + 'player you own is measured against — VORP below is points above this line.'),
+    sectionOf('What the wire offers', {
+      hint: 'The best free agent at each position — the bar every owned player is measured against',
+    },
       el('div', { class: 'tiles' }, [1, 2, 3, 4].map((t) => el('div', { class: 'tile' },
         el('span', { class: 'k' }, POS[t]),
         el('span', { class: 'v' }, bestFree[t] ? bestFree[t].web_name : '—'),
@@ -128,9 +135,8 @@ if (!board?.players?.length) {
           ? `${fmt.pts(bestFree[t].proj)} rest of season · ${freeCount[t] || 0} free agents`
           : 'nobody available')))),
     ),
-    el('div', { class: 'card' },
-      el('div', { class: 'row between' },
-        el('h2', {}, 'Board'),
+    sectionOf('Board', { flush: true },
+      el('div', { class: 'secfilters' },
         el('div', { class: 'filters' },
           el('label', {}, 'Position',
             el('select', { onchange: (e) => { pos = +e.target.value; tbl.refresh(visible()); } },
