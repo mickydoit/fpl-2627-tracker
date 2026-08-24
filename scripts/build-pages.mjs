@@ -9,23 +9,61 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, join, normalize } from 'node:path';
 
+/**
+ * The two products. Classic FPL and FPL Draft are different games — different
+ * mechanics, different state, different questions — and the site now says so
+ * at the top level rather than mixing their pages into one navigation.
+ *
+ * `home` is where the product switcher lands. Deliberately each product's own
+ * dashboard rather than an equivalent page: Classic Transfers and Draft Waivers
+ * are not the same activity, and pretending they are makes the switch
+ * unpredictable.
+ */
+const PRODUCTS = [
+  { id: 'classic', label: 'Classic', home: 'index' },
+  { id: 'draft',   label: 'Draft',   home: 'draft-dashboard' },
+];
+
+/**
+ * Every page, and which product owns it.
+ *
+ * Filenames stay flat at the repo root. `js/data.js` fetches `data/<name>.json`
+ * RELATIVE to the page URL, so moving pages into /classic/ and /draft/ would
+ * make them request /classic/data/… — and fixing that means absolute paths,
+ * which on a project Pages site must be /fpl-2627-tracker/data/ and then break
+ * `npm run serve` at localhost root. Flat files keep direct loads, refreshes,
+ * Pages and every existing Classic bookmark working, with no change to the data
+ * layer. The product split is expressed in the navigation, not the paths.
+ */
 const PAGES = [
-  // Icons are the WC Draft file's own Menu Bar frame (node 229:55), one per page
-  // in the order they sit on the canvas. Each is a single #F4FF7B glyph on a
-  // transparent ground, which is what the bottom nav's grey-out filter expects.
-  { slug: 'index',     title: 'Dashboard',         accent: 'lime',   icon: 'nav-dashboard', nav: 'Dashboard' },
-  { slug: 'squad',     title: 'Squad Optimiser',   accent: 'cyan',   icon: 'nav-squad',     nav: 'Optimiser' },
-  { slug: 'transfers', title: 'Transfers',         accent: 'yellow', icon: 'nav-transfers', nav: 'Transfers' },
-  { slug: 'players',   title: 'Players',           accent: 'lime',   icon: 'nav-players',   nav: 'Players' },
-  { slug: 'market',    title: 'Market',            accent: 'cyan',   icon: 'nav-market',    nav: 'Market' },
-  { slug: 'rules',     title: 'Rules',             accent: 'yellow', icon: 'nav-rules',     nav: 'Rules', hidden: true },
-  // Draft sits last: it is a separate product mode, not another view of the
-  // Classic tracker, and putting it at the end says so.
-  { slug: 'draft',     title: 'Draft Board',       accent: 'cyan',   icon: 'nav-draft',     nav: 'Draft' },
+  // Icons are the WC Draft file's own Menu Bar frame (node 229:55). Each is a
+  // single #F4FF7B glyph on a transparent ground, which is what the bottom
+  // nav's grey-out filter expects.
+  // ---- Classic ----
+  { slug: 'index',           product: 'classic', title: 'Dashboard',   accent: 'lime',   icon: 'nav-dashboard', nav: 'Dashboard' },
+  { slug: 'squad',           product: 'classic', title: 'Squad',       accent: 'cyan',   icon: 'nav-squad',     nav: 'Squad' },
+  { slug: 'transfers',       product: 'classic', title: 'Transfers',   accent: 'yellow', icon: 'nav-transfers', nav: 'Transfers' },
+  { slug: 'players',         product: 'classic', title: 'Players',     accent: 'lime',   icon: 'nav-players',   nav: 'Players' },
+  { slug: 'market',          product: 'classic', title: 'Market',      accent: 'cyan',   icon: 'nav-market',    nav: 'Market' },
+  // Kept out of every navigation on purpose — the scoring reference is reachable
+  // by URL and linked from the pages that need it, not browsed to.
+  { slug: 'rules',           product: 'classic', title: 'Rules',       accent: 'yellow', icon: 'nav-rules',     nav: 'Rules', hidden: true },
+  // ---- Draft ----
+  { slug: 'draft-dashboard', product: 'draft',   title: 'Dashboard',   accent: 'cyan',   icon: 'nav-dashboard', nav: 'Dashboard' },
+  { slug: 'draft-league',    product: 'draft',   title: 'League',      accent: 'lime',   icon: 'nav-market',    nav: 'League' },
+  { slug: 'draft-squad',     product: 'draft',   title: 'Squad',       accent: 'cyan',   icon: 'nav-squad',     nav: 'Squad' },
+  { slug: 'draft-waivers',   product: 'draft',   title: 'Waivers',     accent: 'yellow', icon: 'nav-transfers', nav: 'Waivers' },
+  { slug: 'draft-players',   product: 'draft',   title: 'Players',     accent: 'lime',   icon: 'nav-players',   nav: 'Players' },
+  // Draft Night is a sub-mode of Draft, not a third product: it belongs in this
+  // secondary nav and never beside Classic and Draft.
+  { slug: 'draft',           product: 'draft',   title: 'Draft Night', accent: 'cyan',   icon: 'nav-draft',     nav: 'Draft Night' },
 ];
 
 /** The dashboard's module is named for what it is, not for its URL. */
 const entryFor = (p) => `js/pages/${p.slug === 'index' ? 'dashboard' : p.slug}.js`;
+
+/** Pages of one product, in navigation order, excluding hidden ones. */
+const pagesOf = (product) => PAGES.filter((q) => q.product === product && !q.hidden);
 
 /**
  * Every module a page reaches, transitively.
@@ -157,23 +195,26 @@ ${modules.map((m) => `<link rel="modulepreload" href="${m}?v=${v}" />`).join('\n
 <link rel="stylesheet" href="css/base.css?v=${cssV}" />
 <link rel="stylesheet" href="css/app.css?v=${cssV}" />
 </head>
-<body data-accent="${p.accent}" data-page="${p.slug}">
-<header class="topbar">
-  <a class="brand" href="index.html">
-    <img class="brand-logo" src="img/logo-fpl.svg" alt="FPL Tracker" />
-    <span class="brand-text">FPL<br />26/27</span>
-  </a>
-  <nav>
-${PAGES.filter((q) => !q.hidden).map((q) => `    <a href="${href(q)}"${q.slug === p.slug ? ' class="active"' : ''}>${q.nav}</a>`).join('\n')}
+<body data-accent="${p.accent}" data-page="${p.slug}" data-product="${p.product}">
+<header class="appbar">
+  <nav class="productnav" aria-label="Product">
+${PRODUCTS.map((pr) => `    <a href="${pr.home}.html"${pr.id === p.product ? ' class="active" aria-current="true"' : ''}>${pr.label}</a>`).join('\n')}
   </nav>
+  <a class="brand" href="${PRODUCTS.find((pr) => pr.id === p.product).home}.html">
+    <img class="brand-logo" src="img/logo-fpl.svg" alt="" />
+    <span class="brand-text">FPL<br />Tracker</span>
+  </a>
 </header>
+<nav class="pagenav" aria-label="${p.product === 'draft' ? 'Draft' : 'Classic'} pages">
+${pagesOf(p.product).map((q) => `  <a href="${href(q)}"${q.slug === p.slug ? ' class="active" aria-current="page"' : ''}>${q.nav}</a>`).join('\n')}
+</nav>
 <main class="container">
   <div id="databar"></div>
   <h1>${p.title}</h1>
   <div id="app"><p class="loading">Loading…</p></div>
 </main>
-<nav class="bottomnav">
-${PAGES.filter((q) => !q.hidden).map((q) => `  <a href="${href(q)}"${q.slug === p.slug ? ' class="active"' : ''}><img src="img/${q.icon}.svg" alt="" /><span>${q.nav}</span></a>`).join('\n')}
+<nav class="bottomnav" aria-label="${p.product === 'draft' ? 'Draft' : 'Classic'} pages">
+${pagesOf(p.product).map((q) => `  <a href="${href(q)}"${q.slug === p.slug ? ' class="active" aria-current="page"' : ''}><img src="img/${q.icon}.svg" alt="" /><span>${q.nav}</span></a>`).join('\n')}
 </nav>
 <script type="module" src="${entryFor(p)}?v=${v}"></script>
 </body>

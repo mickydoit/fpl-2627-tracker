@@ -21,45 +21,47 @@
 <link rel="preload" href="fonts/inter-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin />
 <script type="importmap">
-{"imports":{"./js/pages/market.js":"./js/pages/market.js?v=8ba96c5e","./js/data.js":"./js/data.js?v=8ba96c5e","./js/prior.js":"./js/prior.js?v=8ba96c5e","./js/model.js":"./js/model.js?v=8ba96c5e","./js/seasons.js":"./js/seasons.js?v=8ba96c5e","./js/ui.js":"./js/ui.js?v=8ba96c5e"}}
+{"imports":{"./js/pages/market.js":"./js/pages/market.js?v=cb95e04f","./js/data.js":"./js/data.js?v=cb95e04f","./js/prior.js":"./js/prior.js?v=cb95e04f","./js/model.js":"./js/model.js?v=cb95e04f","./js/seasons.js":"./js/seasons.js?v=cb95e04f","./js/ui.js":"./js/ui.js?v=cb95e04f"}}
 </script>
-<link rel="modulepreload" href="js/pages/market.js?v=8ba96c5e" />
-<link rel="modulepreload" href="js/data.js?v=8ba96c5e" />
-<link rel="modulepreload" href="js/prior.js?v=8ba96c5e" />
-<link rel="modulepreload" href="js/model.js?v=8ba96c5e" />
-<link rel="modulepreload" href="js/seasons.js?v=8ba96c5e" />
-<link rel="modulepreload" href="js/ui.js?v=8ba96c5e" />
-<link rel="stylesheet" href="css/base.css?v=e040a4e2" />
-<link rel="stylesheet" href="css/app.css?v=e040a4e2" />
+<link rel="modulepreload" href="js/pages/market.js?v=cb95e04f" />
+<link rel="modulepreload" href="js/data.js?v=cb95e04f" />
+<link rel="modulepreload" href="js/prior.js?v=cb95e04f" />
+<link rel="modulepreload" href="js/model.js?v=cb95e04f" />
+<link rel="modulepreload" href="js/seasons.js?v=cb95e04f" />
+<link rel="modulepreload" href="js/ui.js?v=cb95e04f" />
+<link rel="stylesheet" href="css/base.css?v=96646fce" />
+<link rel="stylesheet" href="css/app.css?v=96646fce" />
 </head>
-<body data-accent="cyan" data-page="market">
-<header class="topbar">
-  <a class="brand" href="index.html">
-    <img class="brand-logo" src="img/logo-fpl.svg" alt="FPL Tracker" />
-    <span class="brand-text">FPL<br />26/27</span>
-  </a>
-  <nav>
-    <a href="index.html">Dashboard</a>
-    <a href="squad.html">Optimiser</a>
-    <a href="transfers.html">Transfers</a>
-    <a href="players.html">Players</a>
-    <a href="market.html" class="active">Market</a>
-    <a href="draft.html">Draft</a>
+<body data-accent="cyan" data-page="market" data-product="classic">
+<header class="appbar">
+  <nav class="productnav" aria-label="Product">
+    <a href="index.html" class="active" aria-current="true">Classic</a>
+    <a href="draft-dashboard.html">Draft</a>
   </nav>
+  <a class="brand" href="index.html">
+    <img class="brand-logo" src="img/logo-fpl.svg" alt="" />
+    <span class="brand-text">FPL<br />Tracker</span>
+  </a>
 </header>
+<nav class="pagenav" aria-label="Classic pages">
+  <a href="index.html">Dashboard</a>
+  <a href="squad.html">Squad</a>
+  <a href="transfers.html">Transfers</a>
+  <a href="players.html">Players</a>
+  <a href="market.html" class="active" aria-current="page">Market</a>
+</nav>
 <main class="container">
   <div id="databar"></div>
   <h1>Market</h1>
   <div id="app"><p class="loading">Loading…</p></div>
 </main>
-<nav class="bottomnav">
+<nav class="bottomnav" aria-label="Classic pages">
   <a href="index.html"><img src="img/nav-dashboard.svg" alt="" /><span>Dashboard</span></a>
-  <a href="squad.html"><img src="img/nav-squad.svg" alt="" /><span>Optimiser</span></a>
+  <a href="squad.html"><img src="img/nav-squad.svg" alt="" /><span>Squad</span></a>
   <a href="transfers.html"><img src="img/nav-transfers.svg" alt="" /><span>Transfers</span></a>
   <a href="players.html"><img src="img/nav-players.svg" alt="" /><span>Players</span></a>
-  <a href="market.html" class="active"><img src="img/nav-market.svg" alt="" /><span>Market</span></a>
-  <a href="draft.html"><img src="img/nav-draft.svg" alt="" /><span>Draft</span></a>
+  <a href="market.html" class="active" aria-current="page"><img src="img/nav-market.svg" alt="" /><span>Market</span></a>
 </nav>
-<script type="module" src="js/pages/market.js?v=8ba96c5e"></script>
+<script type="module" src="js/pages/market.js?v=cb95e04f"></script>
 </body>
 </html>

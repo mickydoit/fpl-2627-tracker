@@ -11,6 +11,7 @@ import {
   actionableEvent, DEFCON_THRESHOLD, DEFCON_PTS,
 } from '../js/model.js';
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
+import { RATING_HORIZONS as DRAFT_RATING_HORIZONS } from '../js/draft/config.js';
 import { snakePicks, replacementRank, buildBoard, assignTiers } from '../js/draft/board.js';
 import { ownershipFrom, availableRows, deriveSlot, myRoster, positionsNeeded } from '../js/draft/live.js';
 import { makeRng, picksBetween, survival } from '../js/draft/simulate.js';
@@ -896,6 +897,105 @@ console.log('\nPooling against the frozen prior');
       near(priorShare(stale), priorShare(bareLive), 1e-9),
       `${(priorShare(stale) * 100).toFixed(0)}% vs bare ${(priorShare(bareLive) * 100).toFixed(0)}%`);
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * navigation shell
+ * ------------------------------------------------------------------ *
+ * Classic and Draft are separate products sharing one shell. These checks are
+ * about that boundary holding: a page belongs to exactly one product, its
+ * navigation offers only that product's pages, and the two never appear in one
+ * list. They read the GENERATED html rather than the generator, because the
+ * generator being right and the files being stale is a real failure mode —
+ * scripts/build-pages.mjs has to be re-run and nothing else enforces that.
+ */
+console.log('\nNavigation shell');
+{
+  const CLASSIC = ['index', 'squad', 'transfers', 'players', 'market'];
+  const DRAFT = ['draft-dashboard', 'draft-league', 'draft-squad', 'draft-waivers', 'draft-players', 'draft'];
+  const html = {};
+  for (const slug of [...CLASSIC, ...DRAFT, 'rules']) {
+    html[slug] = fs.existsSync(`${slug}.html`) ? fs.readFileSync(`${slug}.html`, 'utf8') : null;
+  }
+  ok('every page in both products exists as a file',
+    [...CLASSIC, ...DRAFT].every((s2) => html[s2]),
+    [...CLASSIC, ...DRAFT].filter((s2) => !html[s2]).join(', '));
+
+  const between = (src, open, close) => {
+    const i = src.indexOf(open);
+    if (i < 0) return '';
+    return src.slice(i, src.indexOf(close, i));
+  };
+  const productNav = (src) => between(src, '<nav class="productnav"', '</nav>');
+  const pageNav = (src) => between(src, '<nav class="pagenav"', '</nav>');
+  const hrefs = (frag) => [...frag.matchAll(/href="([^"]+)"/g)].map((m) => m[1].replace('.html', ''));
+  const activeHref = (frag) => (frag.match(/href="([^"]+)"[^>]*class="active"/) || [])[1]?.replace('.html', '');
+
+  for (const [product, own, other] of [['classic', CLASSIC, DRAFT], ['draft', DRAFT, CLASSIC]]) {
+    for (const slug of own) {
+      const src = html[slug];
+      if (!src) continue;
+      ok(`${slug}.html declares itself ${product}`,
+        src.includes(`data-product="${product}"`));
+      /* The primary switcher offers both products and marks this one. */
+      ok(`${slug}.html marks ${product} active in the product switcher`,
+        activeHref(productNav(src)) === (product === 'classic' ? 'index' : 'draft-dashboard'),
+        activeHref(productNav(src)));
+      /* The secondary nav is the crux: it must not mention the other product. */
+      const pages = hrefs(pageNav(src));
+      ok(`${slug}.html lists only ${product} pages`,
+        pages.every((h) => own.includes(h)) && !pages.some((h) => other.includes(h)),
+        pages.join(' '));
+      ok(`${slug}.html marks itself the current page`,
+        activeHref(pageNav(src)) === slug, `${activeHref(pageNav(src))}`);
+    }
+  }
+
+  /* Product switching lands on the other product's dashboard, never on a
+     guessed equivalent — Classic Transfers and Draft Waivers are different
+     activities and pretending otherwise makes the switch unpredictable. */
+  ok('a Classic page switches to the Draft dashboard',
+    hrefs(productNav(html.index)).includes('draft-dashboard'));
+  ok('a Draft page switches to the Classic dashboard',
+    hrefs(productNav(html['draft-dashboard'])).includes('index'));
+
+  /* Draft Night is a sub-mode of Draft, never a third product. */
+  ok('Draft Night appears in the Draft navigation',
+    hrefs(pageNav(html['draft-dashboard'])).includes('draft'));
+  ok('Draft Night never appears in the product switcher',
+    [...CLASSIC, ...DRAFT].every((s2) => !hrefs(productNav(html[s2] || '')).includes('draft')));
+  ok('Draft Night never appears in Classic navigation',
+    CLASSIC.every((s2) => !hrefs(pageNav(html[s2])).includes('draft')));
+
+  /* Rules stays reachable by URL and absent from every navigation. */
+  ok('the Rules page still exists', !!html.rules);
+  ok('Rules appears in no navigation',
+    [...CLASSIC, ...DRAFT].every((s2) => !hrefs(pageNav(html[s2])).includes('rules')
+      && !hrefs(productNav(html[s2])).includes('rules')));
+
+  /* Every link a reader can click resolves to a file that exists. */
+  const dangling = [];
+  for (const slug of [...CLASSIC, ...DRAFT]) {
+    for (const h of [...hrefs(productNav(html[slug])), ...hrefs(pageNav(html[slug]))]) {
+      if (!fs.existsSync(`${h}.html`)) dangling.push(`${slug} -> ${h}`);
+    }
+  }
+  ok('no navigation link is dangling', dangling.length === 0, dangling.join(', '));
+
+  /* The mixed-mode tab strip and its state key are gone. */
+  ok('the old Classic/Draft tab strip is gone',
+    !fs.readFileSync('js/pages/dashboard.js', 'utf8').includes('modetabs'));
+  ok('the redundant dashboardMode key is no longer read or written',
+    !/localStorage\.[gs]etItem\(\s*'dashboardMode'/.test(fs.readFileSync('js/pages/dashboard.js', 'utf8')));
+
+  /* The two rating pickers stay different on purpose — the models behave
+     differently at one gameweek, so matching the lists would be a regression
+     dressed as consistency. */
+  ok('Classic and Draft offer different rating windows',
+    JSON.stringify(RATING_HORIZONS) !== JSON.stringify(DRAFT_RATING_HORIZONS),
+    `${RATING_HORIZONS} vs ${DRAFT_RATING_HORIZONS}`);
+  ok('only Draft offers a one-gameweek rating window',
+    DRAFT_RATING_HORIZONS.includes(1) && !RATING_HORIZONS.includes(1));
 }
 
 /* ------------------------------------------------------------------ *

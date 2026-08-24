@@ -676,14 +676,6 @@ tr.mine { background: rgba(159, 237, 0, 0.08); }
 .pcf-d.d4, .pcf-d.d5 { background: rgba(129, 14, 147, .35); color: #d9b8ff; }
 
 /* dashboard mode tabs */
-.modetabs { display: flex; gap: .4rem; margin: 0 0 1.25rem; }
-.modetabs button {
-  flex: 1; padding: .6rem .8rem; border-radius: 12px; cursor: pointer;
-  background: var(--card-2, #2b2c2e); border: 1px solid var(--hair, #4a4a4c);
-  color: var(--muted); font-weight: 800; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase;
-}
-.modetabs button.on { background: var(--accent); color: #1a1a1a; border-color: var(--accent); }
-.modetabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* side-by-side squad comparison */
 .compare-grid { display: grid; gap: 1.25rem; margin: 0 0 1.25rem; }
@@ -797,7 +789,6 @@ table.players th.col-r, table.players td.col-r { text-align: right; font-variant
 .hub-summary { padding-left: var(--s-md); }
 
 /* controls and keys */
-.modetabs { gap: var(--s-xs); margin-bottom: var(--s-lg); }
 .fdrkey { gap: var(--s-sm); margin: var(--s-md) 0 var(--s-sm); }
 .chiprow { gap: var(--s-xs); }
 

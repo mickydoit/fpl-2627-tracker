@@ -18,7 +18,6 @@ import { scarcityByPosition } from '../draft/scarcity.js';
 import { evaluate } from '../draft/value.js';
 import { LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX, QUOTA } from '../draft/config.js';
 import { pull, debouncedPush, syncConfigured, deviceName } from '../draft/sync.js';
-import { renderHub } from './draft-hub.js';
 import { playerCard } from '../squadview.js';
 
 const app = $('#app');
@@ -196,7 +195,7 @@ function actionButtons(r) {
  * never discarded — `showDraft` flips back to it, and every roster shown in the
  * hub is derived from that log rather than stored separately.
  */
-let showDraft = false;
+let showDraft = true;
 
 /**
  * Rosters from the league mirror, when it has them.
@@ -270,17 +269,22 @@ function renderSeason() {
     }))
     .sort((a, b) => a.event - b.event);
 
-  setKids(app, renderHub({
-    rostersBySlot,
-    pool,
-    league,
-    transactions,
-    teams: teamMap,
-    mySlot: mySlotNow(),
-    onPlayer: (p) => playerCard(p, { teams: teamMap, fixturesFor, horizon: 5, fromEvent: 1 }),
-    source: synced ? 'league' : 'manual',
-    onShowDraft: state?.log?.length ? () => { showDraft = true; render(); } : null,
-  }));
+  /* The League Hub now has its own page. Rendering it here as well would put
+     the same rankings, rosters and free agents behind two navigation entries,
+     which is exactly the confusion this product split exists to remove. Draft
+     Night keeps the pick log; the season view is one link away. */
+  setKids(app,
+    el('div', { class: 'card' },
+      el('h2', {}, 'This draft is finished'),
+      el('p', {}, 'Power rankings, every manager\u2019s roster and the free-agent pool have moved to '
+        + 'their own page, alongside the rest of the season tools.'),
+      el('p', {},
+        el('a', { class: 'btn primary', href: 'draft-league.html' }, 'Go to League \u2192')),
+      el('p', { class: 'hint' },
+        'Draft Night stays here so the pick log remains readable after the event. '
+        + 'It is not where in-season moves are made \u2014 waivers live on their own page.'),
+    ),
+  );
 }
 
 function render() {

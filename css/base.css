@@ -154,55 +154,105 @@ p:last-child { margin-bottom: 0; }
 .dim { color: var(--muted); }
 .error { color: var(--red); }
 
-/* ---------- top bar ---------- */
-.topbar {
-  background: var(--accent);
+/* ---------- app shell: product bar + page bar ----------
+
+   Two levels of navigation, because there are two products. Geometry and
+   colour come from the Figma "WC Draft" file, frame 236:2:
+
+     bar fill          #f4ff7b            = --yellow
+     product pill      radius 8px, padding 1.6px 4.8px
+       active          bg #202123, text #f4ff7b
+       inactive        border 0.8px solid black, text #202123
+     page bar          linear-gradient(123.28deg, #f4ff7b 4.2%, #b1e8aa 107.73%)
+                                          = --yellow -> --sage
+     page item         text #202123
+       active          bg #202123, radius 4.2px, text #f4ff7b
+
+   The frame is 440px wide and its type sizes (19.2px / 13.44px) are for that
+   width. They are expressed in rem here and stepped up slightly on wide
+   viewports, because the design has no desktop frame — see the note in
+   scripts/build-pages.mjs. Everything else is the file's own values.
+
+   The bar deliberately does NOT take --accent: the accent changes per page,
+   and a product switcher that changes colour as you move between pages of the
+   same product would say the opposite of what it means. */
+
+.appbar {
+  background: var(--yellow);
   color: var(--ink);
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.85rem max(1rem, env(safe-area-inset-left)) 0.85rem max(1rem, env(safe-area-inset-right));
+  gap: var(--s-md);
+  padding: 0.7rem max(1rem, env(safe-area-inset-left)) 0.7rem max(1rem, env(safe-area-inset-right));
   position: sticky;
   top: 0;
   z-index: 30;
-  min-height: 72px;
+  min-height: 60px;
 }
 
-.brand { display: flex; align-items: center; gap: 0.6rem; color: var(--ink); flex: none; }
+.productnav { display: flex; align-items: center; gap: var(--s-sm); }
+.productnav a {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  padding: 0.34rem 0.7rem;
+  border: 0.8px solid #000;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.productnav a:hover { text-decoration: none; background: rgba(32, 33, 35, 0.09); }
+.productnav a.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--yellow);
+}
+.productnav a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* The logo sits to the right of the switcher, as in the Figma, and links to
+   the current product's home rather than always to Classic — clicking the mark
+   inside Draft should not throw you into the other product. */
+.appbar .brand { margin-left: auto; }
+.brand { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); flex: none; }
 .brand:hover { text-decoration: none; }
-.brand-logo { display: block; height: 38px; width: auto; }
+.brand-logo { display: block; height: 32px; width: auto; }
 .brand-text {
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   line-height: 1.05;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   max-width: 5.2rem;
 }
 
-.topbar nav {
+.pagenav {
+  background: linear-gradient(123.28deg, var(--yellow) 4.2%, var(--sage) 107.73%);
   display: flex;
   align-items: center;
-  gap: 0.15rem;
-  margin-left: auto;
+  justify-content: center;
+  gap: clamp(0.75rem, 3.4vw, 2.6rem);
+  padding: 0.42rem max(0.75rem, env(safe-area-inset-left));
+  position: sticky;
+  top: 60px;
+  z-index: 29;
   overflow-x: auto;
   scrollbar-width: none;
 }
-.topbar nav::-webkit-scrollbar { display: none; }
-
-.topbar nav a {
+.pagenav::-webkit-scrollbar { display: none; }
+.pagenav a {
   font-family: var(--font-display);
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
   color: var(--ink);
-  padding: 0.4rem 0.6rem;
-  border-radius: 8px;
+  padding: 0.2rem 0.42rem;
+  border-radius: 4.2px;
   white-space: nowrap;
-  opacity: 0.72;
+  opacity: 0.82;
 }
-.topbar nav a:hover { opacity: 1; text-decoration: none; }
-.topbar nav a.active { opacity: 1; background: var(--ink); color: var(--accent); }
+.pagenav a:hover { opacity: 1; text-decoration: none; }
+.pagenav a.active { opacity: 1; background: var(--ink); color: var(--yellow); }
+.pagenav a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 /* ---------- layout ---------- */
 .container {
@@ -336,11 +386,17 @@ hr { border: none; border-top: 1px solid var(--border-soft); margin: 1rem 0; }
 @media (min-width: 760px) {
   .bottomnav { display: none; }
   .container { padding-bottom: 3rem; }
-  .topbar { min-height: 88px; padding-left: 1.5rem; padding-right: 1.5rem; }
-  .brand-logo { height: 44px; }
-  .topbar nav a { font-size: 0.88rem; padding: 0.45rem 0.75rem; }
+  .appbar { min-height: 72px; padding-left: 1.5rem; padding-right: 1.5rem; }
+  .brand-logo { height: 40px; }
+  .productnav a { font-size: 1.2rem; padding: 0.4rem 0.9rem; }
+  .pagenav { top: 72px; padding: 0.5rem 1.5rem; }
+  .pagenav a { font-size: 0.9rem; padding: 0.26rem 0.6rem; }
 }
 
+/* On a phone the page bar stays — it is the only way to reach the other pages
+   of this product without the bottom nav, and it is what the Figma frame
+   shows. It scrolls horizontally rather than wrapping or shrinking to
+   unreadable, so the product switcher above it never moves. */
 @media (max-width: 759px) {
-  .topbar nav { display: none; }
+  .pagenav { justify-content: flex-start; }
 }

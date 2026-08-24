@@ -24,7 +24,18 @@ const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 /** Minimum rest-of-season edge before a waiver swap is worth raising at all. */
 const WAIVER_MIN_GAIN = DRAFT_CONFIG.minimumImprovement;
 
-export async function renderDraftDashboard(host) {
+/**
+ * Which sections of the Draft view to render.
+ *
+ * The Draft product now has its own pages rather than one scrolling dashboard,
+ * and they are all built from the same data prep — the rosters, the pool and
+ * the projections cost the same to compute whichever card ends up on screen.
+ * So the composition is a parameter and NOTHING below it changed: every card
+ * is the one that was already working, rendered into a different page.
+ */
+export const DRAFT_SECTIONS = ['head', 'squad', 'risk', 'waiver'];
+
+export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } = {}) {
   const [board, fixtures, league, live] = await Promise.all([
     readSnapshot('draft/players'),
     readSnapshot('fixtures', []),
@@ -332,14 +343,17 @@ export async function renderDraftDashboard(host) {
   };
   paintHead();
 
-  setKids(host,
-    headCard,
+  const want = new Set(sections);
+  setKids(host, ...[
+    want.has('head') ? headCard : null,
+    want.has('squad') ? squadCard : null,
+    want.has('risk') ? riskCard(mine, openPlayer) : null,
+    want.has('waiver') ? waiverCard(mine, pool, teams, openPlayer, rowsAt) : null,
+  ].filter(Boolean));
 
-    squadCard,
-
-    riskCard(mine, openPlayer),
-    waiverCard(mine, pool, teams, openPlayer, rowsAt),
-  );
+  /* The League page needs the same rosters and pool this function just built.
+     Returned rather than recomputed so the two pages cannot drift apart. */
+  return { rostersBySlot, pool, league, mySlot, teams, byId, projected, openPlayer };
 }
 
 const ord = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th');

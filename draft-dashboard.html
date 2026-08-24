@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#202123" />
-<title>Draft Night · LBH FPL 26/27</title>
+<title>Dashboard · LBH FPL 26/27</title>
 <link rel="icon" type="image/svg+xml" href="img/logo-fpl.svg" />
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
 <link rel="manifest" href="manifest.json" />
@@ -21,29 +21,26 @@
 <link rel="preload" href="fonts/inter-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin />
 <script type="importmap">
-{"imports":{"./js/pages/draft.js":"./js/pages/draft.js?v=04c90383","./js/ui.js":"./js/ui.js?v=04c90383","./js/model.js":"./js/model.js?v=04c90383","./js/data.js":"./js/data.js?v=04c90383","./js/prior.js":"./js/prior.js?v=04c90383","./js/seasons.js":"./js/seasons.js?v=04c90383","./js/draft/project.js":"./js/draft/project.js?v=04c90383","./js/draft/adapt.js":"./js/draft/adapt.js?v=04c90383","./js/draft/scoring.js":"./js/draft/scoring.js?v=04c90383","./js/draft/config.js":"./js/draft/config.js?v=04c90383","./js/draft/state.js":"./js/draft/state.js?v=04c90383","./js/draft/replacement.js":"./js/draft/replacement.js?v=04c90383","./js/draft/scarcity.js":"./js/draft/scarcity.js?v=04c90383","./js/draft/value.js":"./js/draft/value.js?v=04c90383","./js/draft/simulate.js":"./js/draft/simulate.js?v=04c90383","./js/draft/sync.js":"./js/draft/sync.js?v=04c90383","./js/squadview.js":"./js/squadview.js?v=04c90383"}}
+{"imports":{"./js/pages/draft-dashboard.js":"./js/pages/draft-dashboard.js?v=7d679f8f","./js/ui.js":"./js/ui.js?v=7d679f8f","./js/model.js":"./js/model.js?v=7d679f8f","./js/data.js":"./js/data.js?v=7d679f8f","./js/prior.js":"./js/prior.js?v=7d679f8f","./js/seasons.js":"./js/seasons.js?v=7d679f8f","./js/pages/dashboard-draft.js":"./js/pages/dashboard-draft.js?v=7d679f8f","./js/draft/project.js":"./js/draft/project.js?v=7d679f8f","./js/draft/adapt.js":"./js/draft/adapt.js?v=7d679f8f","./js/draft/scoring.js":"./js/draft/scoring.js?v=7d679f8f","./js/draft/config.js":"./js/draft/config.js?v=7d679f8f","./js/draft/rating.js":"./js/draft/rating.js?v=7d679f8f","./js/draft/waiver.js":"./js/draft/waiver.js?v=7d679f8f","./js/squadview.js":"./js/squadview.js?v=7d679f8f"}}
 </script>
-<link rel="modulepreload" href="js/pages/draft.js?v=04c90383" />
-<link rel="modulepreload" href="js/ui.js?v=04c90383" />
-<link rel="modulepreload" href="js/model.js?v=04c90383" />
-<link rel="modulepreload" href="js/data.js?v=04c90383" />
-<link rel="modulepreload" href="js/prior.js?v=04c90383" />
-<link rel="modulepreload" href="js/seasons.js?v=04c90383" />
-<link rel="modulepreload" href="js/draft/project.js?v=04c90383" />
-<link rel="modulepreload" href="js/draft/adapt.js?v=04c90383" />
-<link rel="modulepreload" href="js/draft/scoring.js?v=04c90383" />
-<link rel="modulepreload" href="js/draft/config.js?v=04c90383" />
-<link rel="modulepreload" href="js/draft/state.js?v=04c90383" />
-<link rel="modulepreload" href="js/draft/replacement.js?v=04c90383" />
-<link rel="modulepreload" href="js/draft/scarcity.js?v=04c90383" />
-<link rel="modulepreload" href="js/draft/value.js?v=04c90383" />
-<link rel="modulepreload" href="js/draft/simulate.js?v=04c90383" />
-<link rel="modulepreload" href="js/draft/sync.js?v=04c90383" />
-<link rel="modulepreload" href="js/squadview.js?v=04c90383" />
+<link rel="modulepreload" href="js/pages/draft-dashboard.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/ui.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/model.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/data.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/prior.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/seasons.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/pages/dashboard-draft.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/draft/project.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/draft/adapt.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/draft/scoring.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/draft/config.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/draft/rating.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/draft/waiver.js?v=7d679f8f" />
+<link rel="modulepreload" href="js/squadview.js?v=7d679f8f" />
 <link rel="stylesheet" href="css/base.css?v=96646fce" />
 <link rel="stylesheet" href="css/app.css?v=96646fce" />
 </head>
-<body data-accent="cyan" data-page="draft" data-product="draft">
+<body data-accent="cyan" data-page="draft-dashboard" data-product="draft">
 <header class="appbar">
   <nav class="productnav" aria-label="Product">
     <a href="index.html">Classic</a>
@@ -55,26 +52,26 @@
   </a>
 </header>
 <nav class="pagenav" aria-label="Draft pages">
-  <a href="draft-dashboard.html">Dashboard</a>
+  <a href="draft-dashboard.html" class="active" aria-current="page">Dashboard</a>
   <a href="draft-league.html">League</a>
   <a href="draft-squad.html">Squad</a>
   <a href="draft-waivers.html">Waivers</a>
   <a href="draft-players.html">Players</a>
-  <a href="draft.html" class="active" aria-current="page">Draft Night</a>
+  <a href="draft.html">Draft Night</a>
 </nav>
 <main class="container">
   <div id="databar"></div>
-  <h1>Draft Night</h1>
+  <h1>Dashboard</h1>
   <div id="app"><p class="loading">Loading…</p></div>
 </main>
 <nav class="bottomnav" aria-label="Draft pages">
-  <a href="draft-dashboard.html"><img src="img/nav-dashboard.svg" alt="" /><span>Dashboard</span></a>
+  <a href="draft-dashboard.html" class="active" aria-current="page"><img src="img/nav-dashboard.svg" alt="" /><span>Dashboard</span></a>
   <a href="draft-league.html"><img src="img/nav-market.svg" alt="" /><span>League</span></a>
   <a href="draft-squad.html"><img src="img/nav-squad.svg" alt="" /><span>Squad</span></a>
   <a href="draft-waivers.html"><img src="img/nav-transfers.svg" alt="" /><span>Waivers</span></a>
   <a href="draft-players.html"><img src="img/nav-players.svg" alt="" /><span>Players</span></a>
-  <a href="draft.html" class="active" aria-current="page"><img src="img/nav-draft.svg" alt="" /><span>Draft Night</span></a>
+  <a href="draft.html"><img src="img/nav-draft.svg" alt="" /><span>Draft Night</span></a>
 </nav>
-<script type="module" src="js/pages/draft.js?v=04c90383"></script>
+<script type="module" src="js/pages/draft-dashboard.js?v=7d679f8f"></script>
 </body>
 </html>

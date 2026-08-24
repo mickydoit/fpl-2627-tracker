@@ -15,47 +15,19 @@ import { $, el, fmt, dataBar, countdown, statusBadge, posPill, modal, breakdown 
  * The Draft half is imported lazily, so a Classic-only user never downloads it
  * and a broken Draft dataset can never stop the Classic dashboard rendering.
  */
+/**
+ * The Classic dashboard.
+ *
+ * This page used to host BOTH products behind a tab strip, with the Draft half
+ * lazy-imported so a Classic-only reader never downloaded it. Classic and Draft
+ * are now separate products with their own navigation, so the strip is gone and
+ * the split is structural instead: Draft lives at draft-dashboard.html and this
+ * file never loads it. The `dashboardMode` key it used is no longer read or
+ * written — nothing else consumed it, so there is nothing to migrate.
+ */
 const root = $('#app');
 const app = el('div', { class: 'mode-classic' });
-const draftHost = el('div', { class: 'mode-draft', style: 'display:none' });
-
-let mode = (() => {
-  try { return localStorage.getItem('dashboardMode') || 'classic'; } catch { return 'classic'; }
-})();
-let draftLoaded = false;
-
-const tabBtn = (id, label) => el('button', {
-  class: mode === id ? 'on' : '',
-  type: 'button',
-  onClick: () => setMode(id),
-}, label);
-
-const tabs = el('div', { class: 'modetabs' }, tabBtn('classic', 'FPL Classic'), tabBtn('draft', 'Draft'));
-
-async function setMode(next) {
-  mode = next;
-  try { localStorage.setItem('dashboardMode', next); } catch { /* private mode */ }
-  [...tabs.children].forEach((b, i) => b.classList.toggle('on', (i === 0) === (next === 'classic')));
-  app.style.display = next === 'classic' ? '' : 'none';
-  draftHost.style.display = next === 'draft' ? '' : 'none';
-  if (next === 'draft' && !draftLoaded) {
-    draftLoaded = true;
-    setKids(draftHost, el('p', { class: 'loading' }, 'Loading your Draft team…'));
-    try {
-      // Inherit this page's cache-busting version so the lazy half cannot go
-      // stale while the eager half updates.
-      const v = new URL(import.meta.url).searchParams.get('v');
-      const { renderDraftDashboard } = await import(`./dashboard-draft.js${v ? `?v=${v}` : ''}`);
-      await renderDraftDashboard(draftHost);
-    } catch (err) {
-      draftLoaded = false;
-      setKids(draftHost, el('p', { class: 'empty' }, `Draft dashboard unavailable: ${err.message}`));
-    }
-  }
-}
-
-setKids(root, tabs, app, draftHost);
-if (mode === 'draft') setMode('draft');
+setKids(root, app);
 const d = await loadAll();
 $('#databar').replaceWith(dataBar(d.meta));
 
