@@ -121,6 +121,55 @@ export const LEAGUE_SIZE_MAX = 16;
  * measured minutes prior. This comparison has now moved three times, once per
  * projection correction, and has been stable across the last two. Treat the
  * table as a property of the current model rather than of the game.
+ *
+ * ------------------------------------------------------------------------
+ * **24 Aug 2026 — the table above is stale, and the method is unstable.**
+ *
+ * It moved a fourth time. What is different about this one is that NOTHING IN
+ * THE MODEL CHANGED: it moved between two routine 30-minute data refreshes
+ * during GW1, which is a different kind of finding from the first three.
+ *
+ * At six managers, 72 paired drafts either side of one refresh window:
+ *
+ *     08-23 12:13   demand  71-1    mean -19.13   se 0.71
+ *     08-23 14:45   starters 58-14  mean  +7.84   se 1.63
+ *
+ * Both sit many standard errors from zero, so neither reading is noise — the
+ * quantity being measured genuinely inverted in two and a half hours.
+ *
+ * Re-measured the same day at the sample sizes the table itself used:
+ *
+ *   size   pairs   startersW  demandW   mean     was
+ *      4      96        45       43    +9.70    -0.07  flipped
+ *      5     120        80       39   +10.15    -6.05  flipped
+ *      6     144       126       18    +7.89   -19.64  flipped
+ *      7      84        23       61    -6.11   -19.32
+ *      8      96         0       94   -26.58   -34.41
+ *      9     108        38       70    -5.99    -5.73
+ *     10     120        51       69    -1.71    -4.11
+ *     11     132       110       22    +8.14   +27.36
+ *     12     144       139        5   +23.84   +38.57
+ *     14     168       168        0   +37.02   +43.93
+ *     16     192       152       40   +39.78   +54.06
+ *
+ * Four, five and six have all reversed, leaving starters(4-6) / demand(7-10) /
+ * starters(11+) — non-monotonic, with a demand island no mechanism explains.
+ * The previous "contiguous band from four to ten" reading is gone, and the
+ * eight-manager anomaly declared resolved above is back in a new place.
+ *
+ * The conclusion is not a new threshold. It is that league size does not
+ * determine the winner: the margin is small relative to its own spread (at six
+ * managers sd 11.4 against a mean of 7.9, p10 -5.5 to p90 +16.1) and it tracks
+ * whatever the projections did that morning. `scripts/test-draft.mjs` no longer
+ * asserts that this rule matches the measurement, because that assertion can
+ * only be satisfied by re-fitting the table on every refresh. It prints the
+ * drift instead.
+ *
+ * **Left deliberately unchanged pending a decision.** Flipping max to 3 would
+ * be the fifth re-fit of a number that has never held still. The options worth
+ * weighing are one robust global basis, or deriving replacement level from the
+ * actual pool rather than a size table. Only the live draft assistant reads
+ * this, so it stays dormant until the next draft either way.
  */
 export const DEMAND_BASIS_SIZES = { min: LEAGUE_SIZE_MIN, max: 10 };
 

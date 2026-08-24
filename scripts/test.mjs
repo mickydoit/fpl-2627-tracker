@@ -78,8 +78,41 @@ ok('value is projection over price', rows.filter((p) => p.price > 0).every((p) =
 const top = [...rows].sort((a, b) => b.proj - a.proj)[0];
 ok('best player projects sensibly over 5 GWs', top.proj > 10 && top.proj < 90, `got ${top.proj.toFixed(1)}`);
 
-const withParts = rows.find((p) => p.parts && !p.parts.noFixtures && p.minutes > 1500);
-ok('breakdown components exist', withParts && Number.isFinite(withParts.parts.attack));
+/* The nine routes a projection is made of. js/model.js builds `contrib` so that
+   these sum to the total — "the breakdown has to add up to the number it
+   explains, or it is decoration" — and `prior` is a route in its own right, not
+   context, so it belongs in the sum. */
+const PROJ_ROUTES = ['appearance', 'attack', 'cleanSheet', 'conceded', 'saves',
+  'defcon', 'bonus', 'cards', 'prior'];
+
+/* This used to select one player with `minutes > 1500` and check a single
+   component on him. bootstrap-static's counters are zeroed at the GW1 deadline,
+   so from that moment the selector matched NOBODY: the assertion was handed
+   `undefined`, failed on its own truthiness guard, and reported a model fault
+   that was really an empty search. Asserting across every row tests strictly
+   more than the original and cannot go blind the same way. */
+const rated = rows.filter((p) => p.parts && !p.parts.noFixtures);
+ok('some player is actually projected against fixtures', rated.length > 0,
+  `${rows.length} rows, none with fixtures`);
+ok('breakdown components exist',
+  rated.length > 0 && rated.every((p) => PROJ_ROUTES.every((k) => Number.isFinite(p.parts[k]))),
+  (() => {
+    const bad = rated.find((p) => PROJ_ROUTES.some((k) => !Number.isFinite(p.parts[k])));
+    return bad ? `${bad.web_name} ${JSON.stringify(bad.parts)}` : '';
+  })());
+ok('the breakdown adds up to the projection it explains',
+  rated.every((p) => near(PROJ_ROUTES.reduce((t, k) => t + p.parts[k], 0), p.proj, 1e-9)),
+  (() => {
+    const bad = rated.find((p) => !near(PROJ_ROUTES.reduce((t, k) => t + p.parts[k], 0), p.proj, 1e-9));
+    return bad ? `${bad.web_name}: routes ${PROJ_ROUTES.reduce((t, k) => t + bad.parts[k], 0)} vs proj ${bad.proj}` : '';
+  })());
+/* An unavailable player is still structurally describable: every route present,
+   every route zero. The early return in projectFixture is per-fixture and must
+   not leak an `{unavailable:true}` shape up to the row. */
+const unavailable = rows.filter((p) => p.proj === 0 && p.parts && !p.parts.noFixtures);
+ok('a zero projection still carries a complete zero breakdown',
+  unavailable.every((p) => PROJ_ROUTES.every((k) => p.parts[k] === 0)),
+  `${unavailable.length} zero-projection rows`);
 ok('clean sheet probability is a probability', rows.every((p) => !p.parts?.pCS || (p.parts.pCS > 0 && p.parts.pCS < 1)));
 
 console.log('\nHorizon behaviour');
@@ -650,9 +683,28 @@ console.log('\nPrior blending');
   /* End to end on the sample dataset. make-sample writes its own codes, so the
      prior is built from that payload rather than read from disk — the committed
      prior belongs to real players and would join to nothing here. */
+  /* The minutes the peak player in a payload must have logged before that payload
+     can stand in for a completed season. Mirrors the model's own
+     priorBlendMinutes — below it, even the best-evidenced player is not fully
+     trusted, so the payload cannot furnish a prior for anyone. */
+  const PRIOR_SEASON_SCALE_MINUTES = 900;
+
   const sampleBoot = await readJSON('data/bootstrap.json');
   const sampleFx = await readJSON('data/fixtures.json', []);
-  if (sampleBoot?.elements?.length) {
+  /* This block builds its "last season" out of whatever is in data/, which only
+     means something while that payload HOLDS a season. bootstrap-static's
+     counters are zeroed at the GW1 deadline: on 24 Aug 2026 the prior built here
+     held 17,700 minutes peaking at 90, against a real season's 602,348 and
+     3,420. A prior that thin lifts nobody's evidence, so these checks compared a
+     payload against itself and reported a model fault that was really an empty
+     fixture. npm test seeds season-scale data through make-sample, which is what
+     they are written for. The live zeroed payload is covered instead by the
+     frozen-prior block below, which joins the real 2025/26 record. */
+  const peakMinutes = Math.max(...(sampleBoot?.elements || []).map((e) => Number(e.minutes) || 0), 0);
+  if (sampleBoot?.elements?.length && peakMinutes < PRIOR_SEASON_SCALE_MINUTES) {
+    console.log(`  – end-to-end pooling skipped: payload peaks at ${peakMinutes} minutes, not a season`);
+  }
+  if (sampleBoot?.elements?.length && peakMinutes >= PRIOR_SEASON_SCALE_MINUTES) {
     const zeroed = { ...sampleBoot, elements: sampleBoot.elements.map((e) => ({
       ...e, minutes: 0, bps: 0, yellow_cards: 0, expected_goals: '0.0', expected_assists: '0.0',
       expected_goals_conceded: '0.0', saves: 0, defensive_contribution: 0,
@@ -686,6 +738,80 @@ console.log('\nPrior blending');
   }
 }
 
+
+/* ------------------------------------------------------------------ *
+ * pooling against the frozen prior
+ * ------------------------------------------------------------------ *
+ * The end-to-end block above needs a payload that holds a whole season, and
+ * gets one from make-sample. This is the case it cannot cover: the live
+ * bootstrap after FPL zeroes it at the GW1 deadline, hydrated from the real
+ * committed 2025/26 record. That record joins on `code`, which is stable across
+ * seasons and across both games, so unlike a synthetic prior it works precisely
+ * where the synthetic one stops working.
+ */
+console.log('\nPooling against the frozen prior');
+{
+  /* Zero is a statistic; missing is the absence of one. Confusing the two is
+     the bug class that produced `evidenceMinutes: 0`, so it is asserted here on
+     the pooling arithmetic directly rather than inferred from a projection. */
+  const lambda = PRIOR_DEFAULTS.lastSeasonWeight;
+  const priorRec = { minutes: 2400, expected_goals: 24, expected_assists: 0, bps: 0 };
+  const pool = (current) => poolPlayerSeasons(current, priorRec,
+    { gamesThis: 1, games: 38, lastSeasonWeight: lambda, lastSeasonGames: 38, priorSeason: '2025/26' });
+
+  const played = pool({ minutes: 900, expected_goals: 0 });
+  const unseen = pool({ minutes: 0, expected_goals: 0 });
+  ok('a season with no minutes yet leans wholly on the prior rate',
+    near(unseen.expected_goals_per_90, (24 / 2400) * 90, 1e-9),
+    `${unseen.expected_goals_per_90}`);
+  ok('an observed zero is evidence and pulls the pooled rate down',
+    played.expected_goals_per_90 < unseen.expected_goals_per_90 - 1e-9,
+    `played ${played.expected_goals_per_90.toFixed(4)} vs unseen ${unseen.expected_goals_per_90.toFixed(4)}`);
+  ok('an observed zero does not erase the prior either',
+    played.expected_goals_per_90 > 0,
+    `${played.expected_goals_per_90}`);
+  ok('minutes actually observed are what counts as evidence',
+    played.evidenceMinutes === 900 + lambda * 2400 && unseen.evidenceMinutes === lambda * 2400,
+    `${played.evidenceMinutes} / ${unseen.evidenceMinutes}`);
+
+  const liveBoot = await readJSON('data/bootstrap.json');
+  const liveFx = await readJSON('data/fixtures.json', []);
+  const frozen = await readJSON('data/draft/prior-2526.json');
+  const joins = (liveBoot?.elements || []).filter((e) => frozen?.players?.[e.code]).length;
+  /* Zero overlap means the payload is not in the same code space at all — that
+     is make-sample's synthetic dataset, which mints its own codes, not a
+     regression. A PARTIAL join on a real payload would be one, so only the
+     total absence of overlap skips. */
+  if (liveBoot?.elements?.length && joins === 0) {
+    console.log('  – frozen-prior checks skipped: payload shares no codes with the 2025/26 record');
+  }
+  if (liveBoot?.elements?.length && liveFx?.length && joins > 0) {
+    ok('the frozen prior joins the live payload on code', joins > 300,
+      `${joins} of ${liveBoot.elements.length}`);
+
+    const zeroedLive = { ...liveBoot, elements: liveBoot.elements.map((e) => ({
+      ...e, minutes: 0, bps: 0, yellow_cards: 0, expected_goals: '0.0', expected_assists: '0.0',
+      expected_goals_conceded: '0.0', saves: 0, defensive_contribution: 0,
+      expected_goals_per_90: 0, expected_assists_per_90: 0, expected_goals_conceded_per_90: 0,
+      saves_per_90: 0, defensive_contribution_per_90: 0,
+    })) };
+    const priorShare = (r) => r.rows.filter((x) => x.parts?.isPrior).length / r.rows.length;
+    const bareLive = projectAll(zeroedLive, liveFx, { horizon: 5 });
+    const pooledLive = projectAll(hydrate(zeroedLive, frozen), liveFx, { horizon: 5 });
+    ok('a zeroed payload recovers its evidence from the frozen prior',
+      priorShare(pooledLive) < priorShare(bareLive),
+      `${(priorShare(pooledLive) * 100).toFixed(0)}% on the prior vs ${(priorShare(bareLive) * 100).toFixed(0)}%`);
+    ok('recovering evidence keeps every projection finite and non-negative',
+      pooledLive.rows.every((x) => Number.isFinite(x.proj) && x.proj >= 0));
+
+    /* The two-season window, enforced at the door. A prior relabelled outside it
+       must be refused outright, not blended in because its numbers look fine. */
+    const stale = projectAll(hydrate(zeroedLive, { ...frozen, season: '2024/25' }), liveFx, { horizon: 5 });
+    ok('a prior from outside the two-season window is refused, not blended',
+      near(priorShare(stale), priorShare(bareLive), 1e-9),
+      `${(priorShare(stale) * 100).toFixed(0)}% vs bare ${(priorShare(bareLive) * 100).toFixed(0)}%`);
+  }
+}
 
 /* ------------------------------------------------------------------ *
  * fixture-window semantics
