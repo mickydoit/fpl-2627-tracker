@@ -125,12 +125,31 @@ h1, h2, h3, .display {
   margin: 0;
 }
 
+/* The page name.
+ *
+ * The WC Draft frames each open with a big display heading, and that is why
+ * this rule looked the way it did. The FPL tracker frame (236:2) has none: its
+ * content starts 146px down a 1921px screen, directly under the navigation,
+ * because the active pill in the secondary nav already names the page and a
+ * second, larger copy of that word costs a third of a phone screen.
+ *
+ * So it stays in the document for structure and assistive tech, and comes off
+ * the canvas. Pages that genuinely want a visible title set `data-title="show"`.
+ */
 h1 {
-  font-size: clamp(2.4rem, 7vw, 3.4rem);
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+body[data-title='show'] h1 {
+  position: static;
+  width: auto; height: auto; margin: 1.2rem 0 1rem; clip-path: none;
+  font-size: clamp(2.2rem, 6.5vw, 3rem);
   line-height: 0.95;
   color: var(--accent);
   text-align: center;
-  margin: 1.6rem 0 1.4rem;
+  overflow: visible; white-space: normal;
 }
 
 h2 {
@@ -178,6 +197,7 @@ p:last-child { margin-bottom: 0; }
    same product would say the opposite of what it means. */
 
 .appbar {
+  position: relative;
   background: var(--yellow);
   color: var(--ink);
   display: flex;
@@ -190,7 +210,12 @@ p:last-child { margin-bottom: 0; }
   min-height: 60px;
 }
 
-.productnav { display: flex; align-items: center; gap: var(--s-sm); }
+/* Draft left, Classic right, logo centred between them — Figma 236:2 puts the
+   two products either side of the mark rather than adjacent. Kept as ONE nav
+   element so the landmark and its two links stay a single navigation for a
+   screen reader; the logo is centred over the bar rather than inserted into
+   the list, which would make the mark sound like a third product. */
+.productnav { display: flex; align-items: center; justify-content: space-between; flex: 1; gap: var(--s-sm); }
 .productnav a {
   font-family: var(--font-display);
   font-size: 1.05rem;
@@ -213,10 +238,18 @@ p:last-child { margin-bottom: 0; }
 /* The logo sits to the right of the switcher, as in the Figma, and links to
    the current product's home rather than always to Classic — clicking the mark
    inside Draft should not throw you into the other product. */
-.appbar .brand { margin-left: auto; }
+.appbar .brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: column;
+  gap: 0.1rem;
+  text-align: center;
+  pointer-events: auto;
+}
 .brand { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); flex: none; }
 .brand:hover { text-decoration: none; }
-.brand-logo { display: block; height: 32px; width: auto; }
+.brand-logo { display: block; height: 26px; width: auto; }
 .brand-text {
   font-family: var(--font-display);
   font-size: 0.66rem;
@@ -224,6 +257,7 @@ p:last-child { margin-bottom: 0; }
   letter-spacing: 0.02em;
   text-transform: uppercase;
   max-width: 5.2rem;
+  font-size: 0.55rem;
 }
 
 .pagenav {
@@ -387,7 +421,7 @@ hr { border: none; border-top: 1px solid var(--border-soft); margin: 1rem 0; }
   .bottomnav { display: none; }
   .container { padding-bottom: 3rem; }
   .appbar { min-height: 72px; padding-left: 1.5rem; padding-right: 1.5rem; }
-  .brand-logo { height: 40px; }
+  .brand-logo { height: 30px; }
   .productnav a { font-size: 1.2rem; padding: 0.4rem 0.9rem; }
   .pagenav { top: 72px; padding: 0.5rem 1.5rem; }
   .pagenav a { font-size: 0.9rem; padding: 0.26rem 0.6rem; }

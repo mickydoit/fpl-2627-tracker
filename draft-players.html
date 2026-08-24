@@ -21,27 +21,27 @@
 <link rel="preload" href="fonts/inter-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/inter-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin />
 <script type="importmap">
-{"imports":{"./js/pages/draft-players.js":"./js/pages/draft-players.js?v=811adfd2","./js/ui.js":"./js/ui.js?v=811adfd2","./js/model.js":"./js/model.js?v=811adfd2","./js/data.js":"./js/data.js?v=811adfd2","./js/prior.js":"./js/prior.js?v=811adfd2","./js/seasons.js":"./js/seasons.js?v=811adfd2","./js/draft/project.js":"./js/draft/project.js?v=811adfd2","./js/draft/adapt.js":"./js/draft/adapt.js?v=811adfd2","./js/draft/scoring.js":"./js/draft/scoring.js?v=811adfd2","./js/draft/config.js":"./js/draft/config.js?v=811adfd2","./js/squadview.js":"./js/squadview.js?v=811adfd2"}}
+{"imports":{"./js/pages/draft-players.js":"./js/pages/draft-players.js?v=54e49a5a","./js/ui.js":"./js/ui.js?v=54e49a5a","./js/model.js":"./js/model.js?v=54e49a5a","./js/data.js":"./js/data.js?v=54e49a5a","./js/prior.js":"./js/prior.js?v=54e49a5a","./js/seasons.js":"./js/seasons.js?v=54e49a5a","./js/draft/project.js":"./js/draft/project.js?v=54e49a5a","./js/draft/adapt.js":"./js/draft/adapt.js?v=54e49a5a","./js/draft/scoring.js":"./js/draft/scoring.js?v=54e49a5a","./js/draft/config.js":"./js/draft/config.js?v=54e49a5a","./js/squadview.js":"./js/squadview.js?v=54e49a5a"}}
 </script>
-<link rel="modulepreload" href="js/pages/draft-players.js?v=811adfd2" />
-<link rel="modulepreload" href="js/ui.js?v=811adfd2" />
-<link rel="modulepreload" href="js/model.js?v=811adfd2" />
-<link rel="modulepreload" href="js/data.js?v=811adfd2" />
-<link rel="modulepreload" href="js/prior.js?v=811adfd2" />
-<link rel="modulepreload" href="js/seasons.js?v=811adfd2" />
-<link rel="modulepreload" href="js/draft/project.js?v=811adfd2" />
-<link rel="modulepreload" href="js/draft/adapt.js?v=811adfd2" />
-<link rel="modulepreload" href="js/draft/scoring.js?v=811adfd2" />
-<link rel="modulepreload" href="js/draft/config.js?v=811adfd2" />
-<link rel="modulepreload" href="js/squadview.js?v=811adfd2" />
-<link rel="stylesheet" href="css/base.css?v=96646fce" />
-<link rel="stylesheet" href="css/app.css?v=96646fce" />
+<link rel="modulepreload" href="js/pages/draft-players.js?v=54e49a5a" />
+<link rel="modulepreload" href="js/ui.js?v=54e49a5a" />
+<link rel="modulepreload" href="js/model.js?v=54e49a5a" />
+<link rel="modulepreload" href="js/data.js?v=54e49a5a" />
+<link rel="modulepreload" href="js/prior.js?v=54e49a5a" />
+<link rel="modulepreload" href="js/seasons.js?v=54e49a5a" />
+<link rel="modulepreload" href="js/draft/project.js?v=54e49a5a" />
+<link rel="modulepreload" href="js/draft/adapt.js?v=54e49a5a" />
+<link rel="modulepreload" href="js/draft/scoring.js?v=54e49a5a" />
+<link rel="modulepreload" href="js/draft/config.js?v=54e49a5a" />
+<link rel="modulepreload" href="js/squadview.js?v=54e49a5a" />
+<link rel="stylesheet" href="css/base.css?v=2c81e4f3" />
+<link rel="stylesheet" href="css/app.css?v=2c81e4f3" />
 </head>
-<body data-accent="lime" data-page="draft-players" data-product="draft">
+<body data-accent="yellow" data-page="draft-players" data-product="draft">
 <header class="appbar">
   <nav class="productnav" aria-label="Product">
-    <a href="index.html">Classic</a>
     <a href="draft-dashboard.html" class="active" aria-current="true">Draft</a>
+    <a href="index.html">Classic</a>
   </nav>
   <a class="brand" href="draft-dashboard.html">
     <img class="brand-logo" src="img/logo-fpl.svg" alt="" />
@@ -49,10 +49,8 @@
   </a>
 </header>
 <nav class="pagenav" aria-label="Draft pages">
-  <a href="draft-dashboard.html">Dashboard</a>
+  <a href="draft-dashboard.html">Squad</a>
   <a href="draft-league.html">League</a>
-  <a href="draft-squad.html">Squad</a>
-  <a href="draft-waivers.html">Waivers</a>
   <a href="draft-players.html" class="active" aria-current="page">Players</a>
   <a href="draft.html">Draft Night</a>
 </nav>
@@ -62,13 +60,11 @@
   <div id="app"><p class="loading">Loading…</p></div>
 </main>
 <nav class="bottomnav" aria-label="Draft pages">
-  <a href="draft-dashboard.html"><img src="img/nav-dashboard.svg" alt="" /><span>Dashboard</span></a>
+  <a href="draft-dashboard.html"><img src="img/nav-squad.svg" alt="" /><span>Squad</span></a>
   <a href="draft-league.html"><img src="img/nav-market.svg" alt="" /><span>League</span></a>
-  <a href="draft-squad.html"><img src="img/nav-squad.svg" alt="" /><span>Squad</span></a>
-  <a href="draft-waivers.html"><img src="img/nav-transfers.svg" alt="" /><span>Waivers</span></a>
   <a href="draft-players.html" class="active" aria-current="page"><img src="img/nav-players.svg" alt="" /><span>Players</span></a>
   <a href="draft.html"><img src="img/nav-draft.svg" alt="" /><span>Draft Night</span></a>
 </nav>
-<script type="module" src="js/pages/draft-players.js?v=811adfd2"></script>
+<script type="module" src="js/pages/draft-players.js?v=54e49a5a"></script>
 </body>
 </html>

@@ -911,15 +911,25 @@ console.log('\nPooling against the frozen prior');
  */
 console.log('\nNavigation shell');
 {
-  const CLASSIC = ['index', 'squad', 'transfers', 'players', 'market'];
-  const DRAFT = ['draft-dashboard', 'draft-league', 'draft-squad', 'draft-waivers', 'draft-players', 'draft'];
+  /* Visible = in the product's secondary nav. Hidden = reachable by URL only.
+     The split is the point of the simplified IA: Squad absorbed the Dashboard,
+     Players absorbed Market, Draft Players absorbed Waivers — and none of the
+     absorbed pages was deleted, so each must still build and still carry its
+     product's navigation while appearing in nobody's list. */
+  const CLASSIC = ['index', 'transfers', 'players'];
+  const DRAFT = ['draft-dashboard', 'draft-league', 'draft-players', 'draft'];
+  const HIDDEN = ['squad', 'market', 'rules', 'draft-squad', 'draft-waivers'];
   const html = {};
-  for (const slug of [...CLASSIC, ...DRAFT, 'rules']) {
+  for (const slug of [...CLASSIC, ...DRAFT, ...HIDDEN]) {
     html[slug] = fs.existsSync(`${slug}.html`) ? fs.readFileSync(`${slug}.html`, 'utf8') : null;
   }
   ok('every page in both products exists as a file',
     [...CLASSIC, ...DRAFT].every((s2) => html[s2]),
     [...CLASSIC, ...DRAFT].filter((s2) => !html[s2]).join(', '));
+  ok('no consolidated page was deleted — all still build',
+    HIDDEN.every((s2) => html[s2]), HIDDEN.filter((s2) => !html[s2]).join(', '));
+  ok('each product shows at most four pages',
+    CLASSIC.length <= 4 && DRAFT.length <= 4, `${CLASSIC.length} / ${DRAFT.length}`);
 
   const between = (src, open, close) => {
     const i = src.indexOf(open);
@@ -967,11 +977,14 @@ console.log('\nNavigation shell');
   ok('Draft Night never appears in Classic navigation',
     CLASSIC.every((s2) => !hrefs(pageNav(html[s2])).includes('draft')));
 
-  /* Rules stays reachable by URL and absent from every navigation. */
-  ok('the Rules page still exists', !!html.rules);
-  ok('Rules appears in no navigation',
-    [...CLASSIC, ...DRAFT].every((s2) => !hrefs(pageNav(html[s2])).includes('rules')
-      && !hrefs(productNav(html[s2])).includes('rules')));
+  /* Hidden pages are reachable by URL and absent from every navigation. */
+  for (const h of HIDDEN) {
+    ok(`${h}.html appears in no navigation`,
+      [...CLASSIC, ...DRAFT].every((s2) => !hrefs(pageNav(html[s2])).includes(h)
+        && !hrefs(productNav(html[s2])).includes(h)));
+    ok(`${h}.html still carries its product's navigation`,
+      hrefs(pageNav(html[h])).length > 0, 'no secondary nav rendered');
+  }
 
   /* Every link a reader can click resolves to a file that exists. */
   const dangling = [];

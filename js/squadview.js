@@ -93,40 +93,71 @@ export function activityRings(rings, centre, { size = 176 } = {}) {
  * question looking at a squad graphic is "who does he play for", and two of
  * the three old implementations could not answer it.
  */
-export function shirt(p, { teams, captain, vice, value, sub, onPlayer }) {
+export function shirt(p, { teams, captain, vice, value, sub, onPlayer, variant = 'classic' }) {
   const isCap = captain && p.id === captain.id;
   const isVice = vice && p.id === vice.id;
+  const team = teams[p.team];
+  const flagged = p.status && p.status !== 'a';
+  /* Keepers wear a different kit and it is the fastest way to read a formation
+     at a glance, which is the whole point of showing kits rather than names. */
+  const kit = team?.short_name
+    ? `img/kits/shirt_${team.short_name}${p.element_type === 1 ? '_1' : ''}.png`
+    : null;
+
   return el('div', {
-    class: `shirt ${isCap ? 'cap' : ''} ${p.status && p.status !== 'a' ? 'flagged' : ''}`,
+    class: `shirt ${isCap ? 'cap' : ''} ${flagged ? 'flagged' : ''}`,
     'data-pid': String(p.id),
     'data-pos': POS[p.element_type],
-    title: `${p.first_name || ''} ${p.second_name || p.web_name} — ${teams[p.team]?.name || ''}`,
+    title: `${p.first_name || ''} ${p.second_name || p.web_name}`.trim() + ` — ${team?.name || ''}`,
     // A drag ends with a click; without this guard, releasing a shirt also
     // opens the player card.
     onClick: onPlayer ? (e) => { if (!e.currentTarget.classList.contains('was-dragged')) onPlayer(p); } : null,
   },
-    isCap ? el('span', { class: 'arm' }, 'C') : isVice ? el('span', { class: 'arm vice' }, 'V') : null,
-    p.status && p.status !== 'a' ? el('span', { class: 'shirt-flag' }, '!') : null,
+    el('span', { class: 'kit' },
+      kit ? el('img', { src: kit, alt: '', loading: 'lazy', width: '44', height: '44' })
+        : el('span', { class: 'kit-fallback' }, team?.short_name || '?'),
+      /* Captaincy is a Classic mechanic. Draft has no captain, so the variant
+         decides whether the badge can appear at all rather than relying on the
+         caller remembering not to pass one. */
+      variant === 'classic' && isCap ? el('span', { class: 'arm' }, 'C') : null,
+      variant === 'classic' && isVice ? el('span', { class: 'arm vice' }, 'V') : null,
+      flagged ? el('span', { class: 'shirt-flag', title: p.news || 'Doubtful' }, '!') : null,
+    ),
     el('span', { class: 'nm' }, p.web_name),
-    el('span', { class: 'cl' }, teams[p.team]?.short_name || ''),
-    el('span', { class: 'pr' }, sub ? sub(p) : ''),
     el('span', { class: 'pt' }, value(p)),
+    sub ? el('span', { class: 'pr' }, sub(p)) : null,
   );
 }
 
 /**
- * A full squad laid out by position, with the bench on a strip beneath.
- * Works for any eleven — Classic XI, Draft XI, or an opponent's.
+ * A squad on a pitch.
+ *
+ * Laid out by line rather than as a grid of cards: a formation is information —
+ * 3-4-3 and 4-4-2 are different decisions — and it is unreadable when every
+ * player is an identical rectangle. Kits carry the club, the keeper kit marks
+ * the goalkeeper, and the eye reads the shape before it reads any text.
+ *
+ * The football logic stays entirely with the caller. This function is handed an
+ * eleven and a bench and draws them; it never decides who starts, and changing
+ * it cannot change a projection.
+ *
+ * @param {object[]} xi        the eleven, any legal formation
+ * @param {object[]} bench     the rest, drawn on a strip beneath
+ * @param {'classic'|'draft'} variant  classic shows captaincy, draft does not
  */
-export function squadPitch({ xi, bench = [], teams, captain, vice, value, sub, onPlayer }) {
-  const opts = { teams, captain, vice, value, sub, onPlayer };
+export function squadPitch({ xi, bench = [], teams, captain, vice, value, sub, onPlayer, variant = 'classic' }) {
+  const opts = { teams, captain, vice, value, sub, onPlayer, variant };
   const row = (pos) => {
     const ps = xi.filter((p) => p.element_type === pos);
-    return ps.length ? el('div', { class: 'pitch-row' }, ps.map((p) => shirt(p, opts))) : null;
+    return ps.length ? el('div', { class: `pitch-row line-${pos}` }, ps.map((p) => shirt(p, opts))) : null;
   };
-  return el('div', { class: 'pitch' },
-    [1, 2, 3, 4].map(row).filter(Boolean),
-    bench.length ? el('div', { class: 'bench-strip' }, bench.map((p) => shirt(p, opts))) : null,
+  return el('div', { class: `pitchwrap v-${variant}` },
+    el('div', { class: 'pitch' }, [1, 2, 3, 4].map(row).filter(Boolean)),
+    bench.length
+      ? el('div', { class: 'bench-strip' },
+          el('span', { class: 'bench-label' }, 'Bench'),
+          bench.map((p) => shirt(p, opts)))
+      : null,
   );
 }
 

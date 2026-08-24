@@ -234,6 +234,7 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
       value: (p) => (gwLive ? String(livePts(p) ?? 0) : fmt.pts(byGw(p))),
       sub: (p) => POS[p.element_type],
       onPlayer: openPlayer,
+          variant: 'draft',
     });
 
     setKids(into,

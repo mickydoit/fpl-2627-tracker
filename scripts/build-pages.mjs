@@ -20,8 +20,9 @@ import { dirname, join, normalize } from 'node:path';
  * unpredictable.
  */
 const PRODUCTS = [
-  { id: 'classic', label: 'Classic', home: 'index' },
+  // Draft first, logo centred, Classic right — the composition in Figma 236:2.
   { id: 'draft',   label: 'Draft',   home: 'draft-dashboard' },
+  { id: 'classic', label: 'Classic', home: 'index' },
 ];
 
 /**
@@ -36,27 +37,28 @@ const PRODUCTS = [
  * layer. The product split is expressed in the navigation, not the paths.
  */
 const PAGES = [
-  // Icons are the WC Draft file's own Menu Bar frame (node 229:55). Each is a
-  // single #F4FF7B glyph on a transparent ground, which is what the bottom
-  // nav's grey-out filter expects.
+  // Icons are the WC Draft file's own Menu Bar frame (node 229:55).
+  //
+  // `hidden` keeps a page reachable by URL while removing it from every
+  // navigation. Nothing here is deleted: Squad absorbed the old Dashboard,
+  // Players absorbed Market, and Draft's Waivers folded into Draft Players —
+  // but their URLs still resolve, so bookmarks and in-page links survive and
+  // the functionality can be pulled back into view if the grouping proves wrong.
   // ---- Classic ----
-  { slug: 'index',           product: 'classic', title: 'Dashboard',   accent: 'lime',   icon: 'nav-dashboard', nav: 'Dashboard' },
-  { slug: 'squad',           product: 'classic', title: 'Squad',       accent: 'cyan',   icon: 'nav-squad',     nav: 'Squad' },
+  { slug: 'index',           product: 'classic', title: 'Squad',       accent: 'lime',   icon: 'nav-squad',     nav: 'Squad' },
   { slug: 'transfers',       product: 'classic', title: 'Transfers',   accent: 'yellow', icon: 'nav-transfers', nav: 'Transfers' },
-  { slug: 'players',         product: 'classic', title: 'Players',     accent: 'lime',   icon: 'nav-players',   nav: 'Players' },
-  { slug: 'market',          product: 'classic', title: 'Market',      accent: 'cyan',   icon: 'nav-market',    nav: 'Market' },
-  // Kept out of every navigation on purpose — the scoring reference is reachable
-  // by URL and linked from the pages that need it, not browsed to.
-  { slug: 'rules',           product: 'classic', title: 'Rules',       accent: 'yellow', icon: 'nav-rules',     nav: 'Rules', hidden: true },
+  { slug: 'players',         product: 'classic', title: 'Players',     accent: 'cyan',   icon: 'nav-players',   nav: 'Players' },
+  { slug: 'squad',           product: 'classic', title: 'Optimiser',   accent: 'cyan',   icon: 'nav-squad',     nav: 'Optimiser', hidden: true },
+  { slug: 'market',          product: 'classic', title: 'Market',      accent: 'cyan',   icon: 'nav-market',    nav: 'Market',    hidden: true },
+  { slug: 'rules',           product: 'classic', title: 'Rules',       accent: 'yellow', icon: 'nav-rules',     nav: 'Rules',     hidden: true },
   // ---- Draft ----
-  { slug: 'draft-dashboard', product: 'draft',   title: 'Dashboard',   accent: 'cyan',   icon: 'nav-dashboard', nav: 'Dashboard' },
+  { slug: 'draft-dashboard', product: 'draft',   title: 'Squad',       accent: 'cyan',   icon: 'nav-squad',     nav: 'Squad' },
   { slug: 'draft-league',    product: 'draft',   title: 'League',      accent: 'lime',   icon: 'nav-market',    nav: 'League' },
-  { slug: 'draft-squad',     product: 'draft',   title: 'Squad',       accent: 'cyan',   icon: 'nav-squad',     nav: 'Squad' },
-  { slug: 'draft-waivers',   product: 'draft',   title: 'Waivers',     accent: 'yellow', icon: 'nav-transfers', nav: 'Waivers' },
-  { slug: 'draft-players',   product: 'draft',   title: 'Players',     accent: 'lime',   icon: 'nav-players',   nav: 'Players' },
-  // Draft Night is a sub-mode of Draft, not a third product: it belongs in this
-  // secondary nav and never beside Classic and Draft.
+  { slug: 'draft-players',   product: 'draft',   title: 'Players',     accent: 'yellow', icon: 'nav-players',   nav: 'Players' },
+  // Draft Night is a sub-mode of Draft, never a third product.
   { slug: 'draft',           product: 'draft',   title: 'Draft Night', accent: 'cyan',   icon: 'nav-draft',     nav: 'Draft Night' },
+  { slug: 'draft-squad',     product: 'draft',   title: 'Squad detail', accent: 'cyan',  icon: 'nav-squad',     nav: 'Squad',     hidden: true },
+  { slug: 'draft-waivers',   product: 'draft',   title: 'Waivers',     accent: 'yellow', icon: 'nav-transfers', nav: 'Waivers',   hidden: true },
 ];
 
 /** The dashboard's module is named for what it is, not for its URL. */

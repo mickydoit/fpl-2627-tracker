@@ -164,6 +164,7 @@ function managerCard(r, league, mySlot, onClose, teams, onPlayer) {
       value: (p) => one(p.proj),
       sub: (p) => POS[p.element_type],
       onPlayer,
+          variant: 'draft',
     }),
     c.risk.flagged.length
       ? el('div', {}, el('h3', {}, 'Availability'),

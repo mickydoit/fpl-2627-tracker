@@ -1,386 +1,311 @@
+/**
+ * Classic → Squad. The master page.
+ *
+ * One continuous screen rather than a stack of dashboard cards, following the
+ * composition in the Figma frame (236:2) and the density of the three WC Draft
+ * frames (11:18 ladder, 21:684 fixtures, 82:138 stats):
+ *
+ *   metrics strip → pitch → window + rating → suggested squad
+ *   → summary strip → this week's move → matches
+ *
+ * The rule those frames establish, and the one that matters most here: content
+ * sits on the ground. A bordered container appears only where the design uses
+ * one — the summary strip and the tables — never as a wrapper around every
+ * idea. Section names are small labels, not headings inside boxes, and the
+ * explanation that used to sit under each heading is now a `title` tooltip.
+ *
+ * Every number is produced by the existing engine. This file composes; it does
+ * not compute. projectAll, rateSquad, optimiseWithinTransfers, suggestTransfers
+ * and bestMove are called exactly as the pages they came from called them.
+ */
 import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
-import { projectAll, POS, SQUAD_RULES } from '../model.js';
-import { bestXI, scoreSquad, legalXI } from '../optimiser.js';
-import { squadPitch, playerCard, enableSwapping, activityRings } from '../squadview.js';
-import { horizonPicker, SEASON_HORIZON } from '../ui.js';
+import { projectAll, SQUAD_RULES, actionableEvent } from '../model.js';
+import { bestXI, scoreSquad, legalXI, optimiseWithinTransfers, squadCost, suggestTransfers } from '../optimiser.js';
 import { rateSquad, RATING_HORIZONS } from '../rating.js';
-import { $, el, fmt, dataBar, countdown, statusBadge, posPill, modal, breakdown , setKids, addKids} from '../ui.js';
+import { bestMove, recommendedHorizon } from '../transfer-advice.js';
+import { squadPitch, playerCard, enableSwapping } from '../squadview.js';
+import { horizonPicker, SEASON_HORIZON } from '../ui.js';
+import { $, el, fmt, dataBar, countdown, setKids, addKids } from '../ui.js';
 
-/**
- * The Dashboard hosts two products behind a tab strip: your Classic FPL team
- * and your Draft team. They share this shell and nothing else — the Classic
- * half below is untouched and still renders into `app`, which is now an inner
- * container rather than the page root.
- *
- * The Draft half is imported lazily, so a Classic-only user never downloads it
- * and a broken Draft dataset can never stop the Classic dashboard rendering.
- */
-/**
- * The Classic dashboard.
- *
- * This page used to host BOTH products behind a tab strip, with the Draft half
- * lazy-imported so a Classic-only reader never downloaded it. Classic and Draft
- * are now separate products with their own navigation, so the strip is gone and
- * the split is structural instead: Draft lives at draft-dashboard.html and this
- * file never loads it. The `dashboardMode` key it used is no longer read or
- * written — nothing else consumed it, so there is nothing to migrate.
- */
-const root = $('#app');
-const app = el('div', { class: 'mode-classic' });
-setKids(root, app);
+const app = $('#app');
+setKids(app); // clear the server-rendered loading state
 const d = await loadAll();
 $('#databar').replaceWith(dataBar(d.meta));
-
 if (!d.boot) {
-  setKids(app, 
-    el('div', { class: 'card' },
-      el('h2', {}, 'No data yet'),
-      el('p', {}, 'The site is deployed but no snapshot has been committed. Open the Actions tab in your repo and run the '),
-      el('p', {}, el('strong', {}, '“Refresh FPL data”'), ' workflow. It takes about a minute and commits the FPL and ESPN data into data/.'),
-      el('p', { class: 'hint' }, 'Set the FPL_ENTRY_ID repository variable first if you want My Team and mini-league tracking.'),
-    ),
-  );
+  setKids(app, el('p', { class: 'empty' }, 'No data yet — run the refresh workflow.'));
   throw new Error('no data');
 }
 
 const state = getState();
-const horizon = state.horizon ?? 5;
-const { rows, ctx } = projectAll(d.boot, d.fixtures, { horizon });
-const byId = new Map(rows.map((p) => [p.id, p]));
-const teams = ctx.teams;
+const teams = Object.fromEntries(d.boot.teams.map((t) => [t.id, t]));
+const riskAversion = state.riskAversion ?? 0.5;
+const bank = state.bank ?? 0;
+const freeTransfers = state.freeTransfers ?? 1;
+const fromEvent = actionableEvent(d.boot.events) ?? undefined;
 
-/* ------------------------------------------------------------------ *
- * headline tiles
- * ------------------------------------------------------------------ */
+/* One projection cache for the page. Every horizon the reader can select goes
+   through here, so nothing is projected twice. */
+const cache = new Map();
+const rowsAt = (h) => {
+  if (!cache.has(h)) cache.set(h, projectAll(d.boot, d.fixtures, { horizon: h, riskAversion, fromEvent }).rows);
+  return cache.get(h);
+};
+const ctx = projectAll(d.boot, d.fixtures, { horizon: 5, riskAversion, fromEvent }).ctx;
+const byId = (h) => new Map(rowsAt(h).map((r) => [r.id, r]));
+
+const { ids: squadIds, source } = resolveSquadIds(d.entry, state);
 const nextEvent = d.boot.events.find((e) => e.id === ctx.nextEvent);
 const currentEvent = d.boot.events.find((e) => e.is_current);
-const entry = d.entry?.entry;
-
-const tiles = el('div', { class: 'tiles' });
-
-const cdTile = el('div', { class: 'tile accent' },
-  el('span', { class: 'k' }, `GW${ctx.nextEvent} deadline`),
-  el('span', { class: 'v countdown' }, '—'),
-  el('span', { class: 's' }, nextEvent?.deadline_time
-    ? new Date(nextEvent.deadline_time).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-    : 'unknown'),
-);
-addKids(tiles, cdTile);
-countdown(cdTile.querySelector('.countdown'), nextEvent?.deadline_time);
-
-if (entry) {
-  addKids(tiles, 
-    el('div', { class: 'tile' },
-      el('span', { class: 'k' }, 'Overall points'),
-      el('span', { class: 'v' }, entry.summary_overall_points ?? '—'),
-      el('span', { class: 's' }, entry.name || ''),
-    ),
-    el('div', { class: 'tile' },
-      el('span', { class: 'k' }, 'Overall rank'),
-      el('span', { class: 'v' }, entry.summary_overall_rank ? entry.summary_overall_rank.toLocaleString('en-GB') : '—'),
-      el('span', { class: 's' }, d.meta?.total_players ? `of ${d.meta.total_players.toLocaleString('en-GB')}` : ''),
-    ),
-    el('div', { class: 'tile' },
-      el('span', { class: 'k' }, 'Squad value'),
-      el('span', { class: 'v' }, entry.last_deadline_value ? fmt.price(entry.last_deadline_value) : '—'),
-      el('span', { class: 's' }, entry.last_deadline_bank !== undefined ? `${fmt.price(entry.last_deadline_bank)} in the bank` : ''),
-    ),
-  );
-} else {
-  addKids(tiles, 
-    el('div', { class: 'tile' },
-      el('span', { class: 'k' }, 'My team'),
-      el('span', { class: 'v' }, '—'),
-      el('span', { class: 's' }, 'Set FPL_ENTRY_ID to track it'),
-    ),
-  );
-}
-setKids(app, tiles);
+const isLiveGW = !!currentEvent && !!d.live?.elements?.length;
+const liveById = new Map((d.live?.elements || []).map((e) => [e.id, e]));
 
 /* ------------------------------------------------------------------ *
- * my squad — live or projected
+ * small shared pieces
  * ------------------------------------------------------------------ */
-const { ids: squadIds, source: squadSource } = resolveSquadIds(d.entry, state);
-const liveById = new Map((d.live?.elements || []).map((e) => [e.id, e]));
-const isLiveGW = !!currentEvent && !!d.live?.elements?.length;
+/** A section name. Small, quiet, and never a heading inside a box. */
+const label = (text, hint) => el('div', { class: 'seclabel', title: hint || '' }, text);
 
-if (squadIds.length === 15) {
-  const squad = squadIds.map((id) => byId.get(id)).filter(Boolean);
+/** One cell of a metrics strip: value over caption. */
+const metric = (value, caption, { tone = '', hint = '' } = {}) =>
+  el('div', { class: `metric ${tone}`, title: hint },
+    el('span', { class: 'mv' }, value),
+    el('span', { class: 'mc' }, caption));
+
+const openPlayer = (p) => playerCard(p, {
+  teams,
+  fixturesFor: (q) => (d.fixtures || [])
+    .filter((f) => f.event && (f.team_h === q.team || f.team_a === q.team))
+    .map((f) => ({
+      event: f.event,
+      home: f.team_h === q.team,
+      opponent: f.team_h === q.team ? f.team_a : f.team_h,
+      difficulty: f.team_h === q.team ? f.team_h_difficulty : f.team_a_difficulty,
+    }))
+    .sort((a, b) => a.event - b.event),
+  horizon: 5,
+  fromEvent: ctx.nextEvent,
+});
+
+/* ------------------------------------------------------------------ *
+ * gameweek strip
+ * ------------------------------------------------------------------ */
+const entry = d.entry?.entry;
+const gwStrip = el('div', { class: 'metrics' });
+const cdCell = metric('—', `GW${ctx.nextEvent} deadline`, { tone: 'accent' });
+addKids(gwStrip, cdCell);
+countdown(cdCell.querySelector('.mv'), nextEvent?.deadline_time);
+if (entry) {
+  addKids(gwStrip,
+    metric(String(entry.summary_overall_points ?? '—'), 'Total points'),
+    metric(entry.summary_overall_rank ? entry.summary_overall_rank.toLocaleString('en-GB') : '—', 'Overall rank',
+      { hint: d.meta?.total_players ? `of ${d.meta.total_players.toLocaleString('en-GB')}` : '' }),
+    metric(entry.last_deadline_value ? fmt.price(entry.last_deadline_value) : '—', 'Squad value',
+      { hint: `${fmt.price(bank)} in the bank` }),
+    metric(String(freeTransfers), 'Free transfers'),
+  );
+}
+addKids(app, gwStrip);
+
+/* ------------------------------------------------------------------ *
+ * the squad
+ * ------------------------------------------------------------------ */
+if (squadIds.length !== SQUAD_RULES.size) {
+  addKids(app,
+    label('Squad'),
+    el('p', { class: 'empty' }, entry?.name
+      ? 'FPL has not published your picks yet — they appear after the first deadline.'
+      : 'Set FPL_ENTRY_ID, or build a squad on the Players page, and it will appear here.'));
+} else {
+  const squad = squadIds.map((id) => byId(5).get(id)).filter(Boolean);
   const picks = d.entry?.picks?.picks || [];
   const pickMap = new Map(picks.map((p) => [p.element, p]));
+  let captain = byId(5).get(picks.find((p) => p.is_captain)?.element);
+  const vice = byId(5).get(picks.find((p) => p.is_vice_captain)?.element);
 
-  let xi, bench, captain;
-  if (picks.length) {
-    // Use the real team you actually submitted, not the model's preferred XI.
-    xi = picks.filter((p) => p.position <= 11).map((p) => byId.get(p.element)).filter(Boolean);
-    bench = picks.filter((p) => p.position > 11).map((p) => byId.get(p.element)).filter(Boolean);
-    captain = byId.get(picks.find((p) => p.is_captain)?.element);
-  } else {
-    ({ xi, bench, captain } = bestXI(squad));
+  /* The lineup window is the reader's. bestXI ranks on `proj`, so the window it
+     is given decides the eleven — one gameweek answers "who starts Saturday",
+     eight answers "who is worth keeping". */
+  const LINEUP_HZ = 'lineupHorizon';
+  let lineupH = getState()[LINEUP_HZ] ?? 1;
+  const valueAt = (p) => byId(lineupH).get(p.id)?.proj ?? p.proj ?? 0;
+
+  let chosenXi = picks.length
+    ? picks.filter((p) => p.position <= 11).map((p) => p.element)
+    : bestXI(squad).xi.map((p) => p.id);
+  const savedXi = getState().myXi;
+  if (!isLiveGW && Array.isArray(savedXi) && savedXi.length === 11) {
+    const rows = savedXi.map((id) => byId(5).get(id)).filter(Boolean);
+    if (rows.length === 11 && legalXI(rows) && rows.every((r) => squad.some((s) => s.id === r.id))) chosenXi = savedXi;
   }
 
   const livePts = (p) => {
     const l = liveById.get(p.id);
     if (!l) return null;
-    const mult = pickMap.get(p.id)?.multiplier ?? (p === captain ? 2 : 1);
-    return l.total_points * (mult || 1);
+    return l.total_points * (pickMap.get(p.id)?.multiplier ?? 1);
   };
 
-  const total = isLiveGW
-    ? xi.reduce((s, p) => s + (livePts(p) ?? 0), 0)
-    : xi.reduce((s, p) => s + p.projPerGW, 0) + (captain?.projPerGW || 0);
-
-  const head = el('div', { class: 'row between' },
-    el('h2', {}, isLiveGW ? `GW${currentEvent.id} live` : `GW${ctx.nextEvent} projected`),
-    el('span', { class: 'small dim' }, squadSource === 'fpl' ? 'from your FPL team' : 'from your saved squad'),
-  );
-
-
-  /**
-   * Your XI is yours to set here too.
-   *
-   * The page shows the eleven you actually submitted when FPL has published
-   * picks, and the model's preferred eleven before that — but either way you
-   * may want to try a change and see what it costs. Stored in Classic state,
-   * under its own key, and never read by anything in Draft.
-   *
-   * A live gameweek is the one time this is locked: once players are scoring,
-   * rearranging a lineup you can no longer change would be fiction.
-   */
-  const MY_XI_KEY = 'myXi';
-  /**
-   * The strongest eleven FOR THE NEXT GAMEWEEK.
-   *
-   * bestXI ranks on `proj`, which here is the five-gameweek projection — the
-   * right basis for judging a squad and the wrong one for choosing a lineup.
-   * Starting the player who is better over five weeks rather than the one with
-   * the easier fixture on Saturday is a real cost, every week.
-   *
-   * Squad-level numbers above still use the longer horizon, because "how good
-   * is this squad" and "who plays this week" are different questions.
-   */
-  const LINEUP_HZ = 'lineupHorizon';
-  let lineupH = getState()[LINEUP_HZ] ?? 1;
-  const hzCache = new Map();
-  const valuesAt = (h) => {
-    if (!hzCache.has(h)) {
-      const rows = projectAll(d.boot, d.fixtures, { horizon: h, riskAversion: state.riskAversion ?? 0.5 }).rows;
-      hzCache.set(h, new Map(rows.map((r) => [r.id, r.proj])));
-    }
-    return hzCache.get(h);
-  };
-  let byGw = (p) => valuesAt(lineupH).get(p.id) ?? p.projPerGW ?? 0;
-  let optimalClassic = bestXI(squad.map((p) => ({ ...p, proj: byGw(p) })));
-  let chosenXi = xi.map((p) => p.id);
-  if (!isLiveGW) {
-    const saved = getState()[MY_XI_KEY];
-    if (Array.isArray(saved) && saved.length === 11) {
-      const rows = saved.map((id) => byId.get(id)).filter(Boolean);
-      if (rows.length === 11 && legalXI(rows) && rows.every((r) => squad.includes(r))) {
-        chosenXi = saved;
-      }
-    }
-  }
-
-  const squadCard = el('div', { class: 'card' });
-  const paintClassicSquad = () => {
-    const curXi = chosenXi.map((id) => byId.get(id)).filter(Boolean);
-    const curBench = squad.filter((p) => !chosenXi.includes(p.id));
-    const cap = curXi.includes(captain) ? captain : null;
-    const projTotal = curXi.reduce((t, p) => t + byGw(p), 0) + (cap ? byGw(cap) : 0);
-    const liveTotal = curXi.reduce((t, p) => t + (livePts(p) ?? 0), 0);
-    const optTotal = optimalClassic.xi.reduce((t, p) => t + byGw(p), 0)
-      + (optimalClassic.captain ? byGw(optimalClassic.captain) : 0);
-    const lost = optTotal - projTotal;
-
+  const pitchHost = el('div');
+  const paintPitch = () => {
+    const xi = chosenXi.map((id) => byId(5).get(id)).filter(Boolean);
+    const benchRows = squad.filter((p) => !chosenXi.includes(p.id));
+    const cap = xi.some((p) => p.id === captain?.id) ? captain : null;
     const pitch = squadPitch({
-      xi: curXi, bench: curBench, teams, captain: cap,
-      value: (p) => fmt.pts(isLiveGW ? (livePts(p) ?? 0) : byGw(p) * (p === cap ? 2 : 1)),
-      sub: (p) => (isLiveGW && liveById.get(p.id) ? `${liveById.get(p.id).minutes}'` : fmt.price(p.now_cost)),
-      onPlayer: showPlayer,
+      xi, bench: benchRows, teams, captain: cap, vice, variant: 'classic',
+      value: (p) => (isLiveGW ? String(livePts(p) ?? 0) : fmt.pts(valueAt(p) * (p.id === cap?.id ? 2 : 1))),
+      onPlayer: openPlayer,
     });
-
-    setKids(squadCard,
-      head,
-      el('div', { class: 'row between', style: 'margin-bottom:var(--s-sm)' },
-        el('span', { class: 'hint' }, isLiveGW ? 'Live scoring' : 'Lineup decision'),
-        isLiveGW ? null : horizonPicker(lineupH, (n) => {
-          lineupH = n;
-          setState({ [LINEUP_HZ]: n });
-          byGw = (p) => valuesAt(lineupH).get(p.id) ?? p.projPerGW ?? 0;
-          optimalClassic = bestXI(squad.map((p) => ({ ...p, proj: byGw(p) })));
-          paintClassicSquad();
-        })),
-      el('div', { class: 'tiles' },
-        el('div', { class: 'tile accent' },
-          el('span', { class: 'k' }, isLiveGW ? 'Live points' : 'Projected points'),
-          el('span', { class: 'v' }, fmt.pts(isLiveGW ? liveTotal : projTotal)),
-          el('span', { class: 's' }, isLiveGW ? 'includes provisional bonus once official' : `captain: ${cap?.web_name || '—'}`)),
-        el('div', { class: 'tile' },
-          el('span', { class: 'k' }, `Next ${horizon} GWs`),
-          el('span', { class: 'v' }, fmt.pts(scoreSquad(squad, { horizon }))),
-          el('span', { class: 's' }, 'XI + captain + weighted bench')),
-        isLiveGW
-          ? el('div', { class: 'tile' },
-            el('span', { class: 'k' }, 'Flagged players'),
-            el('span', { class: 'v' }, squad.filter((p) => p.status !== 'a').length),
-            el('span', { class: 's' }, squad.filter((p) => p.status !== 'a').map((p) => p.web_name).join(', ') || 'all fit'))
-          : el('div', { class: `tile ${lost > 0.05 ? 'warn' : ''}` },
-            el('span', { class: 'k' }, 'On your bench'),
-            el('span', { class: 'v' }, lost > 0.05 ? `−${lost.toFixed(1)}` : '0.0'),
-            el('span', { class: 's' }, lost > 0.05 ? 'points left out of the XI' : 'you are playing the optimum')),
-      ),
-      isLiveGW
-        ? el('p', { class: 'hint' }, 'The gameweek is live, so the lineup is fixed.')
-        : el('p', { class: 'hint' }, `Ranked by projected points over ${lineupH === 1 ? 'the next gameweek' : `the next ${lineupH} gameweeks`}`
-          + ' — change the window top right. Drag a player onto another to swap them; hold to lift on a phone.'),
-      pitch,
-      !isLiveGW && lost > 0.05
-        ? el('button', { class: 'ghost', onClick: () => {
-          chosenXi = optimalClassic.xi.map((p) => p.id);
-          setState({ [MY_XI_KEY]: chosenXi });
-          paintClassicSquad();
-        } }, 'Reset to the strongest XI')
-        : null,
-    );
-
-    if (isLiveGW) return;
+    setKids(pitchHost, pitch);
     enableSwapping(pitch, {
       legal: (aId, bId) => {
         const inXi = (id) => chosenXi.includes(id);
         if (inXi(aId) === inXi(bId)) return false;
         const next = chosenXi.map((id) => (id === aId ? bId : id === bId ? aId : id));
-        return legalXI(next.map((id) => byId.get(id)).filter(Boolean));
+        return legalXI(next.map((id) => byId(5).get(id)).filter(Boolean));
       },
       onSwap: (aId, bId) => {
         chosenXi = chosenXi.map((id) => (id === aId ? bId : id === bId ? aId : id));
-        setState({ [MY_XI_KEY]: chosenXi });
-        paintClassicSquad();
+        setState({ myXi: chosenXi });
+        paintPitch();
       },
     });
   };
-  paintClassicSquad();
+  paintPitch();
 
-  /* ------------------------------------------------------------------ *
-   * where this squad sits
-   * ------------------------------------------------------------------ *
-   * The Draft tab answers this by ranking you against five rivals. Classic
-   * cannot: scripts/fetch-all.mjs pulls your picks and nobody else's, so there
-   * are no rival squads to rank against — only their scores, which is a
-   * different thing. So the Classic question is the one js/rating.js was built
-   * for: how much of what your money could buy are you actually getting,
-   * measured against the optimiser's best legal squad at the same spend.
-   *
-   * The window is the reader's to choose, and it excludes the one-gameweek
-   * option Draft offers. RATING_HORIZONS in js/rating.js records why.
-   */
+  const xiTotal = () => chosenXi.map((id) => byId(lineupH).get(id)).filter(Boolean)
+    .reduce((t, p) => t + p.proj * (p.id === captain?.id ? 2 : 1), 0);
+  const liveTotal = () => chosenXi.map((id) => byId(5).get(id)).filter(Boolean)
+    .reduce((t, p) => t + (livePts(p) ?? 0), 0);
+
+  const pitchHead = el('div', { class: 'row between tight' });
+  const paintHead = () => setKids(pitchHead,
+    label(isLiveGW ? `GW${currentEvent.id} live` : 'My squad',
+      source === 'fpl' ? 'From your FPL team' : 'From your saved squad'),
+    el('div', { class: 'row tight' },
+      el('span', { class: 'inline-metric' },
+        el('b', {}, isLiveGW ? String(Math.round(liveTotal())) : fmt.pts(xiTotal())),
+        el('i', {}, isLiveGW ? 'pts' : `over ${lineupH === 1 ? 'GW' : `${lineupH} GW`}`)),
+      horizonPicker(lineupH, (n) => {
+        lineupH = n;
+        setState({ [LINEUP_HZ]: n });
+        paintPitch(); paintHead();
+      }, { options: [1, 3, 5, 8] })));
+  paintHead();
+
+  /* Two columns from 900px: the pitch holds its shape on the left while the
+     numbers that read as a list — rating, suggestion, this week's move — stack
+     beside it. Widening the pitch instead would just inflate the kits. */
+  const sideCol = el('div', { class: 'sidecol' });
+  addKids(app, el('div', { class: 'pitch-and-side' },
+    el('div', {}, pitchHead, pitchHost),
+    sideCol));
+
+  /* ---------------- rating + summary strip ---------------- */
   const RATING_HZ = 'ratingHorizon';
   let ratingH = RATING_HORIZONS.includes(getState()[RATING_HZ]) ? getState()[RATING_HZ] : 5;
-  const ratingBank = state.bank ?? 0;
-  const ratingFT = state.freeTransfers ?? 1;
-  const ratingCache = new Map();
-  const ratingRowsAt = (h) => {
-    if (!ratingCache.has(h)) {
-      ratingCache.set(h, projectAll(d.boot, d.fixtures,
-        { horizon: h, riskAversion: state.riskAversion ?? 0.5 }).rows);
-    }
-    return ratingCache.get(h);
-  };
-
-  const ratingCard = el('div', { class: 'card' });
-  /* Each repaint claims a token. A slow rate that finishes after the reader has
-     already moved the picker again must not overwrite the newer one. */
-  let ratingRun = 0;
+  const ratingHost = el('div');
   const paintRating = () => {
-    const mine = ++ratingRun;
-    const windowLabel = ratingH >= SEASON_HORIZON ? 'the whole season' : `the next ${ratingH} gameweeks`;
-    const head = el('div', { class: 'row between' }, el('h2', {}, 'Squad rating'),
-      horizonPicker(ratingH, (n) => {
-        ratingH = n;
-        setState({ [RATING_HZ]: n });
-        paintRating();
-      }, { options: RATING_HORIZONS }));
-
-    setKids(ratingCard, head, el('p', { class: 'hint' }, `Rating over ${windowLabel}…`));
-
-    /* Rating runs the optimiser to build the ceiling — a few hundred
-       milliseconds. Yield first so the picker repaints immediately rather than
-       freezing under the reader's click. */
-    setTimeout(() => {
-      if (mine !== ratingRun) return;
-      const rows = ratingRowsAt(ratingH);
-      const atH = new Map(rows.map((r) => [r.id, r]));
-      const squadAtH = squad.map((p) => atH.get(p.id)).filter(Boolean);
-      const r = squadAtH.length === SQUAD_RULES.size
-        ? rateSquad(squadAtH, { pool: rows, bank: ratingBank, freeTransfers: ratingFT })
-        : { error: `Only ${squadAtH.length} of your ${SQUAD_RULES.size} players resolved at this window.` };
-      if (mine !== ratingRun) return;
-      if (r.error) {
-        setKids(ratingCard, head, el('p', { class: 'empty' }, r.error));
-        return;
-      }
-      const parts = r.parts;
-      setKids(ratingCard, head,
-        el('p', { class: 'hint' },
-          `How much of what your money could buy you are actually getting, over ${windowLabel}. `
-          + `Strongest: ${r.strongest.label} (${r.strongest.score}). `
-          + `Weakest: ${r.weakest.label} (${r.weakest.score}).`),
-        el('div', { class: 'dd-head' },
-          activityRings(
-            [
-              { label: 'Overall', value: r.overall, max: 100, colour: 'var(--lime, #9fed00)', detail: `of 100` },
-              { label: 'Best XI', value: r.dims.xi, max: 100, colour: 'var(--cyan, #8bffec)', detail: `${r.dims.xi}` },
-              { label: 'Depth', value: r.dims.depth, max: 100, colour: 'var(--yellow, #f4ff7b)', detail: `${r.dims.depth}` },
-            ],
-            { value: String(r.overall), caption: 'rating' },
-          ),
-          el('div', { class: 'tiles dd-tiles' },
-            el('div', { class: 'tile accent' },
-              el('span', { class: 'k' }, 'Your projection'),
-              el('span', { class: 'v' }, fmt.pts(parts.xiPts + parts.capPts)),
-              el('span', { class: 's' }, 'best XI, captain doubled')),
-            el('div', { class: 'tile' },
-              el('span', { class: 'k' }, 'Achievable ceiling'),
-              el('span', { class: 'v' }, fmt.pts(parts.bestXiPts + parts.bestCapPts)),
-              el('span', { class: 's' }, `the best legal squad at ${fmt.price(parts.budget)}`)),
-            el('div', { class: 'tile' },
-              el('span', { class: 'k' }, 'Captain'),
-              el('span', { class: 'v' }, parts.captain ? parts.captain.web_name : '—'),
-              el('span', { class: 's' }, parts.captain ? `${fmt.pts(parts.capPts)} over the window` : '')),
-          ),
-        ),
-      );
-    }, 0);
+    const rows = rowsAt(ratingH);
+    const at = new Map(rows.map((r) => [r.id, r]));
+    const mine = squadIds.map((id) => at.get(id)).filter(Boolean);
+    if (mine.length !== SQUAD_RULES.size) return;
+    const r = rateSquad(mine, { pool: rows, bank, freeTransfers });
+    if (r.error) { setKids(ratingHost, el('p', { class: 'empty' }, r.error)); return; }
+    const cap = r.parts.captain;
+    setKids(ratingHost,
+      el('div', { class: 'row between tight' },
+        label('Rating', 'How much of what your money could buy you are actually getting'),
+        horizonPicker(ratingH, (n) => { ratingH = n; setState({ [RATING_HZ]: n }); paintRating(); },
+          { options: RATING_HORIZONS })),
+      /* The summary strip, straight from Figma 236:198 — one bordered surface,
+         a rule under the labels, four cells. */
+      el('div', { class: 'summary' },
+        el('div', { class: 'sc' }, el('span', { class: 'sl' }, 'Rating'),
+          el('span', { class: 'sv accent' }, String(r.overall))),
+        el('div', { class: 'sc' }, el('span', { class: 'sl' }, 'Projection'),
+          el('span', { class: 'sv' }, fmt.pts(r.parts.xiPts + r.parts.capPts))),
+        el('div', { class: 'sc' }, el('span', { class: 'sl' }, 'Strength'),
+          el('span', { class: 'sv' }, r.strongest.label)),
+        el('div', { class: 'sc' }, el('span', { class: 'sl' }, 'Weakness'),
+          el('span', { class: 'sv' }, r.weakest.label)),
+        /* The model's pick, NOT the armband on the pitch — those are different
+           claims and labelling both "Captain" made the page contradict itself.
+           When they disagree, that disagreement is the useful bit. */
+        el('div', { class: 'sc', title: 'The highest-projected starter — compare with the armband on the pitch' },
+          el('span', { class: 'sl' }, 'Best cap'),
+          el('span', { class: `sv ${cap && cap.id !== captain?.id ? 'accent' : ''}` }, cap ? cap.web_name : '—')),
+      ));
   };
   paintRating();
-  addKids(app, ratingCard);
+  addKids(sideCol, ratingHost);
 
-  addKids(app, squadCard);
-} else {
-  addKids(app, 
-    el('div', { class: 'card' },
-      el('h2', {}, 'No squad yet'),
-      // Three different situations used to share one message telling you to set
-      // a variable you may already have set. FPL does not publish picks until
-      // the first deadline passes, so between registering a team and GW1 the
-      // entry resolves, the NAME is known, and the squad is legitimately empty.
-      // Saying "go set the variable" there is wrong and wastes the reader's time.
-      d.entry?.entry?.name
-        ? el('p', {},
-          'Your team ', el('strong', {}, d.entry.entry.name), ' is connected, but FPL does not publish ',
-          'picks until the first deadline passes. It will appear here once GW1 locks. ',
-          'Until then you can plan one on the ', el('a', { href: 'squad.html' }, 'Squad'), ' page.',
-        )
-        : el('p', {},
-          'Set the ', el('code', {}, 'FPL_ENTRY_ID'), ' repository variable to pull your real team automatically, ',
-          'or build one on the ', el('a', { href: 'squad.html' }, 'Squad'), ' page and save it to this browser.',
-        ),
-    ),
-  );
+  /* ---------------- suggested squad ---------------- */
+  const OPT_HZ = 'optimiserTransfers';
+  let plannedTransfers = getState()[OPT_HZ] ?? freeTransfers;
+  const suggestHost = el('div');
+  const paintSuggest = () => {
+    const rows = rowsAt(8);
+    const reach = optimiseWithinTransfers(squadIds, rows, {
+      bank, transfers: plannedTransfers, horizon: 8, riskAversion,
+    });
+    if (reach.error) { setKids(suggestHost, el('p', { class: 'empty' }, reach.error)); return; }
+    setKids(suggestHost,
+      el('div', { class: 'row between tight' },
+        label('Suggested squad', 'The best squad reachable with the transfers you have — no hits'),
+        el('div', { class: 'row tight' },
+          el('span', { class: 'inline-metric' },
+            el('b', { class: reach.gain > 0 ? 'up' : '' }, reach.gain > 0 ? fmt.signed(reach.gain) : '—'),
+            el('i', {}, 'over 8 GW')),
+          el('select', {
+            class: 'hz hz-picker hz-next5',
+            title: 'Transfers to spend',
+            onChange: (e) => { plannedTransfers = +e.target.value; setState({ [OPT_HZ]: plannedTransfers }); paintSuggest(); },
+          }, [0, 1, 2, 3, 4, 5].map((n) => el('option', { value: String(n), selected: n === plannedTransfers },
+            `${n} FT`))))),
+      reach.moves.length
+        ? el('div', { class: 'rowlist' }, reach.moves.map((m) => el('div', { class: 'lrow' },
+            el('span', { class: 'lo' }, m.out.web_name,
+              el('i', {}, teams[m.out.team]?.short_name || '')),
+            el('span', { class: 'la' }, '→'),
+            el('span', { class: 'li' }, m.in.web_name,
+              el('i', {}, teams[m.in.team]?.short_name || '')),
+            el('span', { class: 'lv up' }, fmt.signed(m.in.proj - m.out.proj)))))
+        : el('p', { class: 'empty tight' }, 'Nothing worth doing with those transfers.'));
+  };
+  paintSuggest();
+  addKids(sideCol, suggestHost);
+
+  /* ---------------- this week's move ---------------- */
+  const rec = recommendedHorizon({ squad, freeTransfers });
+  const sug = suggestTransfers(squadIds, rowsAt(rec.horizon), {
+    bank, freeTransfers, horizon: rec.horizon, riskAversion, maxSuggestions: 12,
+  });
+  if (!sug.error) {
+    const gainAt = (move, h) => {
+      const at = byId(h);
+      const sq = squadIds.map((id) => at.get(id)).filter(Boolean);
+      const inc = at.get(move.in.id);
+      if (!inc) return 0;
+      const base = scoreSquad(sq, { horizon: h, riskAversion });
+      return scoreSquad(sq.filter((p) => p.id !== move.out.id).concat(inc), { horizon: h, riskAversion }) - base;
+    };
+    const best = bestMove(sug.singles, gainAt, { hit: freeTransfers >= 1 ? 0 : 4 });
+    addKids(sideCol,
+      el('div', { class: 'row between tight' },
+        label('This week', rec.why),
+        el('span', { class: `verdict ${best?.move ? 'go' : 'hold'}` }, best?.verdict || 'HOLD')),
+      best?.move
+        ? el('div', { class: 'rowlist' }, el('div', { class: 'lrow' },
+            el('span', { class: 'lo' }, best.move.out.web_name, el('i', {}, teams[best.move.out.team]?.short_name || '')),
+            el('span', { class: 'la' }, '→'),
+            el('span', { class: 'li' }, best.move.in.web_name, el('i', {}, teams[best.move.in.team]?.short_name || '')),
+            el('span', { class: 'lv up' }, fmt.signed(best.gain))))
+        : el('p', { class: 'empty tight' }, 'No move clears the bar this week.'),
+      el('p', { class: 'seemore' }, el('a', { href: 'transfers.html' }, 'Every legal move →')));
+  }
 }
 
 /* ------------------------------------------------------------------ *
- * live matches (ESPN)
+ * matches
  * ------------------------------------------------------------------ */
 const matches = (d.scoreboard?.events || [])
   .filter((m) => {
@@ -388,13 +313,13 @@ const matches = (d.scoreboard?.events || [])
     return t > Date.now() - 3 * 864e5 && t < Date.now() + 8 * 864e5;
   })
   .sort((a, b) => new Date(a.date) - new Date(b.date))
-  .slice(0, 12);
+  .slice(0, 10);
 
 if (matches.length) {
   const wrap = el('div', { class: 'matches' });
   for (const m of matches) {
     const cls = m.state === 'in' ? 'live' : m.state === 'post' ? 'done' : '';
-    addKids(wrap, 
+    addKids(wrap,
       el('div', { class: `match ${cls}` },
         el('div', { class: 't h' }, m.home.logo ? el('img', { src: m.home.logo, alt: '', loading: 'lazy' }) : null, m.home.short || m.home.name),
         el('div', { class: 'sc' },
@@ -404,101 +329,7 @@ if (matches.length) {
           el('span', { class: 'st' }, m.state === 'in' ? (m.clock || 'LIVE') : m.state === 'post' ? 'FT' : ''),
         ),
         el('div', { class: 't a' }, m.away.logo ? el('img', { src: m.away.logo, alt: '', loading: 'lazy' }) : null, m.away.short || m.away.name),
-      ),
-    );
+      ));
   }
-  addKids(app, el('div', { class: 'card' }, el('h2', {}, 'Matches'), wrap));
+  addKids(app, label('Matches'), wrap);
 }
-
-/* ------------------------------------------------------------------ *
- * price movers
- * ------------------------------------------------------------------ */
-const risers = rows.filter((p) => p.cost_change_event > 0).sort((a, b) => b.cost_change_event - a.cost_change_event).slice(0, 8);
-const fallers = rows.filter((p) => p.cost_change_event < 0).sort((a, b) => a.cost_change_event - b.cost_change_event).slice(0, 8);
-const transfersIn = [...rows].sort((a, b) => b.transfers_in_event - a.transfers_in_event).slice(0, 8);
-
-const moverList = (items, render) =>
-  el('ul', { class: 'mover-list' }, items.map((p) => el('li', {}, el('span', {}, p.web_name), render(p))));
-
-if (risers.length || fallers.length || transfersIn.length) {
-  addKids(app, 
-    el('div', { class: 'card' },
-      el('h2', {}, 'Market movement this gameweek'),
-      el('div', { class: 'movers' },
-        el('div', {},
-          el('h3', { class: 'small dim' }, 'Price risers'),
-          risers.length ? moverList(risers, (p) => el('span', { class: 'up' }, `+£${(p.cost_change_event / 10).toFixed(1)}m`)) : el('p', { class: 'empty' }, 'None'),
-        ),
-        el('div', {},
-          el('h3', { class: 'small dim' }, 'Price fallers'),
-          fallers.length ? moverList(fallers, (p) => el('span', { class: 'down' }, `£${(p.cost_change_event / 10).toFixed(1)}m`)) : el('p', { class: 'empty' }, 'None'),
-        ),
-        el('div', {},
-          el('h3', { class: 'small dim' }, 'Most transferred in'),
-          moverList(transfersIn, (p) => el('span', { class: 'dim' }, p.transfers_in_event.toLocaleString('en-GB'))),
-        ),
-      ),
-    ),
-  );
-}
-
-/* ------------------------------------------------------------------ *
- * best value right now
- * ------------------------------------------------------------------ */
-const picks = [...rows]
-  .filter((p) => p.status === 'a' && p.proj > 0)
-  .sort((a, b) => b.value - a.value)
-  .slice(0, 10);
-
-addKids(app, 
-  el('div', { class: 'card' },
-    el('h2', {}, `Best value over the next ${horizon} gameweeks`),
-    el('p', { class: 'hint' }, 'Projected points per £1.0m. Click any player for the full breakdown.'),
-    el('ul', { class: 'mover-list' }, picks.map((p) =>
-      el('li', { style: 'cursor:pointer', onClick: () => showPlayer(p) },
-        el('span', {}, posPill(p), ' ', p.web_name, el('span', { class: 'dim small' }, ` ${teams[p.team]?.short_name}`)),
-        el('span', {}, el('span', { class: 'dim small' }, `${fmt.price(p.now_cost)} · `), el('strong', {}, fmt.pts(p.proj))),
-      ),
-    )),
-  ),
-);
-
-/* ------------------------------------------------------------------ *
- * watchlist from curated research
- * ------------------------------------------------------------------ */
-if (d.notes?.watchlist?.length) {
-  addKids(app, 
-    el('div', { class: 'card' },
-      el('h2', {}, 'Season watchlist'),
-      el('ul', {}, d.notes.watchlist.map((w) => el('li', { style: 'margin:0.35rem 0' }, w))),
-      el('p', { class: 'hint' }, el('a', { href: 'market.html' }, 'Full market and manager notes →')),
-    ),
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/** A player's upcoming fixtures, shaped for the shared player card. */
-const fixturesFor = (p) => (d.fixtures || [])
-  .filter((f) => f.event && (f.team_h === p.team || f.team_a === p.team))
-  .map((f) => ({
-    event: f.event,
-    home: f.team_h === p.team,
-    opponent: f.team_h === p.team ? f.team_a : f.team_h,
-    difficulty: f.team_h === p.team ? f.team_h_difficulty : f.team_a_difficulty,
-  }))
-  .sort((a, b) => a.event - b.event);
-
-function showPlayer(p) {
-  playerCard(p, {
-    teams,
-    fixturesFor,
-    horizon: 5,
-    fromEvent: ctx?.nextEvent ?? 1,
-    extra: el('div', { class: 'tiles' },
-      el('div', { class: 'tile' }, el('span', { class: 'k' }, 'Price'), el('span', { class: 'v' }, fmt.price(p.now_cost))),
-      el('div', { class: 'tile' }, el('span', { class: 'k' }, `Proj ${horizon} GW`), el('span', { class: 'v' }, fmt.pts(p.proj))),
-      el('div', { class: 'tile' }, el('span', { class: 'k' }, 'Owned by'), el('span', { class: 'v' }, `${p.selected_by_percent}%`)),
-    ),
-  });
-}
-
