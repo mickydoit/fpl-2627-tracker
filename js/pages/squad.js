@@ -1,7 +1,8 @@
 import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
 import { projectAll, POS, SQUAD_RULES, actionableEvent } from '../model.js';
 import { rateSquad } from '../rating.js';
-import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI, scoreSquad } from '../optimiser.js';
+import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI, scoreSquad,
+  optimiseWithinTransfers } from '../optimiser.js';
 import { squadPitch, playerCard } from '../squadview.js';
 import { fdrLegend, horizonBadge } from '../ui.js';
 import { suggestTransfers } from '../optimiser.js';
@@ -21,6 +22,15 @@ let benchWeight = state.benchWeight ?? 0.12;
 let locked = new Set(state.locked || []);
 let excluded = new Set(state.excluded || []);
 let manualXi = state.manualXi || null;
+/**
+ * How many transfers the reachable squad may spend.
+ *
+ * Seeded from the free-transfer count set on the Transfers page, but stored
+ * under its own key: asking "what would banking three buy me?" is a question
+ * about a hypothetical, and answering it must not overwrite what you actually
+ * have. FPL banks to five, so that is the ceiling.
+ */
+let plannedTransfers = state.optimiserTransfers ?? state.freeTransfers ?? 1;
 let result = null;
 let lastMs = 0;
 
@@ -76,6 +86,9 @@ function renderControls() {
         el('select', { onchange: (e) => { benchWeight = +e.target.value; setState({ benchWeight }); run(); } },
           [['0.02', 'Minimal — max the XI'], ['0.12', 'Balanced'], ['0.35', 'Strong bench']].map(([v, l]) =>
             el('option', { value: v, selected: +v === benchWeight }, l)))),
+      el('label', {}, 'Transfers available',
+        el('select', { onchange: (e) => { plannedTransfers = +e.target.value; setState({ optimiserTransfers: plannedTransfers }); run(); } },
+          [0, 1, 2, 3, 4, 5].map((n) => el('option', { value: n, selected: n === plannedTransfers }, String(n))))),
       el('button', { class: 'primary', onClick: run }, 'Optimise squad'),
     ),
     el('p', { class: 'hint' },
@@ -627,13 +640,38 @@ function compareCard(result) {
 
   const mineXI = bestXI(mine);
   const mineScore = scoreSquad(mine, { horizon, riskAversion });
-  const optScore = scoreSquad(result.squad, { horizon, riskAversion });
+
+  /* The squad you can actually reach, and what each extra transfer buys.
+   *
+   * The whole ladder is solved, not just the chosen rung: the interesting
+   * number is almost never the total, it is where the gain stops growing.
+   * Each solve is single-digit milliseconds, so there is no reason to make the
+   * reader move a control to find that out. */
+  const cstate = getState();
+  const bank = cstate.bank ?? 0;
+  const solveOpts = { horizon, riskAversion, benchWeight, excludedIds: [...excluded] };
+  const ladder = [0, 1, 2, 3, 4, 5].map((n) =>
+    optimiseWithinTransfers(mineIds, rows, { bank, transfers: n, ...solveOpts }));
+  const reach = ladder[Math.min(plannedTransfers, ladder.length - 1)];
+
+  /* Seeded with the reachable squads so the benchmark can never read LOWER
+     than a squad reachable under a transfer limit — which is nonsense on its
+     face and does happen: randomised construction alone left 1.6 points on the
+     table on one dataset. See optimiseSquad's seedSquads. */
+  const ceiling = optimiseSquad(rows, {
+    budget: squadCost(mine) + bank,
+    ...solveOpts,
+    lockedIds: [...locked],
+    seedSquads: ladder.map((r) => r.squad).filter(Boolean),
+  }) || result;
+
+  const optScore = scoreSquad(ceiling.squad, { horizon, riskAversion });
   const delta = optScore - mineScore;
 
-  const optIds = new Set(result.squad.map((p) => p.id));
+  const optIds = new Set(ceiling.squad.map((p) => p.id));
   const mineSet = new Set(mine.map((p) => p.id));
   const out = mine.filter((p) => !optIds.has(p.id)).sort((a, b) => b.proj - a.proj);
-  const inc = result.squad.filter((p) => !mineSet.has(p.id)).sort((a, b) => b.proj - a.proj);
+  const inc = ceiling.squad.filter((p) => !mineSet.has(p.id)).sort((a, b) => b.proj - a.proj);
 
   const openPlayer = (p) => playerCard(p, { teams, fixturesFor, horizon, fromEvent: ctx?.nextEvent ?? 1 });
   const pitchFor = (squad) => {
@@ -653,26 +691,64 @@ function compareCard(result) {
         el('span', { class: 'k' }, `Your squad · ${horizon} GW`),
         el('span', { class: 'v' }, fmt.pts(mineScore)),
         el('span', { class: 's' }, source === 'fpl' ? 'from your FPL team' : 'from your saved squad')),
+      el('div', { class: `tile ${reach.gain > 0 ? 'accent' : ''}` },
+        el('span', { class: 'k' }, `With ${plannedTransfers} transfer${plannedTransfers === 1 ? '' : 's'}`),
+        el('span', { class: 'v' }, fmt.pts(reach.score)),
+        el('span', { class: 's' }, reach.transfersUsed
+          ? `${fmt.signed(reach.gain)} · ${reach.transfersUsed} move${reach.transfersUsed === 1 ? '' : 's'}`
+          : 'nothing worth doing')),
       el('div', { class: 'tile' },
-        el('span', { class: 'k' }, `Optimiser · ${horizon} GW`),
+        el('span', { class: 'k' }, 'Unreachable ceiling'),
         el('span', { class: 'v' }, fmt.pts(optScore)),
-        el('span', { class: 's' }, 'built from scratch today')),
-      el('div', { class: `tile ${delta > 0 ? 'accent' : ''}` },
-        el('span', { class: 'k' }, 'Theoretical gap'),
-        el('span', { class: 'v' }, fmt.signed(delta)),
-        el('span', { class: 's' }, `${out.length} player${out.length === 1 ? '' : 's'} differ`)),
+        el('span', { class: 's' }, `${out.length} player${out.length === 1 ? '' : 's'} differ · ${fmt.signed(delta)}`)),
     ),
     el('p', { class: 'hint' },
-      'The optimiser builds from scratch under the budget — it is a benchmark, not a to-do list. '
-      + 'Differences here are differences, not recommended transfers; the Transfers page decides that, '
-      + 'and it has to clear a far higher bar than a projection gap before it says move.'),
+      `The squad above is the best one you can REACH with ${plannedTransfers} transfer`
+      + `${plannedTransfers === 1 ? '' : 's'} and ${fmt.price(bank)} in the bank — every move is one you could make. `
+      + 'The ceiling beside it is built from scratch and costs a transfer per player changed, '
+      + 'so it is a benchmark rather than a plan. No suggestion here takes a −4 hit; '
+      + 'set the transfer count to what you have, or to what you would have after banking.'),
+
+    /* Where the gain stops growing is the actual decision — banking a fourth
+       transfer is only worth it if the fourth rung is meaningfully higher. */
+    el('h3', {}, 'What each transfer buys'),
+    el('div', { class: 'tablewrap' }, el('table', { class: 'players' },
+      el('thead', {}, el('tr', {}, ...['Transfers', `Squad · ${horizon} GW`, 'Gain', 'Extra over previous', 'Moves'].map((h) => el('th', {}, h)))),
+      el('tbody', {}, ladder.map((r, n) => el('tr', { class: n === plannedTransfers ? 'picked' : '' },
+        el('td', {}, String(n)),
+        el('td', { class: 'num' }, fmt.pts(r.score)),
+        el('td', { class: 'num' }, n === 0 ? '—' : fmt.signed(r.gain)),
+        el('td', { class: 'num' }, n === 0 ? '—' : fmt.signed(r.gain - ladder[n - 1].gain)),
+        el('td', {}, r.moves.length
+          ? r.moves.map((m) => `${m.out.web_name} → ${m.in.web_name}`).join(', ')
+          : '—'),
+      ))),
+    )),
+
+    reach.moves.length
+      ? el('div', {},
+          el('h3', {}, `Your ${reach.transfersUsed} move${reach.transfersUsed === 1 ? '' : 's'}`),
+          el('div', {}, reach.moves.map((m) => el('div', { class: 'row between', style: 'padding:0.35rem 0.75rem;border-bottom:1px solid var(--border-soft)' },
+            el('span', {}, el('strong', { class: 'down' }, m.out.web_name),
+              el('span', { class: 'dim' }, ` ${teams[m.out.team]?.short_name} · ${fmt.price(m.out.now_cost)} · ${fmt.pts(m.out.proj)}`),
+              ' → ',
+              el('strong', { class: 'up' }, m.in.web_name),
+              el('span', { class: 'dim' }, ` ${teams[m.in.team]?.short_name} · ${fmt.price(m.in.now_cost)} · ${fmt.pts(m.in.proj)}`)),
+            el('span', { class: 'dim' }, fmt.signed(m.in.proj - m.out.proj)),
+          ))),
+          el('p', { class: 'hint' }, `Leaves ${fmt.price(reach.remaining)} in the bank.`))
+      : null,
+
     el('div', { class: 'compare-grid' },
       el('div', { class: 'compare-col' },
         el('h3', {}, source === 'fpl' ? 'My FPL squad' : 'My saved squad'),
         pitchFor(mine)),
       el('div', { class: 'compare-col' },
-        el('h3', {}, 'Optimiser squad'),
-        pitchFor(result.squad)),
+        el('h3', {}, `Reachable with ${plannedTransfers}`),
+        pitchFor(reach.squad)),
+      el('div', { class: 'compare-col' },
+        el('h3', {}, 'Unreachable ceiling'),
+        pitchFor(ceiling.squad)),
     ),
     actionableCard(mine, mineIds),
     /* After actionableCard, which is what publishes the adviser's verdict. */

@@ -262,7 +262,7 @@ function clubsLegal(squad) {
 }
 
 /** One steepest-ascent pass over single swaps. Returns the best improvement or null. */
-function bestSingleSwap(current, pool, { budget, lockedIds, opts, best }) {
+function bestSingleSwap(current, pool, { budget, lockedIds, opts, best, accept = null }) {
   let bestSwap = null;
   for (let i = 0; i < current.length; i++) {
     const out = current[i];
@@ -279,6 +279,8 @@ function bestSingleSwap(current, pool, { budget, lockedIds, opts, best }) {
       if (inc.proj <= out.proj && inc.now_cost >= out.now_cost) continue; // strictly dominated
 
       const trial = [...rest, inc];
+      // Checked before scoring: rejecting a trial is far cheaper than valuing it.
+      if (accept && !accept(trial)) continue;
       const s = scoreSquad(trial, opts);
       if (s > best + 1e-9 && (!bestSwap || s > bestSwap.score)) {
         bestSwap = { score: s, squad: trial };
@@ -297,7 +299,7 @@ function bestSingleSwap(current, pool, { budget, lockedIds, opts, best }) {
  * searched too, restricted to plausible (upgrade, downgrade) combinations to keep
  * it fast enough to run in the browser.
  */
-function bestPairSwap(current, pool, { budget, lockedIds, opts, best, upgradeK = 10, downgradeK = 6 }) {
+function bestPairSwap(current, pool, { budget, lockedIds, opts, best, accept = null, upgradeK = 10, downgradeK = 6 }) {
   let bestMove = null;
   const owned = new Set(current.map((p) => p.id));
 
@@ -334,6 +336,7 @@ function bestPairSwap(current, pool, { budget, lockedIds, opts, best, upgradeK =
           if (restCost + inI.now_cost + inJ.now_cost > budget) continue;
           const trial = [...rest, inI, inJ];
           if (!clubsLegal(trial)) continue;
+          if (accept && !accept(trial)) continue;
           const s = scoreSquad(trial, opts);
           if (s > best + 1e-9 && (!bestMove || s > bestMove.score)) {
             bestMove = { score: s, squad: trial };
@@ -345,20 +348,20 @@ function bestPairSwap(current, pool, { budget, lockedIds, opts, best, upgradeK =
   return bestMove;
 }
 
-function improve(squad, pool, { budget, lockedIds, opts, maxPasses = 40 }) {
+function improve(squad, pool, { budget, lockedIds, opts, accept = null, maxPasses = 40 }) {
   let current = [...squad];
   let best = scoreSquad(current, opts);
 
   for (let pass = 0; pass < maxPasses; pass++) {
     // Cheap single swaps first — they resolve most of the gap.
-    const single = bestSingleSwap(current, pool, { budget, lockedIds, opts, best });
+    const single = bestSingleSwap(current, pool, { budget, lockedIds, opts, best, accept });
     if (single) {
       current = single.squad;
       best = single.score;
       continue;
     }
     // Only reach for the expensive paired search once singles are exhausted.
-    const pair = bestPairSwap(current, pool, { budget, lockedIds, opts, best });
+    const pair = bestPairSwap(current, pool, { budget, lockedIds, opts, best, accept });
     if (!pair) break;
     current = pair.squad;
     best = pair.score;
@@ -378,6 +381,19 @@ export function optimiseSquad(players, options = {}) {
     excludedIds = [],
     restarts = 8,
     seed = 12345,
+    /**
+     * Squads to improve from in addition to the randomised greedy seeds.
+     *
+     * Randomised construction is not guaranteed to reach the optimum in a fixed
+     * number of restarts — on one sample dataset eight restarts landed 1.6
+     * points short of where sixteen converged. That is normally invisible, but
+     * it becomes absurd when this result is shown beside a squad reached under
+     * a TRANSFER limit: the benchmark can read lower than the thing it is
+     * supposed to be the ceiling for. Handing the constrained result in as a
+     * starting point removes the possibility by construction rather than by
+     * raising the restart count and hoping.
+     */
+    seedSquads = [],
     ...opts
   } = options;
 
@@ -416,6 +432,22 @@ export function optimiseSquad(players, options = {}) {
     if (!best || result.score > best.score) best = result;
   }
 
+  /* Improve from any squad the caller supplies, on the same terms. Skipped
+     rather than rejected if it does not fit the budget or the roster rules —
+     a caller passing last week's squad after a price change should not lose
+     the whole solve over it. */
+  for (const given of seedSquads) {
+    const sq = given.map((p) => byId.get(p?.id ?? p)).filter(Boolean);
+    if (sq.length !== SQUAD_RULES.size) continue;
+    if (squadCost(sq) > budget) continue;
+    if (sq.some((p) => exclude.has(p.id))) continue;
+    for (const p of sq) {
+      if (!pool[p.element_type].some((q) => q.id === p.id)) pool[p.element_type].push(p);
+    }
+    const result = improve(sq, pool, { budget, lockedIds: lockedSet, opts });
+    if (!best || result.score > best.score) best = result;
+  }
+
   if (!best) return null;
 
   const squad = best.squad;
@@ -424,6 +456,92 @@ export function optimiseSquad(players, options = {}) {
     squad: [...squad].sort((a, b) => a.element_type - b.element_type || b.proj - a.proj),
     xi, bench, captain, vice, formation,
     score: best.score,
+    cost: squadCost(squad),
+    remaining: budget - squadCost(squad),
+    projected: xi.reduce((t, p) => t + p.proj, 0) + (captain?.proj || 0),
+  };
+}
+
+/**
+ * The best squad you can actually REACH, given the transfers you have.
+ *
+ * `optimiseSquad` answers "what is the strongest fifteen for £100m". That is a
+ * benchmark, not a plan: acting on it costs one transfer per player changed,
+ * and on a real squad it usually differs by six or seven. At −4 a piece beyond
+ * your free transfers, the theoretical gain is spent several times over before
+ * you have finished buying it.
+ *
+ * This answers the question a manager actually has. Same search, two changes:
+ *
+ * 1. **The budget is what you hold**, `squadCost(yours) + bank` — not a fresh
+ *    £100m. You can only spend what selling your own players raises.
+ * 2. **A hard cap on how far the squad may drift from the one you own.**
+ *
+ * The cap counts the FINAL difference, not the moves made along the way. That
+ * matters: the local search reaches good squads by passing through
+ * intermediate ones, and a slot it moves away and later moves back has cost
+ * nothing in the real game. Counting moves instead of difference would charge
+ * for transfers that were never made and refuse squads that are plainly legal.
+ *
+ * No hits, ever. The cap is hard rather than priced, because a manager who has
+ * decided not to take hits wants the best squad without them, not a solver
+ * second-guessing that with a −4 it likes the look of.
+ *
+ * Deterministic, and no restarts: the starting point is your squad rather than
+ * a randomised greedy seed, so there is nothing to average over.
+ *
+ * @param {number[]} squadIds the fifteen you own
+ * @param {object[]} players  projected rows
+ * @param {object} options    bank (tenths), transfers, plus scoreSquad options
+ */
+export function optimiseWithinTransfers(squadIds, players, options = {}) {
+  const { bank = 0, transfers = 1, excludedIds = [], ...opts } = options;
+  const byId = new Map(players.map((p) => [p.id, p]));
+  const current = squadIds.map((id) => byId.get(id)).filter(Boolean);
+  if (current.length !== SQUAD_RULES.size) {
+    return { error: `Squad has ${current.length} players, need ${SQUAD_RULES.size}.` };
+  }
+
+  const budget = squadCost(current) + bank;
+  const originIds = new Set(current.map((p) => p.id));
+  const baseScore = scoreSquad(current, opts);
+
+  const pool = poolByPosition(players, { exclude: new Set(excludedIds) });
+  /* Your own players must be in the pool even if pruning dropped them, or the
+     search cannot move a slot back to where it started and free a transfer. */
+  for (const p of current) {
+    if (!pool[p.element_type].some((q) => q.id === p.id)) pool[p.element_type].push(p);
+  }
+
+  const accept = (trial) => {
+    let changed = 0;
+    for (const p of trial) if (!originIds.has(p.id)) changed++;
+    return changed <= transfers;
+  };
+
+  const { squad, score } = transfers > 0
+    ? improve(current, pool, { budget, lockedIds: new Set(), opts, accept })
+    : { squad: current, score: baseScore };
+
+  /* Position quotas are fixed, so the players leaving and arriving match up
+     position by position — which is what a transfer actually is. */
+  const out = current.filter((p) => !squad.some((q) => q.id === p.id));
+  const incoming = squad.filter((p) => !originIds.has(p.id));
+  const moves = out.map((o) => {
+    const i = incoming.findIndex((x) => x.element_type === o.element_type);
+    return { out: o, in: i >= 0 ? incoming.splice(i, 1)[0] : null };
+  }).filter((m) => m.in);
+
+  const { xi, bench, captain, vice, formation } = bestXI(squad);
+  return {
+    squad: [...squad].sort((a, b) => a.element_type - b.element_type || b.proj - a.proj),
+    xi, bench, captain, vice, formation,
+    score,
+    baseScore,
+    gain: score - baseScore,
+    moves,
+    transfersUsed: moves.length,
+    transfersAllowed: transfers,
     cost: squadCost(squad),
     remaining: budget - squadCost(squad),
     projected: xi.reduce((t, p) => t + p.proj, 0) + (captain?.proj || 0),

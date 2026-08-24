@@ -16,7 +16,8 @@ import { ownershipFrom, availableRows, deriveSlot, myRoster, positionsNeeded } f
 import { makeRng, picksBetween, survival } from '../js/draft/simulate.js';
 import { recommend } from '../js/draft/advise.js';
 import { runDraft, STRATEGIES } from '../js/draft/compete.js';
-import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI } from '../js/optimiser.js';
+import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI,
+  optimiseWithinTransfers } from '../js/optimiser.js';
 import { hydrate, PRIOR_DEFAULTS, poolPlayerSeasons, espnEvidence } from '../js/prior.js';
 import { ALLOWED_MODEL_SEASONS, CURRENT_SEASON, isAllowedSeason, seasonStartYear,
   assertAllowedSeason, onlyAllowedSeasons } from '../js/seasons.js';
@@ -123,6 +124,8 @@ const longById = new Map(long.map((p) => [p.id, p]));
 const sample = rows.filter((p) => p.proj > 5).slice(0, 50);
 ok('a longer horizon projects more points', sample.every((p) => longById.get(p.id).proj >= shortById.get(p.id).proj - 1e-9));
 
+const squadCostOf = (sq) => sq.reduce((t, p) => t + p.now_cost, 0);
+
 console.log('\nOptimiser');
 const t0 = Date.now();
 const opt = optimiseSquad(rows, { horizon: 5, restarts: 8 });
@@ -200,6 +203,88 @@ for (const p of [...rows].filter((p) => p.status === 'a' && p.proj > 0).sort((a,
 if (weak.length === 15) {
   const weakSug = suggestTransfers(weak.map((p) => p.id), rows, { bank: 400, freeTransfers: 1, horizon: 5 });
   ok('a weak squad has improving transfers', weakSug.singles.length > 0 && weakSug.singles[0].net > 1, `best ${weakSug.singles[0]?.net.toFixed(2)}`);
+}
+
+/* ------------------------------------------------------------------ *
+ * transfer-constrained optimiser
+ * ------------------------------------------------------------------ *
+ * The from-scratch optimiser answers "what is the best fifteen for £100m",
+ * which is a benchmark nobody can reach: acting on it costs a transfer per
+ * player changed. This one answers the question an actual manager has —
+ * "what is the best fifteen I can REACH with the transfers I have" — so its
+ * whole job is respecting a budget the other solver does not have.
+ */
+console.log('\nTransfer-constrained optimiser');
+{
+  /* A deliberately sub-optimal starting squad: solved at a reduced budget, then
+     handed the difference as bank. That guarantees there is something to find
+     without hand-picking a squad the solver is known to improve. */
+  const START_BUDGET = 950;
+  const seedSquad = optimiseSquad(rows, { budget: START_BUDGET, horizon: 5 });
+  ok('the constrained optimiser has a starting squad to work from',
+    seedSquad?.squad?.length === 15);
+
+  if (seedSquad?.squad?.length === 15) {
+    const ids = seedSquad.squad.map((p) => p.id);
+    const bank = 1000 - squadCostOf(seedSquad.squad);
+    const run = (transfers) => optimiseWithinTransfers(ids, rows, { bank, transfers, horizon: 5 });
+    const originIds = new Set(ids);
+    const changed = (r) => r.squad.filter((p) => !originIds.has(p.id)).length;
+
+    const none = run(0);
+    ok('zero transfers returns the squad untouched',
+      changed(none) === 0 && none.moves.length === 0 && near(none.gain, 0, 1e-9),
+      `${changed(none)} changed, gain ${none.gain}`);
+
+    const results = [1, 2, 3, 4, 5].map(run);
+    ok('every result is a legal squad',
+      results.every((r) => validate(r.squad, 1000).ok),
+      results.map((r) => validate(r.squad, 1000).errors?.join(';')).filter(Boolean).join(' | '));
+    ok('the transfer budget is never exceeded',
+      results.every((r, i) => changed(r) <= i + 1),
+      results.map((r, i) => `${i + 1}->${changed(r)}`).join(' '));
+    ok('every reported move is matched within its own position',
+      results.every((r) => r.moves.every((m) => m.out.element_type === m.in.element_type)));
+    ok('the moves reported are exactly the players that changed',
+      results.every((r) => r.moves.length === changed(r)),
+      results.map((r) => `${r.moves.length}/${changed(r)}`).join(' '));
+    /* Spending money you do not have is the failure that would make every
+       suggestion useless, so it is asserted on cost directly rather than
+       inferred from validate(). */
+    ok('the cash budget is never exceeded',
+      results.every((r) => squadCostOf(r.squad) <= squadCostOf(seedSquad.squad) + bank + 1e-9),
+      results.map((r) => squadCostOf(r.squad)).join(' '));
+    /* More transfers can only widen the search, never narrow it. A dip here
+       would mean the cap is pruning moves it should allow. */
+    ok('more transfers never scores worse',
+      results.every((r, i) => i === 0 || r.score >= results[i - 1].score - 1e-9),
+      results.map((r) => r.score.toFixed(2)).join(' '));
+    ok('a transfer actually improves on doing nothing',
+      results[0].score > none.score + 1e-9,
+      `${results[0].score.toFixed(2)} vs ${none.score.toFixed(2)}`);
+    ok('the gain reported matches the scores it came from',
+      results.every((r) => near(r.gain, r.score - none.score, 1e-9)));
+    /* A suggestion that changes between page loads cannot be acted on. */
+    ok('the solve is deterministic',
+      JSON.stringify(run(3).squad.map((p) => p.id).sort())
+        === JSON.stringify(results[2].squad.map((p) => p.id).sort()));
+    /* The reachable squad can never beat the unconstrained one at the same
+       spend — the page shows them side by side, and a benchmark reading lower
+       than the squad it is meant to cap is nonsense.
+       This is what `seedSquads` is for. Randomised construction alone does not
+       guarantee it: on this dataset the from-scratch solve at its default eight
+       restarts lands on 90.50 while sixteen restarts and the constrained solve
+       both reach 92.10. Seeding makes the relationship hold by construction. */
+    const ceilingBudget = squadCostOf(seedSquad.squad) + bank;
+    const ceiling = optimiseSquad(rows, {
+      budget: ceilingBudget, horizon: 5, seedSquads: results.map((r) => r.squad),
+    });
+    ok('the reachable squad never beats the unconstrained one at the same money',
+      results.every((r) => r.score <= ceiling.score + 1e-9),
+      `${results.map((r) => r.score.toFixed(2)).join(' ')} vs ceiling ${ceiling.score.toFixed(2)}`);
+    ok('a seeded squad is never worse than solving without the seed',
+      ceiling.score >= optimiseSquad(rows, { budget: ceilingBudget, horizon: 5 }).score - 1e-9);
+  }
 }
 
 /**
