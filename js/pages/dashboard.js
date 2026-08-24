@@ -1,8 +1,9 @@
 import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
-import { projectAll, POS } from '../model.js';
+import { projectAll, POS, SQUAD_RULES } from '../model.js';
 import { bestXI, scoreSquad, legalXI } from '../optimiser.js';
-import { squadPitch, playerCard, enableSwapping } from '../squadview.js';
-import { horizonPicker } from '../ui.js';
+import { squadPitch, playerCard, enableSwapping, activityRings } from '../squadview.js';
+import { horizonPicker, SEASON_HORIZON } from '../ui.js';
+import { rateSquad, RATING_HORIZONS } from '../rating.js';
 import { $, el, fmt, dataBar, countdown, statusBadge, posPill, modal, breakdown , setKids, addKids} from '../ui.js';
 
 /**
@@ -287,6 +288,101 @@ if (squadIds.length === 15) {
     });
   };
   paintClassicSquad();
+
+  /* ------------------------------------------------------------------ *
+   * where this squad sits
+   * ------------------------------------------------------------------ *
+   * The Draft tab answers this by ranking you against five rivals. Classic
+   * cannot: scripts/fetch-all.mjs pulls your picks and nobody else's, so there
+   * are no rival squads to rank against — only their scores, which is a
+   * different thing. So the Classic question is the one js/rating.js was built
+   * for: how much of what your money could buy are you actually getting,
+   * measured against the optimiser's best legal squad at the same spend.
+   *
+   * The window is the reader's to choose, and it excludes the one-gameweek
+   * option Draft offers. RATING_HORIZONS in js/rating.js records why.
+   */
+  const RATING_HZ = 'ratingHorizon';
+  let ratingH = RATING_HORIZONS.includes(getState()[RATING_HZ]) ? getState()[RATING_HZ] : 5;
+  const ratingBank = state.bank ?? 0;
+  const ratingFT = state.freeTransfers ?? 1;
+  const ratingCache = new Map();
+  const ratingRowsAt = (h) => {
+    if (!ratingCache.has(h)) {
+      ratingCache.set(h, projectAll(d.boot, d.fixtures,
+        { horizon: h, riskAversion: state.riskAversion ?? 0.5 }).rows);
+    }
+    return ratingCache.get(h);
+  };
+
+  const ratingCard = el('div', { class: 'card' });
+  /* Each repaint claims a token. A slow rate that finishes after the reader has
+     already moved the picker again must not overwrite the newer one. */
+  let ratingRun = 0;
+  const paintRating = () => {
+    const mine = ++ratingRun;
+    const windowLabel = ratingH >= SEASON_HORIZON ? 'the whole season' : `the next ${ratingH} gameweeks`;
+    const head = el('div', { class: 'row between' }, el('h2', {}, 'Squad rating'),
+      horizonPicker(ratingH, (n) => {
+        ratingH = n;
+        setState({ [RATING_HZ]: n });
+        paintRating();
+      }, { options: RATING_HORIZONS }));
+
+    setKids(ratingCard, head, el('p', { class: 'hint' }, `Rating over ${windowLabel}…`));
+
+    /* Rating runs the optimiser to build the ceiling — a few hundred
+       milliseconds. Yield first so the picker repaints immediately rather than
+       freezing under the reader's click. */
+    setTimeout(() => {
+      if (mine !== ratingRun) return;
+      const rows = ratingRowsAt(ratingH);
+      const atH = new Map(rows.map((r) => [r.id, r]));
+      const squadAtH = squad.map((p) => atH.get(p.id)).filter(Boolean);
+      const r = squadAtH.length === SQUAD_RULES.size
+        ? rateSquad(squadAtH, { pool: rows, bank: ratingBank, freeTransfers: ratingFT })
+        : { error: `Only ${squadAtH.length} of your ${SQUAD_RULES.size} players resolved at this window.` };
+      if (mine !== ratingRun) return;
+      if (r.error) {
+        setKids(ratingCard, head, el('p', { class: 'empty' }, r.error));
+        return;
+      }
+      const parts = r.parts;
+      setKids(ratingCard, head,
+        el('p', { class: 'hint' },
+          `How much of what your money could buy you are actually getting, over ${windowLabel}. `
+          + `Strongest: ${r.strongest.label} (${r.strongest.score}). `
+          + `Weakest: ${r.weakest.label} (${r.weakest.score}).`),
+        el('div', { class: 'dd-head' },
+          activityRings(
+            [
+              { label: 'Overall', value: r.overall, max: 100, colour: 'var(--lime, #9fed00)', detail: `of 100` },
+              { label: 'Best XI', value: r.dims.xi, max: 100, colour: 'var(--cyan, #8bffec)', detail: `${r.dims.xi}` },
+              { label: 'Depth', value: r.dims.depth, max: 100, colour: 'var(--yellow, #f4ff7b)', detail: `${r.dims.depth}` },
+            ],
+            { value: String(r.overall), caption: 'rating' },
+          ),
+          el('div', { class: 'tiles dd-tiles' },
+            el('div', { class: 'tile accent' },
+              el('span', { class: 'k' }, 'Your projection'),
+              el('span', { class: 'v' }, fmt.pts(parts.xiPts + parts.capPts)),
+              el('span', { class: 's' }, 'best XI, captain doubled')),
+            el('div', { class: 'tile' },
+              el('span', { class: 'k' }, 'Achievable ceiling'),
+              el('span', { class: 'v' }, fmt.pts(parts.bestXiPts + parts.bestCapPts)),
+              el('span', { class: 's' }, `the best legal squad at ${fmt.price(parts.budget)}`)),
+            el('div', { class: 'tile' },
+              el('span', { class: 'k' }, 'Captain'),
+              el('span', { class: 'v' }, parts.captain ? parts.captain.web_name : '—'),
+              el('span', { class: 's' }, parts.captain ? `${fmt.pts(parts.capPts)} over the window` : '')),
+          ),
+        ),
+      );
+    }, 0);
+  };
+  paintRating();
+  addKids(app, ratingCard);
+
   addKids(app, squadCard);
 } else {
   addKids(app, 

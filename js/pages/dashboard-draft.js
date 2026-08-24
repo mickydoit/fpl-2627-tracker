@@ -10,12 +10,12 @@
  * transfers or the Classic optimiser. The two dashboards share a tab strip and
  * nothing else.
  */
-import { el, setKids, fmt, horizonBadge, horizonPicker } from '../ui.js';
+import { el, setKids, fmt, horizonPicker } from '../ui.js';
 import { readSnapshot } from '../data.js';
 import { projectBoard, projectBoardAt } from '../draft/project.js';
 import { actionableEvent } from '../model.js';
 import { rateLeague, bestXI } from '../draft/rating.js';
-import { DRAFT_CONFIG } from '../draft/config.js';
+import { DRAFT_CONFIG, RATING_HORIZONS } from '../draft/config.js';
 import { bestWaiver } from '../draft/waiver.js';
 import { squadPitch, playerCard, activityRings, enableSwapping, legalDraftXI } from '../squadview.js';
 
@@ -100,10 +100,58 @@ export async function renderDraftDashboard(host) {
     return horizonCache.get(h);
   };
 
-  const rated = rateLeague(rostersBySlot, {
-    pool, horizon: DRAFT_CONFIG.nearTermHorizon, seasonLength: DRAFT_CONFIG.rosHorizon,
-  });
-  const me = rated.find((r) => r.slot === mySlot);
+  /**
+   * The rating horizon is the reader's to choose, and it is a different
+   * question from the lineup horizon further down the page.
+   *
+   * "Who do I start on Saturday" and "how good is this squad" want different
+   * windows — reading the season rating while naming a lineup for the next
+   * gameweek is a perfectly ordinary thing to want — so the two pickers keep
+   * separate state and neither drags the other.
+   *
+   * Deliberately NOT built on rowsAt(). That measures from the first gameweek
+   * a waiver claim could still affect, which is right for the adviser and
+   * wrong here: a rating describes the squad you have, including the gameweek
+   * already under way. Passing fromEvent moves the season total by 25 points
+   * without saying so — scripts/test-draft.mjs holds the two apart.
+   */
+  const RATING_HZ_KEY = 'draftRatingHorizon';
+  const SEASON = RATING_HORIZONS[RATING_HORIZONS.length - 1];
+  let ratingH = SEASON;
+  try {
+    const saved = Number(localStorage.getItem(RATING_HZ_KEY));
+    if (RATING_HORIZONS.includes(saved)) ratingH = saved;
+  } catch { /* unreadable storage is not worth failing over */ }
+
+  /* Seeded with the board's own rest-of-season rows, which is what the whole
+     season window means — no re-projection, and no drift against the number
+     the page showed before this control existed. */
+  const ratingCache = new Map([[SEASON, new Map(projected.map((r) => [r.id, r]))]]);
+  const ratingRowsAt = (h) => {
+    if (!ratingCache.has(h)) {
+      const projAt = projectBoardAt(board.players, fixtures, board.teams || [], h);
+      ratingCache.set(h, new Map([...projAt].map(([id, proj]) => [id, { ...byId.get(id), proj }])));
+    }
+    return ratingCache.get(h);
+  };
+
+  /* Every squad in the league is re-rated at the chosen window, not just mine:
+     the headline is a comparison, so moving the window has to move everyone or
+     it means nothing. Six rosters and a depth pass cost single-digit
+     milliseconds, and each window is cached after its first visit. */
+  const rateAt = (h) => {
+    const rows = ratingRowsAt(h);
+    const rosters = new Map([...rostersBySlot].map(([slot, rs]) =>
+      [slot, rs.map((p) => rows.get(p.id)).filter(Boolean)]));
+    return rateLeague(rosters, {
+      pool: [...rows.values()].filter((r) => !ownedIds.has(r.id)),
+      horizon: DRAFT_CONFIG.nearTermHorizon,
+      seasonLength: DRAFT_CONFIG.rosHorizon,
+    });
+  };
+
+  let rated = rateAt(ratingH);
+  let me = rated.find((r) => r.slot === mySlot);
 
   /* fixtures for the player card — the board rows carry team ids, and the
    * committed fixture list is keyed the same way as the Classic model. */
@@ -232,10 +280,27 @@ export async function renderDraftDashboard(host) {
   const squadCard = el('div', { class: 'card' });
   paintSquad(squadCard);
 
-  setKids(host,
-    /* ---- headline: rings + gameweek ---- */
-    el('div', { class: 'card' },
-      el('div', { class: 'row between' }, el('h2', {}, 'My Draft team'), horizonBadge('ros')),
+  /* ---- headline: rings + gameweek ---- */
+  const headCard = el('div', { class: 'card' });
+
+  /* The rings and the squad total are the only things the rating window moves.
+     Live gameweek points are what was actually scored, and the flagged count is
+     a fact about today — neither has a horizon to follow. */
+  const paintHead = () => {
+    rated = rateAt(ratingH);
+    me = rated.find((r) => r.slot === mySlot);
+    const windowLabel = ratingH >= SEASON ? 'Rest of season'
+      : ratingH === 1 ? 'Next gameweek' : `Next ${ratingH} gameweeks`;
+    setKids(headCard,
+      el('div', { class: 'row between' }, el('h2', {}, 'My Draft team'),
+        horizonPicker(ratingH, (n) => {
+          ratingH = n;
+          try { localStorage.setItem(RATING_HZ_KEY, String(n)); } catch { /* ignore */ }
+          paintHead();
+        }, { options: RATING_HORIZONS })),
+      el('p', { class: 'hint' },
+        `Rated against your ${rated.length - 1} rivals over ${windowLabel.toLowerCase()}`
+        + ' — every squad in the league is re-rated when you change the window.'),
       el('div', { class: 'dd-head' },
         me ? activityRings(
           [
@@ -254,7 +319,7 @@ export async function renderDraftDashboard(host) {
               : '—'),
             el('span', { class: 's' }, gwLive ? 'starting XI, live' : 'no matches played yet')),
           el('div', { class: 'tile' },
-            el('span', { class: 'k' }, 'Rest of season'),
+            el('span', { class: 'k' }, windowLabel),
             el('span', { class: 'v' }, me ? fmt.pts(me.components.ros) : '—'),
             el('span', { class: 's' }, 'whole squad')),
           el('div', { class: 'tile' },
@@ -263,7 +328,12 @@ export async function renderDraftDashboard(host) {
             el('span', { class: 's' }, mine.filter((p) => p.status && p.status !== 'a').map((p) => p.web_name).join(', ') || 'all fit')),
         ),
       ),
-    ),
+    );
+  };
+  paintHead();
+
+  setKids(host,
+    headCard,
 
     squadCard,
 

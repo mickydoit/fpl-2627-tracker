@@ -49,6 +49,18 @@ export const SUPABASE = {
  */
 export const RATING_WEIGHTS = { xi: 0.40, ros: 0.25, depth: 0.15, vorp: 0.10, risk: 0.10 };
 
+/**
+ * The windows the Dashboard's rating picker offers.
+ *
+ * Draft rates every squad against its five rivals, so the scale holds at any
+ * width — one gameweek is as meaningful as a season, it just answers a
+ * different question. Classic cannot offer the one-gameweek window for reasons
+ * recorded in js/rating.js; the two lists differ on purpose.
+ *
+ * 38 is SEASON_HORIZON in js/ui.js, which renders it as "Whole season".
+ */
+export const RATING_HORIZONS = [1, 3, 5, 8, 38];
+
 export const ROUNDS = 15;
 /**
  * The owner's league is six managers. The Draft API's own

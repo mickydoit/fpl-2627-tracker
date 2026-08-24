@@ -20,7 +20,8 @@ import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap,
 import { hydrate, PRIOR_DEFAULTS, poolPlayerSeasons, espnEvidence } from '../js/prior.js';
 import { ALLOWED_MODEL_SEASONS, CURRENT_SEASON, isAllowedSeason, seasonStartYear,
   assertAllowedSeason, onlyAllowedSeasons } from '../js/seasons.js';
-import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scoreRatio, RATING_WEIGHTS } from '../js/rating.js';
+import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scoreRatio,
+  RATING_WEIGHTS, RATING_HORIZONS, RATING_FLOOR } from '../js/rating.js';
 
 let failures = 0;
 let checks = 0;
@@ -1002,6 +1003,50 @@ console.log('\nClassic squad rating');
     return files.every((f) => !/from\s+['"][^'"]*\/rating\.js['"]/.test(fs.readFileSync(`js/draft/${f}`, 'utf8'))
       || !fs.readFileSync(`js/draft/${f}`, 'utf8').includes("'../rating.js'"));
   })());
+}
+
+/* ------------------------------------------------------------------ *
+ * Classic rating horizons
+ * ------------------------------------------------------------------ *
+ * The Dashboard's rating picker re-rates the squad over each offered window.
+ * Classic offers fewer windows than Draft, and the gap is the point.
+ */
+console.log('\nClassic rating horizons');
+{
+  ok('the one-gameweek window is not offered',
+    !RATING_HORIZONS.includes(1), RATING_HORIZONS.join(','));
+  ok('the widest window is the whole season',
+    RATING_HORIZONS[RATING_HORIZONS.length - 1] === 38);
+  ok('the offered windows are ascending and distinct',
+    RATING_HORIZONS.every((h, i) => i === 0 || h > RATING_HORIZONS[i - 1]));
+
+  /* Why 1 is absent: RATING_FLOOR is calibrated against multi-week windows, so
+     a one-gameweek benchmark is whichever legal squad drew the softest single
+     fixture. Measured on a real 15 in August 2026 the XI dimension clamped to
+     0 and the headline read 30, against 69 over five gameweeks — a scare, not
+     a measurement. The floor itself is what would have to move. */
+  ok('the floor that rules out a one-gameweek window is still where it was measured',
+    RATING_FLOOR === 0.60);
+
+  if (boot?.elements?.length) {
+    const at = (h) => projectAll(boot, fixtures, { horizon: h }).rows;
+    const built = optimiseSquad(at(5), { budget: 1000 });
+    if (built?.squad?.length === 15) {
+      const ids = new Set(built.squad.map((p) => p.id));
+      for (const h of RATING_HORIZONS) {
+        const rows = at(h);
+        const mine = rows.filter((r) => ids.has(r.id));
+        const rated = mine.length === 15
+          ? rateSquad(mine, { pool: rows, bank: 0, freeTransfers: 1 })
+          : null;
+        ok(`the squad rates over ${h === 38 ? 'the whole season' : `${h} GW`}`,
+          !!rated && !rated.error && Number.isFinite(rated.overall)
+          && rated.overall >= 0 && rated.overall <= 100
+          && Object.values(rated.dims).every((v) => Number.isFinite(v)),
+          rated?.error || `overall ${rated?.overall}`);
+      }
+    }
+  }
 }
 
 /* ------------------------------------------------------------------ *

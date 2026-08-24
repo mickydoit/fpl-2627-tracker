@@ -309,14 +309,26 @@ export function horizonBadge(kind) {
  * Styled as the badge it replaces so the horizon still reads at a glance when
  * nobody is touching it.
  */
+/**
+ * The window that means "everything still to play".
+ *
+ * A season is 38 gameweeks, so 38 is the widest window any picker can offer —
+ * but it must never render as "Next 38 gameweeks", which reads as a countdown
+ * from a fixed point rather than as the rest of the season. Labelled and
+ * coloured like horizonBadge('ros') so the two are indistinguishable at rest.
+ */
+export const SEASON_HORIZON = 38;
+
 export function horizonPicker(value, onChange, { options = [1, 3, 5, 8, 10] } = {}) {
-  const label = (n) => (n === 1 ? 'Next gameweek' : `Next ${n} gameweeks`);
+  const label = (n) => (n >= SEASON_HORIZON ? 'Whole season'
+    : n === 1 ? 'Next gameweek' : `Next ${n} gameweeks`);
+  const tone = (n) => (n === 1 ? 'hz-gw' : n >= SEASON_HORIZON ? 'hz-ros' : 'hz-next5');
   const sel = el('select', {
-    class: `hz hz-picker ${value === 1 ? 'hz-gw' : 'hz-next5'}`,
+    class: `hz hz-picker ${tone(value)}`,
     title: 'Choose the window these projections cover',
     onChange: (e) => {
       const n = Number(e.target.value);
-      sel.className = `hz hz-picker ${n === 1 ? 'hz-gw' : 'hz-next5'}`;
+      sel.className = `hz hz-picker ${tone(n)}`;
       onChange(n);
     },
   }, options.map((n) => el('option', { value: String(n), selected: n === value }, label(n))));

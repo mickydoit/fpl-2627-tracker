@@ -5,7 +5,7 @@
  */
 import { readJSON } from './lib/io.mjs';
 import { DRAFT_CONFIG, QUOTA, STARTER_QUOTA, ROUNDS,
-  LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX,
+  LEAGUE_SIZE_DEFAULT, LEAGUE_SIZE_MIN, LEAGUE_SIZE_MAX, RATING_HORIZONS,
   replacementBasisForLeagueSize, DEMAND_BASIS_SIZES } from '../js/draft/config.js';
 import {
   SCHEMA_VERSION, createDraft, addPick, undoLastPick, editPick, derive, needsFor,
@@ -16,7 +16,7 @@ import { outstandingDemand, replacementLevel, attachVorp } from '../js/draft/rep
 import { playersBeforeCliff, scarcityByPosition, allowedPositions } from '../js/draft/scarcity.js';
 import { survival } from '../js/draft/simulate.js';
 import { evaluate } from '../js/draft/value.js';
-import { projectBoard, toModelRow } from '../js/draft/project.js';
+import { projectBoard, projectBoardAt, toModelRow } from '../js/draft/project.js';
 import { teamDefence } from '../js/model.js';
 import { estimateBps90, bonusFromBps90, draftBonusModel } from '../js/draft/scoring.js';
 import { runDraft, STRATEGIES } from '../js/draft/compete.js';
@@ -1043,6 +1043,81 @@ console.log('\nDraft season horizons');
   if (boardFile2?.events?.length) {
     ok('the board carries gameweek deadlines so Draft can find the actionable one',
       boardFile2.events.every((e) => 'id' in e) && boardFile2.events.some((e) => e.deadline_time));
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Rating horizons
+ * ------------------------------------------------------------------ *
+ * The Dashboard lets the reader re-rate the league over 1/3/5/8/38 gameweeks.
+ * Two properties have to hold for that control to mean anything.
+ */
+console.log('\nRating horizons');
+{
+  ok('the picker offers a one-gameweek window and a whole season',
+    RATING_HORIZONS[0] === 1 && RATING_HORIZONS[RATING_HORIZONS.length - 1] === 38);
+  ok('the offered windows are ascending and distinct',
+    RATING_HORIZONS.every((h, i) => i === 0 || h > RATING_HORIZONS[i - 1]));
+
+  const boardH = await readJSON('data/draft/players.json');
+  const fixturesH = await readJSON('data/fixtures.json');
+  if (boardH?.players?.length && fixturesH?.length) {
+    const teamsH = boardH.teams || [];
+    const seasonRows = projectBoard(boardH.players, fixturesH, teamsH);
+
+    /* The rating measures from the gameweek in progress, so it must NOT pass
+       `fromEvent`. The waiver adviser does pass it, correctly — a claim cannot
+       score from a deadline already gone — and that shifts every projection by
+       a gameweek. Reusing the adviser's rows for the rating silently moved the
+       Dashboard's squad total by 25 points, which is why this is a check and
+       not a comment. */
+    const atSeason = projectBoardAt(boardH.players, fixturesH, teamsH, 38);
+    const drift = seasonRows.reduce((worst, r) =>
+      Math.max(worst, Math.abs((atSeason.get(r.id) ?? 0) - r.proj)), 0);
+    ok('the whole-season window reproduces the board\u2019s own rest-of-season projection',
+      drift < 1e-9, `worst per-player drift ${drift}`);
+
+    /* Widening the window can only add fixtures, never remove them. */
+    const at3 = projectBoardAt(boardH.players, fixturesH, teamsH, 3);
+    const at8 = projectBoardAt(boardH.players, fixturesH, teamsH, 8);
+    ok('a wider window never projects fewer points than a narrower one',
+      seasonRows.every((r) => (at3.get(r.id) ?? 0) <= (at8.get(r.id) ?? 0) + 1e-9
+        && (at8.get(r.id) ?? 0) <= (atSeason.get(r.id) ?? 0) + 1e-9));
+
+    /* A full six-manager league, dealt by position so every roster is legal,
+       rated at each window the picker offers. */
+    const byPos = { 1: [], 2: [], 3: [], 4: [] };
+    for (const r of [...seasonRows].sort((a, b) => b.proj - a.proj)) byPos[r.element_type]?.push(r);
+    const LEAGUE = 6;
+    const dealt = new Map();
+    let short = false;
+    for (let slot = 1; slot <= LEAGUE; slot++) {
+      const roster = [];
+      for (const [t, n] of Object.entries(QUOTA)) {
+        const take = byPos[t].slice((slot - 1) * n, slot * n);
+        if (take.length < n) short = true;
+        roster.push(...take);
+      }
+      dealt.set(slot, roster);
+    }
+    const owned = new Set([...dealt.values()].flat().map((r) => r.id));
+
+    if (!short) {
+      for (const h of RATING_HORIZONS) {
+        const rows = h === 38 ? new Map(seasonRows.map((r) => [r.id, r]))
+          : new Map([...projectBoardAt(boardH.players, fixturesH, teamsH, h)]
+            .map(([id, proj]) => [id, { ...seasonRows.find((r) => r.id === id), proj }]));
+        const rosters = new Map([...dealt].map(([slot, rs]) =>
+          [slot, rs.map((r) => rows.get(r.id)).filter(Boolean)]));
+        const poolH = [...rows.values()].filter((r) => !owned.has(r.id));
+        const rated = rateLeague(rosters, { pool: poolH, horizon: 5, seasonLength: 38 });
+        ok(`every squad is rated over ${h === 38 ? 'the whole season' : `${h} GW`}`,
+          rated.length === LEAGUE
+          && rated.every((r) => Number.isFinite(r.rating) && r.rating >= 0 && r.rating <= 100)
+          && rated.map((r) => r.rank).join() === '1,2,3,4,5,6',
+          rated.map((r) => r.rating).join(','));
+      }
+    }
   }
 }
 

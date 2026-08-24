@@ -43,6 +43,22 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
  */
 export const RATING_FLOOR = 0.60;
 
+/**
+ * The windows the Dashboard's rating picker offers — deliberately without the
+ * one-gameweek window that Draft has.
+ *
+ * RATING_FLOOR is calibrated against multi-week windows. Over a single
+ * gameweek the benchmark collapses to whichever legal squad drew the softest
+ * one-off fixture, and no squad assembled for a season comes near it: measured
+ * on a real 15 in August 2026, the XI dimension clamped to 0 and the headline
+ * fell to 30, against 69 over five gameweeks. Nothing had changed about the
+ * squad. Offering that window would report a scare as a measurement.
+ *
+ * Fixing it properly means fitting the floor per horizon. Until that exists,
+ * the honest move is to not offer a window the scale cannot describe.
+ */
+export const RATING_HORIZONS = [3, 5, 8, 38];
+
 export function scoreRatio(mine, best, floor = RATING_FLOOR) {
   if (!(best > 0)) return 0;
   const r = mine / best;
