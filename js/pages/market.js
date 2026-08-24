@@ -1,5 +1,13 @@
 import { loadAll } from '../data.js';
-import { $, el, dataBar , setKids, addKids} from '../ui.js';
+import { $, el, dataBar, setKids, addKids, section } from '../ui.js';
+
+/** section(), in the shape the builders below already use: one call, children
+ *  as trailing arguments. */
+const sectionOf = (name, opts, ...kids) => {
+  const sec = section(name, opts);
+  setKids(sec.body, ...kids.filter(Boolean));
+  return sec.wrap;
+};
 
 const app = $('#app');
 const d = await loadAll();
@@ -27,8 +35,7 @@ const tabBar = el('div', { class: 'chiprow', style: 'margin-bottom:1rem' },
 
 const body = el('div', {});
 setKids(app, 
-  el('div', { class: 'card' },
-    el('h2', {}, 'Season watchlist'),
+  sectionOf('Season watchlist', {},
     el('ul', {}, (n.watchlist || []).map((w) => el('li', { style: 'margin:0.35rem 0' }, w))),
     el('p', { class: 'hint' }, `Curated ${n.updated}. Window closes 1 September 2026. Edit data/manual/season-notes.json to keep this current — the refresh workflow never touches it.`),
   ),

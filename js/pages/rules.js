@@ -1,6 +1,14 @@
 import { loadAll } from '../data.js';
-import { $, el, dataBar , setKids, addKids} from '../ui.js';
+import { $, el, dataBar, setKids, addKids, section } from '../ui.js';
 import { GOAL_PTS, CS_PTS, DEFCON_THRESHOLD } from '../model.js';
+
+/** section(), in the shape the builders below already use: one call, children
+ *  as trailing arguments. */
+const sectionOf = (name, opts, ...kids) => {
+  const sec = section(name, opts);
+  setKids(sec.body, ...kids.filter(Boolean));
+  return sec.wrap;
+};
 
 const app = $('#app');
 const d = await loadAll();
@@ -24,8 +32,7 @@ const cs = scoring?.clean_sheets || { GKP: CS_PTS[1], DEF: CS_PTS[2], MID: CS_PT
 const dc = scoring?.defensive_contribution || { GKP: 0, DEF: 2, MID: 2, FWD: 2 };
 
 setKids(app, 
-  el('div', { class: 'card' },
-    el('h2', {}, 'Points scoring 2026/27'),
+  sectionOf('Points scoring 2026/27', {},
     el('p', { class: 'hint' }, scoring
       ? 'Read live from the FPL API (game_config.scoring), so this stays correct even if the rules change mid-season.'
       : 'Fallback values — run the refresh workflow to read these from the API.'),
@@ -47,8 +54,7 @@ setKids(app,
     ]),
   ),
 
-  el('div', { class: 'card' },
-    el('h2', {}, 'Defensive contribution'),
+  sectionOf('Defensive contribution', {},
     el('p', {}, 'Worth 2 points, capped at 2 per match no matter how far past the threshold you go. Goalkeepers are ineligible.'),
     table(['Position', 'Qualifying actions', 'Threshold'], [
       ['Defenders', 'Clearances, blocks, interceptions, tackles', DEFCON_THRESHOLD[2]],
@@ -58,8 +64,7 @@ setKids(app,
     el('p', { class: 'hint' }, 'Unchanged for 2026/27 — the widely predicted drop from 12 to 10 for midfielders did not happen. High-volume defensive midfielders remain among the best points-per-million assets in the game.'),
   ),
 
-  el('div', { class: 'card' },
-    el('h2', {}, 'Squad and transfers'),
+  sectionOf('Squad and transfers', {},
     table(['Rule', 'Value'], [
       ['Budget', `£${((gs.squad_total_spend ?? 1000) / 10).toFixed(1)}m`],
       ['Squad size', gs.squad_squadsize ?? 15],
@@ -76,8 +81,7 @@ setKids(app,
     ]),
   ),
 
-  el('div', { class: 'card' },
-    el('h2', {}, 'Chips'),
+  sectionOf('Chips', {},
     chips.length
       ? table(['Chip', 'Available', 'Type'], chips.map((c) => [
           ({ wildcard: 'Wildcard', freehit: 'Free Hit', bboost: 'Bench Boost', '3xc': 'Triple Captain' }[c.name] || c.name),
@@ -88,8 +92,7 @@ setKids(app,
     el('p', { class: 'hint' }, 'Two sets of four. First-half chips must be used before the GW19 deadline and do not carry over. Only one chip per gameweek. Bench Boost and Triple Captain can be played in GW1; Wildcard and Free Hit start in GW2. The Assistant Manager chip has been removed for 2026/27.'),
   ),
 
-  el('div', { class: 'card' },
-    el('h2', {}, "What changed for 2026/27"),
+  sectionOf('What changed for 2026/27', {},
     el('div', { class: 'notes' }, (d.notes?.rule_changes || []).map((r) =>
       el('div', { class: 'note' },
         el('h3', {}, r.title),
@@ -99,8 +102,7 @@ setKids(app,
       ))),
   ),
 
-  el('div', { class: 'card' },
-    el('h2', {}, 'How the projections work'),
+  sectionOf('How the projections work', {},
     el('p', {}, 'Every projection is built from components that map onto the rules above, so you can always see why a player scores well rather than trusting a single number.'),
     el('ul', {},
       el('li', {}, el('strong', {}, 'Appearance — '), 'expected minutes from minutes played per team game, converted into the probability of playing at all and of reaching 60 minutes.'),

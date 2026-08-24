@@ -4,10 +4,18 @@ import { rateSquad } from '../rating.js';
 import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI, scoreSquad,
   optimiseWithinTransfers } from '../optimiser.js';
 import { squadPitch, playerCard } from '../squadview.js';
-import { fdrLegend, horizonBadge } from '../ui.js';
+import { fdrLegend, horizonBadge, section } from '../ui.js';
 import { suggestTransfers } from '../optimiser.js';
 import { bestMove, recommendedHorizon } from '../transfer-advice.js';
 import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown , setKids, addKids} from '../ui.js';
+
+/** section(), in the shape the builders below already use: one call, children
+ *  as trailing arguments. */
+const sectionOf = (name, opts, ...kids) => {
+  const sec = section(name, opts);
+  setKids(sec.body, ...kids.filter(Boolean));
+  return sec.wrap;
+};
 
 const app = $('#app');
 const d = await loadAll();
@@ -61,9 +69,10 @@ function recompute() {
 /* ------------------------------------------------------------------ *
  * controls
  * ------------------------------------------------------------------ */
-const controls = el('div', { class: 'card' });
+const controlsSec = section('Optimiser', { hint: 'Budget, horizon and constraints for the solve' });
+const controls = controlsSec.body;
 const output = el('div', {});
-setKids(app, controls, output);
+setKids(app, controlsSec.wrap, output);
 
 function numberField(label, value, attrs, onChange) {
   const input = el('input', { type: 'number', value, ...attrs, oninput: (e) => onChange(e.target.value) });
@@ -325,10 +334,9 @@ function renderResult(ms) {
     ),
     check.ok ? null : el('div', { class: 'banner err' }, check.errors.join('; ')),
     compareCard(result),
-    el('div', { class: 'card' },
-      el('div', { class: 'row between' },
-        el('h2', {}, 'Suggested squad'),
-        el('div', { class: 'btnrow' },
+    sectionOf('Suggested squad', {
+      flush: true,
+      control: el('div', { class: 'btnrow' },
           el('button', { onClick: saveSquad }, 'Save as my squad'),
           el('button', { onClick: copyList }, 'Copy list'),
           manualXi ? el('button', { class: 'ghost', onClick: () => {
@@ -337,8 +345,8 @@ function renderResult(ms) {
             Object.assign(result, best);
             renderResult(lastMs);
           } }, 'Reset to optimal XI') : null,
-        ),
       ),
+    },
       el('div', { class: 'pitch' },
         [1, 2, 3, 4].map(pitchRow).filter(Boolean),
         el('div', { class: 'bench-strip' }, (() => {
@@ -348,8 +356,7 @@ function renderResult(ms) {
         })()),
       ),
     ),
-    el('div', { class: 'card' },
-      el('h2', {}, 'Squad detail'),
+    sectionOf('Squad detail', { flush: true },
       el('div', { class: 'tablewrap' },
         el('table', { class: 'players' },
           // One definition per column drives BOTH the header and the cell, so a
@@ -561,8 +568,7 @@ function ratingCard({ mine, rowsAt, bank, freeTransfers, advice }) {
   const cap = outlook.parts.captain;
   const swing = outlook.overall - quality.overall;
 
-  return el('div', { class: 'card' },
-    el('div', { class: 'row between' }, el('h2', {}, 'Squad rating'), horizonBadge('next5')),
+  return sectionOf('Squad rating', { hint: 'Next 5 gameweeks' },
     el('div', { class: 'tiles' },
       el('div', { class: 'tile accent' },
         el('span', { class: 'k' }, 'Squad quality'),
@@ -623,8 +629,7 @@ function ratingCard({ mine, rowsAt, bank, freeTransfers, advice }) {
 function compareCard(result) {
   const { ids: mineIds, source } = resolveSquadIds(d.entry, getState());
   if (mineIds.length !== 15) {
-    return el('div', { class: 'card' },
-      el('div', { class: 'row between' }, el('h2', {}, 'Compare with my squad'), horizonBadge(horizon === 5 ? 'next5' : `next${horizon}`)),
+    return sectionOf('Compare with my squad', { hint: `Next ${horizon} gameweeks` },
       el('p', { class: 'hint' },
         source === 'none'
           ? 'No squad of your own yet. Save one here, or wait for your FPL picks to publish after the first deadline, and this will compare the two.'
@@ -633,8 +638,7 @@ function compareCard(result) {
 
   const mine = mineIds.map((id) => byId.get(id)).filter(Boolean);
   if (mine.length !== 15) {
-    return el('div', { class: 'card' },
-      el('div', { class: 'row between' }, el('h2', {}, 'Compare with my squad'), horizonBadge(horizon === 5 ? 'next5' : `next${horizon}`)),
+    return sectionOf('Compare with my squad', { hint: `Next ${horizon} gameweeks` },
       el('p', { class: 'hint' }, 'Some of your players are missing from the current dataset, so the comparison is not reliable this refresh.'));
   }
 
@@ -684,8 +688,7 @@ function compareCard(result) {
     });
   };
 
-  return el('div', { class: 'card' },
-    el('div', { class: 'row between' }, el('h2', {}, 'Compare with my squad'), horizonBadge(horizon === 5 ? 'next5' : `next${horizon}`)),
+  return sectionOf('Compare with my squad', { hint: `Next ${horizon} gameweeks` },
     el('div', { class: 'tiles' },
       el('div', { class: 'tile' },
         el('span', { class: 'k' }, `Your squad · ${horizon} GW`),

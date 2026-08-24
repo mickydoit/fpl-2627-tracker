@@ -56,10 +56,9 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
     return;
   }
   if (!league?.ownership || !Object.keys(league.ownership).length) {
-    setKids(host, el('div', { class: 'card' },
-      el('h2', {}, 'No drafted squad yet'),
+    setKids(host, sectionOf('No drafted squad yet', {},
       el('p', {}, 'Once your Draft league has drafted, your squad, ranking and waiver suggestions appear here. '
-        + 'Until then the Draft page runs the live draft assistant.')));
+        + 'Until then Draft Night runs the live draft assistant.')));
     return;
   }
 
@@ -92,11 +91,10 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
     } catch { /* unreadable storage is not worth failing over */ }
   }
   if (mySlot == null) {
-    setKids(host, el('div', { class: 'card' },
-      el('h2', {}, 'Which squad is yours?'),
+    setKids(host, sectionOf('Which squad is yours?', {},
       el('p', {}, `Your league's ${rostersBySlot.size} squads are mirrored, but nothing identifies which one is yours.`),
       el('p', { class: 'hint' }, 'Set the FPL_DRAFT_ENTRY_ID repository variable to your Draft entry id and the next refresh will label it. '
-        + 'The League Hub on the Draft page still shows every squad meanwhile.')));
+        + 'The League page still shows every squad meanwhile.')));
     return;
   }
   const mine = rostersBySlot.get(mySlot) || [];
