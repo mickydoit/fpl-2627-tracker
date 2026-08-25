@@ -14,7 +14,7 @@
  * `squadVorp` in js/draft/rating.js exactly — see the note on `bestFree` below
  * for why the draft-night version of this number does not survive the draft.
  */
-import { $, el, fmt, setKids, dataBar, sortableTable, statusBadge, posPill, section } from '../ui.js';
+import { $, el, fmt, setKids, dataBar, sortableTable, statusBadge, posPill, section, cycler } from '../ui.js';
 import { readSnapshot } from '../data.js';
 import { projectBoard } from '../draft/project.js';
 import { playerCard } from '../squadview.js';
@@ -139,9 +139,8 @@ if (!board?.players?.length) {
       el('div', { class: 'secfilters' },
         el('div', { class: 'filters' },
           el('label', {}, 'Position',
-            el('select', { onchange: (e) => { pos = +e.target.value; tbl.refresh(visible()); } },
-              [[0, 'All'], [1, 'GKP'], [2, 'DEF'], [3, 'MID'], [4, 'FWD']].map(([v, l]) =>
-                el('option', { value: String(v) }, l)))),
+            cycler(pos, [[0, 'All'], [1, 'GKP'], [2, 'DEF'], [3, 'MID'], [4, 'FWD']],
+              (v) => { pos = v; tbl.refresh(visible()); }, { compact: true })),
           el('label', { class: 'check' }, 'Free agents only',
             el('input', { type: 'checkbox', onchange: (e) => { onlyFree = e.target.checked; tbl.refresh(visible()); } })),
         )),

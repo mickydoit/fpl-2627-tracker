@@ -1,6 +1,6 @@
 import { loadAll, getState, setState } from '../data.js';
 import { projectAll, POS } from '../model.js';
-import { $, el, fmt, dataBar, sortableTable, statusBadge, penBadge, posPill, fdrTicker, modal, breakdown, setKids, addKids, section } from '../ui.js';
+import { $, el, fmt, dataBar, sortableTable, statusBadge, penBadge, posPill, fdrTicker, modal, breakdown, setKids, addKids, section, cycler } from '../ui.js';
 
 /** section(), in the shape the builders below already use: one call, children
  *  as trailing arguments. */
@@ -37,9 +37,8 @@ const teamSel = el('select', { onchange: (e) => { filters.team = e.target.value;
   [...d.boot.teams].sort((a, b) => a.name.localeCompare(b.name)).map((t) => el('option', { value: t.id }, t.name)),
 );
 const priceInput = el('input', { type: 'number', step: '0.1', min: '3.5', max: '16', value: '15.5', style: 'width:5.5rem', oninput: (e) => { filters.maxPrice = parseFloat(e.target.value) || 20; render(); } });
-const horizonSel = el('select', { onchange: (e) => { horizon = parseInt(e.target.value, 10); setState({ horizon }); recompute(); render(); } },
-  [1, 3, 5, 8, 10].map((n) => el('option', { value: n, selected: n === horizon }, `${n} GW`)),
-);
+const horizonSel = cycler(horizon, [1, 3, 5, 8, 10].map((n) => ({ value: n, label: `${n} GW` })),
+  (n) => { horizon = n; setState({ horizon }); recompute(); render(); }, { compact: true });
 const availChk = el('input', { type: 'checkbox', checked: true, onchange: (e) => { filters.available = e.target.checked; render(); } });
 const minsInput = el('input', { type: 'number', step: '90', min: '0', value: '0', style: 'width:5.5rem', oninput: (e) => { filters.minMinutes = parseInt(e.target.value, 10) || 0; render(); } });
 

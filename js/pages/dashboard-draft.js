@@ -10,7 +10,7 @@
  * transfers or the Classic optimiser. The two dashboards share a tab strip and
  * nothing else.
  */
-import { el, setKids, fmt, horizonPicker, horizonCycler, section, metric } from '../ui.js';
+import { el, setKids, fmt, horizonCycler, section, metric } from '../ui.js';
 import { readSnapshot, readGameweek } from '../data.js';
 import { projectBoard, projectBoardAt } from '../draft/project.js';
 import { actionableEvent } from '../model.js';
@@ -341,7 +341,7 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
     const windowLabel = ratingH >= SEASON ? 'Rest of season'
       : ratingH === 1 ? 'Next gameweek' : `Next ${ratingH} gameweeks`;
     setKids(headSec.ctl,
-      horizonPicker(ratingH, (n) => {
+      horizonCycler(ratingH, (n) => {
         ratingH = n;
         try { localStorage.setItem(RATING_HZ_KEY, String(n)); } catch { /* ignore */ }
         paintHead();

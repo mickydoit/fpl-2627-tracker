@@ -2,7 +2,7 @@ import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
 import { projectAll, POS, actionableEvent } from '../model.js';
 import { suggestTransfers, bestXI, scoreSquad } from '../optimiser.js';
 import { bestMove, recommendedHorizon, TRANSFER_CONFIG } from '../transfer-advice.js';
-import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown, setKids, addKids, section, metric } from '../ui.js';
+import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown, setKids, addKids, section, metric, cycler } from '../ui.js';
 
 /** section(), in the shape the builders below already use: one call, children
  *  as trailing arguments. */
@@ -47,18 +47,17 @@ function renderControls() {
   setKids(controls, 
     el('div', { class: 'filters' },
       el('label', {}, 'Horizon',
-        el('select', { onchange: (e) => { horizon = +e.target.value; setState({ horizon }); recompute(); run(); } },
-          [1, 3, 5, 8, 10].map((n) => el('option', { value: n, selected: n === horizon }, `${n} GW`)))),
+        cycler(horizon, [1, 3, 5, 8, 10].map((n) => ({ value: n, label: `${n} GW` })),
+          (n) => { horizon = n; setState({ horizon }); recompute(); run(); }, { compact: true })),
       el('label', {}, 'Free transfers',
-        el('select', { onchange: (e) => { freeTransfers = +e.target.value; setState({ freeTransfers }); run(); } },
-          [0, 1, 2, 3, 4, 5].map((n) => el('option', { value: n, selected: n === freeTransfers }, String(n))))),
+        cycler(freeTransfers, [0, 1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n} FT` })),
+          (n) => { freeTransfers = n; setState({ freeTransfers }); run(); }, { compact: true })),
       el('label', {}, 'In the bank (£m)',
         el('input', { type: 'number', step: '0.1', min: '0', value: (bank / 10).toFixed(1), style: 'width:6rem',
           oninput: (e) => { bank = Math.round((parseFloat(e.target.value) || 0) * 10); setState({ bank }); } })),
       el('label', {}, 'Risk aversion',
-        el('select', { onchange: (e) => { riskAversion = +e.target.value; setState({ riskAversion }); recompute(); run(); } },
-          [['0', 'Ignore doubts'], ['0.5', 'Balanced'], ['1', 'Avoid all doubts']].map(([v, l]) =>
-            el('option', { value: v, selected: +v === riskAversion }, l)))),
+        cycler(riskAversion, [[0, 'Ignore doubts'], [0.5, 'Balanced'], [1, 'Avoid all doubts']],
+          (v) => { riskAversion = v; setState({ riskAversion }); recompute(); run(); }, { compact: true })),
       el('button', { class: 'primary', onClick: run }, 'Find transfers'),
     ),
   );

@@ -25,7 +25,7 @@ import { rateSquad, RATING_HORIZONS } from '../rating.js';
 import { topMoves, recommendedHorizon } from '../transfer-advice.js';
 import { squadPitch, playerCard, enableSwapping, playerTile } from '../squadview.js';
 import { notesFor, justifyMove, transferRows } from '../explain.js';
-import { horizonPicker, horizonCycler, SEASON_HORIZON } from '../ui.js';
+import { horizonCycler, cycler, SEASON_HORIZON } from '../ui.js';
 import { $, el, fmt, dataBar, countdown, setKids, addKids, section, metric, compact } from '../ui.js';
 
 const app = $('#app');
@@ -330,7 +330,7 @@ if (squadIds.length !== SQUAD_RULES.size) {
     const cap = r.parts.captain;
     const sec = section('Rating', {
       hint: 'How much of what your money could buy you are actually getting',
-      control: horizonPicker(ratingH, (n) => { ratingH = n; setState({ [RATING_HZ]: n }); paintRating(); },
+      control: horizonCycler(ratingH, (n) => { ratingH = n; setState({ [RATING_HZ]: n }); paintRating(); },
         { options: RATING_HORIZONS }),
       flush: true,
     });
@@ -382,12 +382,9 @@ if (squadIds.length !== SQUAD_RULES.size) {
           el('i', {}, `over ${suggestH === 1 ? 'GW' : `${suggestH} GW`}`)),
         horizonCycler(suggestH, (n) => { suggestH = n; setState({ [SUGGEST_HZ]: n }); paintSuggest(); },
           { options: [1, 3, 5, 8] }),
-        el('select', {
-          class: 'hz hz-picker hz-next5',
-          title: 'Transfers to spend',
-          onChange: (e) => { plannedTransfers = +e.target.value; setState({ [OPT_HZ]: plannedTransfers }); paintSuggest(); },
-        }, [0, 1, 2, 3, 4, 5].map((n) => el('option', { value: String(n), selected: n === plannedTransfers },
-          `${n} FT`))),
+        cycler(plannedTransfers, [0, 1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n} FT` })),
+          (n) => { plannedTransfers = n; setState({ [OPT_HZ]: plannedTransfers }); paintSuggest(); },
+          { title: 'Transfers to spend' }),
       ],
       flush: true,
     });

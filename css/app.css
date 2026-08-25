@@ -968,18 +968,9 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
 .hz-next3, .hz-next5, .hz-next8 { color: var(--cyan); border-color: rgba(139,255,236,.45); }
 .hz-ros { color: var(--yellow); border-color: rgba(244,255,123,.45); }
 
-/* the horizon badge as a control */
-select.hz-picker {
-  background: transparent; cursor: pointer; appearance: none;
-  padding-right: 1.4rem; font-family: inherit;
-  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
-                    linear-gradient(135deg, currentColor 50%, transparent 50%);
-  background-position: calc(100% - .62rem) 55%, calc(100% - .38rem) 55%;
-  background-size: .24rem .24rem, .24rem .24rem;
-  background-repeat: no-repeat;
-}
-select.hz-picker:hover { border-color: currentColor; }
-select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text); }
+/* `select.hz-picker` lived here — the horizon badge dressed as a dropdown.
+   Every one of those is now a cycler; the .hz badge classes above are still
+   used by horizonBadge(), which is a read-only label, not a control. */
 
 /* ---------- squad rating bars ---------- */
 /* One row per dimension. The track is the achievable ceiling and the fill is
@@ -1079,7 +1070,6 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
 /* Selectors wear the filled pill. */
 /* The filled pill, wherever a control sits — inside a section header or alone
    at the top of the page as the gameweek stepper is. */
-.secctl select.hz-picker,
 .secctl .verdict,
 .secctl .gwstep,
 .secctl .hzcycle,
@@ -1093,7 +1083,6 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
   border-radius: clamp(6px, 1.17vw, 15px);
   padding: clamp(0.3rem, 1.1vw, 14px) clamp(0.5rem, 0.94vw, 12px);
 }
-.secctl select.hz-picker { appearance: none; padding-right: clamp(1.2rem, 2.6vw, 34px); }
 .secctl .inline-metric { align-items: baseline; gap: 0.3rem; }
 .secctl .inline-metric b {
   color: var(--mint-2);
@@ -1423,15 +1412,24 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
 /* The page-level gameweek stepper: alone, centred, above the metrics. */
 .sechead.pagestep { margin: clamp(0.8rem, 2.5vw, 2rem) 0 0; }
 
-/* ---------- window cycler ----------
-   The frame's control: a filled pill with the current option between two
-   arrows. An arrow is replaced by a same-width spacer at either end of the
-   range, so the label does not jump sideways as you step through. */
+/* ---------- the cycler ----------
+   The frame's control, and now the app's only selector for a short ordered
+   list: a filled pill with the current option between two arrows. An arrow is
+   replaced by a same-width spacer at either end of the range, so the label
+   does not jump sideways as you step through.
+
+   Styled standalone rather than only inside a section header, because it also
+   stands in for the dropdowns in the filter rows. The section-header rule
+   further down enlarges it there. */
 .hzcycle {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: clamp(0.4rem, 1.6vw, 1.6rem);
+  background: var(--mint-2);
+  color: var(--ink);
+  border-radius: clamp(6px, 1.17vw, 15px);
+  padding: clamp(0.3rem, 1.1vw, 14px) clamp(0.5rem, 0.94vw, 12px);
 }
 .hzcycle button,
 .hzcycle .spacer {
@@ -1443,7 +1441,11 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
   background: url('../img/ui/arrow-right.svg') no-repeat center / contain;
   border: none; padding: 0; cursor: pointer;
   text-indent: -9999px; overflow: hidden;
+  /* base.css gives every button a 37px floor for tap targets; these are icons
+     sized by the clamp above, and the floor was stretching the pill. */
+  min-height: 0;
 }
+.hzcycle button:hover { border-color: transparent; opacity: 0.65; }
 .hzcycle button.prev { transform: rotate(180deg); }
 .hzcycle-label {
   font-family: var(--font-body);
@@ -1453,6 +1455,30 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
   color: var(--ink);
   white-space: nowrap;
 }
+
+/* In a filter row the cycler is one of six controls sitting under a caption,
+   so it holds a fixed small size instead of scaling with the viewport the way
+   a section header does. min-width keeps a row of them from reflowing as the
+   labels change length ("Balanced" -> "Avoid all doubts"). */
+.hzcycle.compact {
+  gap: 0.45rem;
+  border-radius: var(--pill);
+  padding: 0.3rem 0.7rem;
+  /* Matches the height of the number inputs it sits beside in a filter row —
+     base.css floors those at 37px plus a border. */
+  min-height: 40px;
+}
+.hzcycle.compact button,
+.hzcycle.compact .spacer { width: 13px; height: 13px; }
+.hzcycle.compact .hzcycle-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  min-width: 7.5rem;
+  text-align: center;
+}
+/* The caption above a filter control is uppercase mint; the pill under it is
+   the value. Without this the label's own colour would bleed into the pill. */
+.filters label > .hzcycle { align-self: flex-start; }
 
 /* A shortlist row that the classifier did not endorse. Present because five
    ranked options say more than two, dimmed because it is not a recommendation. */

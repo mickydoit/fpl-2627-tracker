@@ -319,21 +319,9 @@ export function horizonBadge(kind) {
  */
 export const SEASON_HORIZON = 38;
 
-export function horizonPicker(value, onChange, { options = [1, 3, 5, 8, 10] } = {}) {
-  const label = (n) => (n >= SEASON_HORIZON ? 'Whole season'
-    : n === 1 ? 'Next gameweek' : `Next ${n} gameweeks`);
-  const tone = (n) => (n === 1 ? 'hz-gw' : n >= SEASON_HORIZON ? 'hz-ros' : 'hz-next5');
-  const sel = el('select', {
-    class: `hz hz-picker ${tone(value)}`,
-    title: 'Choose the window these projections cover',
-    onChange: (e) => {
-      const n = Number(e.target.value);
-      sel.className = `hz hz-picker ${tone(n)}`;
-      onChange(n);
-    },
-  }, options.map((n) => el('option', { value: String(n), selected: n === value }, label(n))));
-  return sel;
-}
+/* horizonPicker, the <select> that used to sit here, is gone — every caller now
+   uses `cycler` / `horizonCycler` below. Keeping both would leave two ways to
+   build the same control and let a select drift back in. */
 
 
 /* ------------------------------------------------------------------ *
@@ -404,21 +392,63 @@ export function compact(n) {
  *
  * @param {number[]} options ascending gameweek counts
  */
-export function horizonCycler(value, onChange, { options = [1, 3, 5, 8] } = {}) {
+/**
+ * A value you step through rather than open.
+ *
+ * The Figma has no dropdown anywhere: it has a pill with the current option in
+ * the middle and an arrow either side. That is a better fit than a select for
+ * a short ordered list — the options ARE a sequence, so stepping along one
+ * keeps the reader's eye on the page instead of in a menu, and the current
+ * value stays readable at display size instead of shrinking to fit a control.
+ *
+ * The end arrows disappear rather than wrapping. Wrapping from the last option
+ * back to the first on a forward press reads as a glitch, and the reference
+ * frame draws the first option with only a forward arrow. The vacated arrow is
+ * replaced by a same-width spacer so the label does not shift as you step.
+ *
+ * NOT for long lists. Reaching one of twenty clubs, or one of fifteen league
+ * sizes, would take up to nineteen clicks — those keep their dropdown, which is
+ * the right control for picking one of many rather than moving along a scale.
+ *
+ * @param {*} value              the current value, compared with ===
+ * @param {{value:*, label:string}[]} options  in the order they step
+ * @param {(v:*) => void} onChange
+ */
+export function cycler(value, options, onChange, { title = '', compact = false } = {}) {
+  const opts = options.map((o) => (Array.isArray(o) ? { value: o[0], label: o[1] } : o));
+  /* Redraws itself in place. A <select> shows its new value for free; a pill
+     built from the old one does not, and several of these sit in one-shot
+     renders with no repaint function to call. Swapping itself means a caller
+     only has to react to the change, never to re-render the control — and a
+     caller that does repaint simply replaces the node again, harmlessly. */
+  let node;
+  const build = (v) => {
+    const at = opts.findIndex((o) => o.value === v);
+    const i = at < 0 ? 0 : at;
+    const step = (delta) => {
+      const next = opts[i + delta];
+      if (!next) return;
+      const fresh = build(next.value);
+      node.replaceWith(fresh);
+      node = fresh;
+      onChange(next.value);
+    };
+    const arrow = (dir, to) => (to
+      ? el('button', { class: dir, title: to.label, onClick: () => step(dir === 'prev' ? -1 : 1) }, to.label)
+      : el('span', { class: 'spacer' }));
+    return el('div', { class: `hzcycle ${compact ? 'compact' : ''}`, title },
+      arrow('prev', opts[i - 1]),
+      el('span', { class: 'hzcycle-label' }, opts[i]?.label ?? ''),
+      arrow('next', opts[i + 1]),
+    );
+  };
+  node = build(value);
+  return node;
+}
+
+/** The projection-window cycler: a `cycler` over gameweek counts. */
+export function horizonCycler(value, onChange, { options = [1, 3, 5, 8], compact = false } = {}) {
   const label = (n) => (n >= SEASON_HORIZON ? 'Whole season'
     : n === 1 ? 'Next Gameweek' : `Next ${n} GW`);
-  const i = Math.max(0, options.indexOf(value));
-  const step = (delta) => {
-    const next = options[i + delta];
-    if (next != null) onChange(next);
-  };
-  return el('div', { class: 'hzcycle' },
-    i > 0
-      ? el('button', { class: 'prev', title: label(options[i - 1]), onClick: () => step(-1) }, 'Shorter')
-      : el('span', { class: 'spacer' }),
-    el('span', { class: 'hzcycle-label' }, label(options[i])),
-    i < options.length - 1
-      ? el('button', { class: 'next', title: label(options[i + 1]), onClick: () => step(1) }, 'Longer')
-      : el('span', { class: 'spacer' }),
-  );
+  return cycler(value, options.map((n) => ({ value: n, label: label(n) })), onChange, { compact });
 }

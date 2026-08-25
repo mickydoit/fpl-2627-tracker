@@ -4,7 +4,7 @@ import { rateSquad } from '../rating.js';
 import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI, scoreSquad,
   optimiseWithinTransfers } from '../optimiser.js';
 import { squadPitch, playerCard } from '../squadview.js';
-import { fdrLegend, horizonBadge, section } from '../ui.js';
+import { fdrLegend, horizonBadge, section, cycler } from '../ui.js';
 import { suggestTransfers } from '../optimiser.js';
 import { bestMove, recommendedHorizon } from '../transfer-advice.js';
 import { $, el, fmt, dataBar, posPill, statusBadge, penBadge, fdrTicker, modal, breakdown , setKids, addKids} from '../ui.js';
@@ -83,21 +83,19 @@ function renderControls() {
   setKids(controls, 
     el('div', { class: 'filters' },
       el('label', {}, 'Horizon',
-        el('select', { onchange: (e) => { horizon = +e.target.value; setState({ horizon }); run(); } },
-          [1, 3, 5, 8, 10].map((n) => el('option', { value: n, selected: n === horizon }, `${n} GW`)))),
+        cycler(horizon, [1, 3, 5, 8, 10].map((n) => ({ value: n, label: `${n} GW` })),
+          (n) => { horizon = n; setState({ horizon }); run(); }, { compact: true })),
       numberField('Budget (£m)', (budget / 10).toFixed(1), { step: '0.1', min: '80', max: '110', style: 'width:6rem' },
         (v) => { budget = Math.round(parseFloat(v) * 10) || SQUAD_RULES.budget; setState({ budget }); }),
       el('label', {}, 'Risk aversion',
-        el('select', { onchange: (e) => { riskAversion = +e.target.value; setState({ riskAversion }); run(); } },
-          [['0', 'Ignore doubts'], ['0.5', 'Balanced'], ['1', 'Avoid all doubts']].map(([v, l]) =>
-            el('option', { value: v, selected: +v === riskAversion }, l)))),
+        cycler(riskAversion, [[0, 'Ignore doubts'], [0.5, 'Balanced'], [1, 'Avoid all doubts']],
+          (v) => { riskAversion = v; setState({ riskAversion }); run(); }, { compact: true })),
       el('label', {}, 'Bench value',
-        el('select', { onchange: (e) => { benchWeight = +e.target.value; setState({ benchWeight }); run(); } },
-          [['0.02', 'Minimal — max the XI'], ['0.12', 'Balanced'], ['0.35', 'Strong bench']].map(([v, l]) =>
-            el('option', { value: v, selected: +v === benchWeight }, l)))),
+        cycler(benchWeight, [[0.02, 'Minimal — max the XI'], [0.12, 'Balanced'], [0.35, 'Strong bench']],
+          (v) => { benchWeight = v; setState({ benchWeight }); run(); }, { compact: true })),
       el('label', {}, 'Transfers available',
-        el('select', { onchange: (e) => { plannedTransfers = +e.target.value; setState({ optimiserTransfers: plannedTransfers }); run(); } },
-          [0, 1, 2, 3, 4, 5].map((n) => el('option', { value: n, selected: n === plannedTransfers }, String(n))))),
+        cycler(plannedTransfers, [0, 1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n} FT` })),
+          (n) => { plannedTransfers = n; setState({ optimiserTransfers: plannedTransfers }); run(); }, { compact: true })),
       el('button', { class: 'primary', onClick: run }, 'Optimise squad'),
     ),
     el('p', { class: 'hint' },
