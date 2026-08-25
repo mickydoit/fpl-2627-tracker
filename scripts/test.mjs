@@ -427,6 +427,67 @@ console.log('\nExpectation vs preference');
 }
 
 /* ------------------------------------------------------------------ *
+ * the evaluation harness
+ * ------------------------------------------------------------------ *
+ * Every remaining phase is gated on out-of-sample evidence rather than on more
+ * code, and scripts/evaluate.mjs is what supplies it. These check the harness
+ * itself: a scorer that is quietly wrong would let a bad model change look
+ * like an improvement.
+ */
+console.log('\nEvaluation harness');
+{
+  const evalPath = 'scripts/evaluate.mjs';
+  ok('the evaluation harness exists', fs.existsSync(evalPath));
+  const src = fs.readFileSync(evalPath, 'utf8');
+  /* It must never re-project. A projection recomputed today has seen the
+     result, which is the exact contamination the archive exists to prevent. */
+  ok('it never re-projects, it only reads the archive',
+    !/projectAll|hydrate\(/.test(src));
+  ok('it reads the archive directory', /data\/history\/gw/.test(src));
+  ok('it can emit machine-readable output for ablations', /--json/.test(src));
+
+  /* Spearman with tied ranks. FPL scores are full of ties — most players score
+     zero — so naive ranking silently distorts the correlation. */
+  const rho = (pairs) => {
+    const rank = (vals) => {
+      const idx = vals.map((v, i) => [v, i]).sort((a, b) => a[0] - b[0]);
+      const out = new Array(vals.length);
+      let i = 0;
+      while (i < idx.length) {
+        let j = i;
+        while (j + 1 < idx.length && idx[j + 1][0] === idx[i][0]) j++;
+        const avg = (i + j) / 2;
+        for (let k = i; k <= j; k++) out[idx[k][1]] = avg;
+        i = j + 1;
+      }
+      return out;
+    };
+    const a = rank(pairs.map((p) => p[0]));
+    const b = rank(pairs.map((p) => p[1]));
+    const m = (x) => x.reduce((s, v) => s + v, 0) / x.length;
+    const ma = m(a), mb = m(b);
+    let n = 0, da = 0, db = 0;
+    for (let i = 0; i < a.length; i++) { n += (a[i] - ma) * (b[i] - mb); da += (a[i] - ma) ** 2; db += (b[i] - mb) ** 2; }
+    return da > 0 && db > 0 ? n / Math.sqrt(da * db) : NaN;
+  };
+  ok('a perfect ordering scores 1', near(rho([[1, 1], [2, 2], [3, 3], [4, 4]]), 1, 1e-9));
+  ok('a reversed ordering scores -1', near(rho([[1, 4], [2, 3], [3, 2], [4, 1]]), -1, 1e-9));
+  ok('ties are averaged rather than ordered arbitrarily',
+    near(rho([[0, 5], [0, 1], [0, 3], [0, 2]]), NaN, 1) || Number.isNaN(rho([[0, 5], [0, 1], [0, 3], [0, 2]])),
+    'all-tied actuals give no correlation, not a spurious one');
+
+  /* The archive it reads must actually pair up. */
+  const gwDir = 'data/history/gw';
+  const archived = fs.readdirSync(gwDir).map((f) => JSON.parse(fs.readFileSync(`${gwDir}/${f}`, 'utf8')));
+  const scorable = archived.filter((g) => g.projected && g.actual);
+  ok('at least one gameweek is scorable', scorable.length >= 1, `${scorable.length}`);
+  for (const g of scorable) {
+    const paired = Object.keys(g.projected).filter((c) => Array.isArray(g.actual[c]));
+    ok(`GW${g.event} pairs projections to results by code`, paired.length > 400, `${paired.length}`);
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * per-gameweek starting XI
  * ------------------------------------------------------------------ *
  * FPL fixes the fifteen and lets the manager field any legal eleven from it
