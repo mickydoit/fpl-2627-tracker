@@ -122,6 +122,7 @@ for (const ev of boot.events) {
   let availability = null;
   let diagnostics = null;
   let news = null;
+  let capturedAt = null;
 
   if (beforeDeadline) {
     const rows = projectAll(prior ? hydrate(boot, prior, {}, espn) : boot,
@@ -139,6 +140,14 @@ for (const ev of boot.events) {
        `chance_of_playing_*` unset for players it has no doubt about, so a
        missing value is itself the evidence and must never be filled in with a
        guessed 100. */
+    /* When the pre-deadline snapshot was actually taken. `updatedAt` cannot
+       answer this: it is the last write of any kind, so for a settled gameweek
+       it is days AFTER the deadline, once the actuals landed. Recording the
+       capture instant separately is what lets a later backtest compute
+       `deadline - capturedAt` and know how stale the frozen projection was —
+       and it comes from the run itself rather than being inferred from a git
+       commit, which only says when something was committed. */
+    capturedAt = new Date().toISOString();
     availability = {};
     diagnostics = {};
     news = {};
@@ -195,6 +204,8 @@ for (const ev of boot.events) {
        it simply lack those keys and stay readable — they are NOT backfilled,
        because today's availability is not what was known at their deadline. */
     schema: schemaFor(availability ?? existing?.availability, existing?.schema),
+    ...(carryForward(existing?.capturedAt, capturedAt)
+      ? { capturedAt: carryForward(existing?.capturedAt, capturedAt) } : {}),
     /* [ elementId, status, chanceThisRound, chanceNextRound, minutes, starts, newsAdded ] */
     ...(carryForward(existing?.availability, availability)
       ? { availability: carryForward(existing?.availability, availability) } : {}),

@@ -457,6 +457,16 @@ console.log('\nAvailability archive');
     ok('and it is null rather than zero',
       Object.values(a.availability).every((r) => r[chanceIdx] === null || typeof r[chanceIdx] === 'number'));
 
+    /* The capture instant, which `updatedAt` cannot supply: that is the last
+       write of any kind, and on a settled gameweek it lands days after the
+       deadline once the actuals arrive. Only this supports asking how stale
+       the frozen projection was. */
+    ok('a pre-deadline snapshot records when it was captured', !!a.capturedAt, `${a.capturedAt}`);
+    ok('and it was captured before the deadline it describes',
+      Date.parse(a.capturedAt) < Date.parse(a.deadline),
+      `${a.capturedAt} vs ${a.deadline}`);
+    ok('capturedAt is distinct from updatedAt', a.capturedAt !== a.updatedAt);
+
     /* F — the model's own beliefs are frozen alongside FPL's report. */
     ok('diagnostics are frozen with the same snapshot', !!a.diagnostics);
     ok('diagnostic rows carry every documented field',
@@ -476,6 +486,7 @@ console.log('\nAvailability archive');
     ok('GW1 is not backfilled with availability it never had', !gw1.availability);
     ok('GW1 still reads as the schema it was written under', (gw1.schema ?? 1) === 1, `${gw1.schema ?? 'absent'}`);
     ok('GW1 keeps its recovered-projection provenance', !!gw1.projectedFrom);
+    ok('GW1 gains no capture timestamp it never had', !gw1.capturedAt);
   }
 
   /* G — the settlement pass must not overwrite what was believed beforehand.
@@ -485,6 +496,8 @@ console.log('\nAvailability archive');
   const settlement = null;                       // a post-deadline run captures nothing
   ok('a later settlement pass preserves pre-deadline availability',
     carryForward(preDeadline, settlement) === preDeadline);
+  ok('and preserves the capture timestamp alongside it',
+    carryForward('2026-08-28T17:00:00Z', null) === '2026-08-28T17:00:00Z');
   ok('a pre-deadline run overwrites with the fresher snapshot',
     carryForward(preDeadline, { 1: ['d', 50] }) !== preDeadline);
   ok('nothing archived and nothing captured stays null',

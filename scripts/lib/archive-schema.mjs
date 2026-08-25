@@ -6,9 +6,16 @@
  * is the whole point:
  *
  *   PRE-DEADLINE   what was believed before a ball was kicked — the
- *                  projection, FPL's availability report, and the opportunity
- *                  model's own diagnostics. Written only while the deadline is
+ *                  projection, FPL's availability report, the opportunity
+ *                  model's own diagnostics, and `capturedAt`, the instant the
+ *                  snapshot was taken. Written only while the deadline is
  *                  still ahead, and never revised afterwards.
+ *
+ *                  `capturedAt` is distinct from `updatedAt` on purpose.
+ *                  `updatedAt` is the last write of any kind and for a settled
+ *                  gameweek lands days after the deadline; only `capturedAt`
+ *                  supports `deadline - capturedAt`, i.e. how stale the frozen
+ *                  projection was when the deadline arrived.
  *   POST-MATCH     what actually happened. Attached later.
  *
  * Mixing them silently is the one failure this dataset cannot survive: a
