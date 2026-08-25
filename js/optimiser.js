@@ -35,10 +35,23 @@ const { budget: BUDGET, perClub: PER_CLUB, select: SELECT, minPlay: MIN_PLAY, ma
  * position first, then fill the remaining slots with whoever projects highest
  * and still fits under the per-position maximum.
  */
-export function bestXI(squad) {
+/**
+ * The best legal eleven under an arbitrary per-player value.
+ *
+ * Take the mandatory minimum at each position, then fill the remaining four
+ * slots with whoever is worth most and still fits under the per-position
+ * maximum. That is optimal here rather than merely reasonable: the minimums
+ * must be paid, and what is left is a plain "best four subject to a cap per
+ * position", where greedy by value is exact.
+ *
+ * Parameterised on `valueOf` so the same selector serves the horizon-total XI
+ * and a single gameweek's XI. Two selectors would drift apart and one of them
+ * would eventually field an illegal side.
+ */
+function pickXI(squad, valueOf) {
   const byPos = { 1: [], 2: [], 3: [], 4: [] };
   for (const p of squad) byPos[p.element_type].push(p);
-  for (const k of Object.keys(byPos)) byPos[k].sort((a, b) => score(b) - score(a));
+  for (const k of Object.keys(byPos)) byPos[k].sort((a, b) => valueOf(b) - valueOf(a));
 
   const xi = [];
   const used = { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -50,7 +63,7 @@ export function bestXI(squad) {
   }
   const rest = [];
   for (const pos of [1, 2, 3, 4]) rest.push(...byPos[pos].slice(used[pos]));
-  rest.sort((a, b) => score(b) - score(a));
+  rest.sort((a, b) => valueOf(b) - valueOf(a));
   for (const p of rest) {
     if (xi.length >= 11) break;
     const pos = p.element_type;
@@ -58,15 +71,24 @@ export function bestXI(squad) {
     xi.push(p);
     used[pos]++;
   }
+  return xi;
+}
 
-  // FPL benches the reserve keeper in its own slot — it is not part of the
-  // outfield autosub order. Keep the keeper first, then subs 1-3 by projection.
-  const benched = squad.filter((p) => !xi.includes(p));
-  const bench = [
-    ...benched.filter((p) => p.element_type === 1),
-    ...benched.filter((p) => p.element_type !== 1).sort((a, b) => b.proj - a.proj),
-  ];
-  return dressXI(squad, xi);
+/** Best legal XI on horizon totals, plus captain, bench and formation. */
+export function bestXI(squad) {
+  return dressXI(squad, pickXI(squad, score));
+}
+
+/**
+ * Best legal XI for ONE gameweek.
+ *
+ * FPL lets a manager field a different legal eleven every week, so a fifteen is
+ * worth more than its best fixed eleven: a cheap defender with one good fixture
+ * earns his place that week and sits the rest. Scoring the squad on a single
+ * horizon-total XI priced that rotation at zero.
+ */
+export function bestXIForGW(squad, gw, key = 'utilByGW') {
+  return pickXI(squad, (p) => p?.[key]?.[gw] ?? 0);
 }
 
 /**
@@ -186,13 +208,103 @@ export function captainForGW(xi, gw, key = 'projByGW') {
   return best && best.value > 0 ? best : null;
 }
 
-/** Objective: XI projection + captain again + a discounted bench. */
-export function scoreSquad(squad, opts = {}) {
+/**
+ * The fixed-XI objective: one eleven for the whole horizon.
+ *
+ * Kept as the fallback for squads with no per-gameweek detail, and as the
+ * control the rotation gain is measured against. `scoreSquad` below is the
+ * entry point everything actually calls.
+ */
+export function scoreSquadFixed(squad, opts = {}) {
   const o = { ...DEFAULTS, ...opts };
   const { xi, bench, captain } = bestXI(squad);
   const xiPts = xi.reduce((s, p) => s + score(p), 0);
   const benchPts = bench.reduce((s, p) => s + score(p), 0);
   return xiPts + captaincyBonus(xi, 'utilByGW') + benchPts * o.benchWeight;
+}
+
+/**
+ * The squad objective. Re-picks the eleven every gameweek where the data
+ * supports it, and falls back to the fixed-XI scorer where it does not.
+ *
+ * Every caller — the solver's swap tests, the transfer adviser, the transfer
+ * ladder — goes through here, so rotation value reaches all of them from one
+ * place rather than three that could drift.
+ */
+export function scoreSquad(squad, opts = {}) {
+  return scoreSquadByGW(squad, opts);
+}
+
+/** Gameweeks any player in the squad has a projection for. */
+function eventsOf(squad, key) {
+  const evs = new Set();
+  for (let i = 0; i < squad.length; i++) {
+    const m = squad[i]?.[key];
+    if (m === undefined) continue;
+    for (const gw in m) evs.add(gw);
+  }
+  return [...evs];
+}
+
+/**
+ * Squad value with the eleven re-chosen every gameweek.
+ *
+ * FPL fixes the fifteen and lets the manager field any legal eleven from it
+ * each week. Scoring one horizon-total XI therefore undercounted a squad by
+ * exactly its rotation value — a cheap defender with one strong fixture, a
+ * second keeper worth playing on his good weeks, a formation that ought to
+ * change. All of that priced at zero.
+ *
+ *   for each gameweek:
+ *     XI      = best legal eleven on THAT week's projections
+ *     captain = best of that eleven that week   (Phase 4, now on a rotating XI)
+ *     bench   = the four not selected THAT week, discounted
+ *
+ * The bench term is deliberately computed per gameweek from whoever is left
+ * out that week, not from a fixed four. Otherwise a player who starts in GW2
+ * and sits in GW3 would collect starter value and bench value in the same
+ * breath, and the optimiser would happily pay twice for him.
+ *
+ * `benchWeight` keeps its meaning and its value: the chance a benched player is
+ * autosubbed in. That is a per-gameweek event, so it applies per gameweek. It
+ * is NOT refitted here.
+ *
+ * Falls back to the fixed-XI scorer when rows carry no per-gameweek detail, so
+ * synthetic squads and older callers behave exactly as before.
+ */
+export function scoreSquadByGW(squad, opts = {}) {
+  const o = { ...DEFAULTS, ...opts };
+  const evs = eventsOf(squad, 'utilByGW');
+  if (!evs.length) return scoreSquadFixed(squad, opts);
+
+  /* This runs in the solver's innermost loop — tens of thousands of squads, each
+     scored across every gameweek in the horizon — so the arithmetic is worth
+     keeping tight. The whole-squad total is computed once per week and the XI is
+     subtracted from it, which avoids a second pass and a Set membership test per
+     player. Semantics are unchanged: bench value is still exactly the players
+     NOT selected that week. */
+  const bw = o.benchWeight;
+  let total = 0;
+  for (let e = 0; e < evs.length; e++) {
+    const gw = evs[e];
+    const valueOf = (p) => {
+      const m = p.utilByGW;
+      return m === undefined ? 0 : (m[gw] ?? 0);
+    };
+    let squadPts = 0;
+    for (let i = 0; i < squad.length; i++) squadPts += valueOf(squad[i]);
+
+    const xi = pickXI(squad, valueOf);
+    let xiPts = 0;
+    let cap = 0;
+    for (let i = 0; i < xi.length; i++) {
+      const v = valueOf(xi[i]);
+      xiPts += v;
+      if (v > cap) cap = v;
+    }
+    total += xiPts + cap + (squadPts - xiPts) * bw;
+  }
+  return total;
 }
 
 export function squadCost(squad) {

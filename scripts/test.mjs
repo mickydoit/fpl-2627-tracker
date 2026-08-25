@@ -20,7 +20,8 @@ import { makeRng, picksBetween, survival } from '../js/draft/simulate.js';
 import { recommend } from '../js/draft/advise.js';
 import { runDraft, STRATEGIES } from '../js/draft/compete.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI,
-  optimiseWithinTransfers, captaincyBonus, captainForGW } from '../js/optimiser.js';
+  optimiseWithinTransfers, captaincyBonus, captainForGW,
+  bestXIForGW, scoreSquadByGW, scoreSquadFixed } from '../js/optimiser.js';
 import { hydrate, PRIOR_DEFAULTS, poolPlayerSeasons, espnEvidence, decomposeOpportunity } from '../js/prior.js';
 import { ALLOWED_MODEL_SEASONS, CURRENT_SEASON, isAllowedSeason, seasonStartYear,
   assertAllowedSeason, onlyAllowedSeasons } from '../js/seasons.js';
@@ -423,6 +424,141 @@ console.log('\nExpectation vs preference');
   ok('Draft projects risk-neutrally', MODEL_DEFAULTS.riskAversion === 0);
   ok('and projectBoard is never handed a risk preference',
     !/riskAversion/.test(fs.readFileSync('js/draft/project.js', 'utf8')));
+}
+
+/* ------------------------------------------------------------------ *
+ * per-gameweek starting XI
+ * ------------------------------------------------------------------ *
+ * FPL fixes the fifteen and lets the manager field any legal eleven from it
+ * each week. Scoring one horizon-total XI priced that rotation at zero: a cheap
+ * defender with one strong fixture, a second keeper worth playing on his good
+ * weeks, a formation that ought to change — all invisible.
+ */
+console.log('\nPer-gameweek XI');
+{
+  const mk = (id, type, byGW) => {
+    const tot = Object.values(byGW).reduce((a, b) => a + b, 0);
+    return { id, element_type: type, team: id, now_cost: 50,
+      proj: tot, util: tot, projByGW: byGW, utilByGW: byGW };
+  };
+  const flat = (id, type, v) => mk(id, type, { 1: v, 2: v, 3: v });
+  /* a legal remainder: 1 more GK, enough DEF/MID/FWD to fill any formation */
+  const rest = () => [flat(90, 1, 1),
+    flat(92, 2, 2), flat(93, 2, 2), flat(94, 2, 2),
+    flat(60, 3, 2), flat(61, 3, 2), flat(62, 3, 2), flat(63, 3, 2), flat(64, 3, 2),
+    flat(70, 4, 2), flat(71, 4, 2), flat(72, 4, 2)];
+
+  /* A — the XI itself changes week to week. */
+  const A = mk(1, 2, { 1: 6, 2: 1, 3: 6 });
+  const B = mk(2, 2, { 1: 1, 2: 6, 3: 1 });
+  const sq = [flat(91, 1, 3), A, B, ...rest()].slice(0, 15);
+  const inXI = (gw, id) => bestXIForGW(sq, String(gw), 'projByGW').some((p) => p.id === id);
+  ok('the XI can change between gameweeks',
+    inXI(1, 1) && !inXI(2, 1) && inXI(3, 1), 'A should start 1 and 3, not 2');
+  ok('and the complementary player takes his place',
+    !inXI(1, 2) && inXI(2, 2) && !inXI(3, 2));
+  ok('rotation is worth more than the best fixed XI',
+    scoreSquadByGW(sq) > scoreSquadFixed(sq),
+    `${scoreSquadByGW(sq).toFixed(2)} vs ${scoreSquadFixed(sq).toFixed(2)}`);
+
+  /* F — legality every week, whatever rotates. */
+  for (const gw of [1, 2, 3]) {
+    const xi = bestXIForGW(sq, String(gw), 'projByGW');
+    const c = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    for (const p of xi) c[p.element_type]++;
+    ok(`GW${gw} fields a legal XI`,
+      xi.length === 11 && c[1] === 1 && c[2] >= 3 && c[3] >= 2 && c[4] >= 1,
+      `${c[1]}-${c[2]}-${c[3]}-${c[4]} n=${xi.length}`);
+  }
+
+  /* C — goalkeepers rotate, and exactly one plays. */
+  const g1 = mk(1, 1, { 1: 5, 2: 2, 3: 5 });
+  const g2 = mk(2, 1, { 1: 2, 2: 6, 3: 2 });
+  const gsq = [g1, g2, ...rest().filter((p) => p.element_type !== 1)].slice(0, 15);
+  const keeper = (gw) => bestXIForGW(gsq, String(gw), 'projByGW').find((p) => p.element_type === 1)?.id;
+  ok('the goalkeeper can rotate', keeper(1) === 1 && keeper(2) === 2 && keeper(3) === 1,
+    `${keeper(1)},${keeper(2)},${keeper(3)}`);
+  ok('and exactly one keeper is ever fielded',
+    [1, 2, 3].every((gw) => bestXIForGW(gsq, String(gw), 'projByGW')
+      .filter((p) => p.element_type === 1).length === 1));
+
+  /* B — formation follows the fixtures. */
+  const shape = (gw, squad) => {
+    const xi = bestXIForGW(squad, String(gw), 'projByGW');
+    const c = { 2: 0, 3: 0, 4: 0 };
+    for (const p of xi) if (c[p.element_type] !== undefined) c[p.element_type]++;
+    return `${c[2]}-${c[3]}-${c[4]}`;
+  };
+  const fsq = [flat(91, 1, 3),
+    mk(10, 2, { 1: 9, 2: 9, 3: 1 }), mk(11, 2, { 1: 9, 2: 1, 3: 1 }), mk(12, 2, { 1: 9, 2: 1, 3: 1 }),
+    mk(13, 2, { 1: 9, 2: 1, 3: 1 }), mk(14, 2, { 1: 1, 2: 1, 3: 1 }),
+    mk(20, 3, { 1: 1, 2: 9, 3: 9 }), mk(21, 3, { 1: 1, 2: 9, 3: 9 }), mk(22, 3, { 1: 1, 2: 9, 3: 9 }),
+    mk(23, 3, { 1: 1, 2: 9, 3: 9 }), mk(24, 3, { 1: 1, 2: 1, 3: 9 }),
+    mk(30, 4, { 1: 9, 2: 1, 3: 1 }), mk(31, 4, { 1: 1, 2: 1, 3: 1 }), mk(32, 4, { 1: 1, 2: 1, 3: 1 }),
+    flat(93, 1, 0)];
+  const shapes = new Set([1, 2, 3].map((gw) => shape(gw, fsq)));
+  ok('the formation can change between gameweeks', shapes.size > 1, [...shapes].join(' '));
+
+  /* D — the captain is chosen from THAT week's XI, so rotating in makes a
+     player captainable. */
+  const spike = mk(5, 4, { 1: 0, 2: 20, 3: 0 });
+  const csq = [flat(91, 1, 3), spike, ...rest()].slice(0, 15);
+  ok('a player who only starts one week can captain it',
+    captainForGW(bestXIForGW(csq, '2', 'projByGW'), '2').player.id === 5);
+  ok('and is not captain in a week he does not start',
+    captainForGW(bestXIForGW(csq, '1', 'projByGW'), '1').player.id !== 5);
+
+  /* E — a rotating player cannot draw starter AND bench value in one week. */
+  ok('starter and bench value never double-count', (() => {
+    const evs = ['1', '2', '3'];
+    for (const gw of evs) {
+      const xi = new Set(bestXIForGW(sq, gw, 'utilByGW'));
+      const bench = sq.filter((p) => !xi.has(p));
+      if (xi.size + bench.length !== sq.length) return false;
+      if (bench.some((p) => xi.has(p))) return false;
+    }
+    return true;
+  })());
+
+  /* G — a blank gameweek: the player contributes nothing and is rotated out. */
+  const blanker = mk(1, 2, { 1: 8 });                       // no GW2 fixture
+  const cover = mk(2, 2, { 1: 1, 2: 5 });
+  const bsq = [flat(91, 1, 3), blanker, cover, ...rest()].slice(0, 15);
+  ok('a blanking player is rotated out',
+    bestXIForGW(bsq, '1', 'projByGW').some((p) => p.id === 1)
+    && !bestXIForGW(bsq, '2', 'projByGW').some((p) => p.id === 1));
+  ok('and the XI stays legal without him', (() => {
+    const xi = bestXIForGW(bsq, '2', 'projByGW');
+    const c = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    for (const p of xi) c[p.element_type]++;
+    return xi.length === 11 && c[1] === 1 && c[2] >= 3 && c[3] >= 2 && c[4] >= 1;
+  })());
+
+  /* H — a double gameweek is already a summed total, so it simply competes. */
+  const dbl = mk(1, 3, { 1: 4 + 5 });
+  const sgl = mk(2, 3, { 1: 7 });
+  const dsq = [flat(91, 1, 3), dbl, sgl, ...rest()].slice(0, 15);
+  ok('a double gameweek total competes on its whole-week value',
+    bestXIForGW(dsq, '1', 'projByGW').some((p) => p.id === 1));
+
+  /* I — over one gameweek there is nothing to rotate, so the two scorers agree. */
+  /* Totals must match the single gameweek, or the two scorers are being handed
+     different squads: the fixed scorer sums `proj`, the per-gameweek one sums
+     `projByGW`. */
+  const one = [flat(91, 1, 3), mk(1, 2, { 1: 6 }), ...rest()].slice(0, 15)
+    .map((p) => {
+      const v = p.projByGW['1'] ?? 0;
+      return { ...p, proj: v, util: v, projByGW: { 1: v }, utilByGW: { 1: v } };
+    });
+  const fixedOne = scoreSquadFixed(one);
+  const gwOne = scoreSquadByGW(one);
+  ok('over a single gameweek the two scorers agree', near(fixedOne, gwOne, 1e-9),
+    `${fixedOne.toFixed(4)} vs ${gwOne.toFixed(4)}`);
+
+  /* Squads with no per-gameweek detail keep the old behaviour exactly. */
+  const plain = sq.map(({ projByGW, utilByGW, ...r }) => r);
+  ok('a squad without per-gameweek detail falls back to the fixed scorer',
+    near(scoreSquadByGW(plain), scoreSquadFixed(plain), 1e-9));
 }
 
 /* ------------------------------------------------------------------ *
