@@ -5,8 +5,18 @@
  * every 30 minutes). Stepping back to an earlier gameweek needs its numbers
  * kept, and they are only worth keeping in two halves:
  *
- *   projected  what the model said BEFORE the deadline
- *   actual     what the player then scored
+ *   projected     what the model said BEFORE the deadline
+ *   availability  what FPL said about the player's fitness at that moment
+ *   diagnostics   what the opportunity model believed at that moment
+ *   actual        what the player then scored
+ *
+ * The middle two are evidence collection, not display. Historical FPL data
+ * cannot distinguish "injured", "benched" and "not in the squad" — every one
+ * of them is simply an absence of minutes, and `history_past` carries season
+ * totals with no availability at all. That makes P(start | available)
+ * unestimable from anything already on disk. The only way to get it is to
+ * start writing down what was known before each deadline, from now on, which
+ * is what these two maps are for. Nothing reads them yet.
  *
  * Those two together are the comparison the squad view draws. The projection
  * has to be captured before the deadline or it is hindsight — FPL wipes and
@@ -21,7 +31,8 @@
  * awarded. The file is rewritten until `data_checked` turns true, then frozen —
  * that is the point after which nothing can move.
  *
- * Cheap by construction: one 9KB file per gameweek, ~0.3MB for a season, and
+ * Cheap by construction: ~60KB per gameweek once the pre-deadline evidence is
+ * included, ~2.3MB for a season, and
  * each is written a handful of times and then never again. `data/live.json` is
  * 112KB rewritten every half hour, so this adds nothing next to what the
  * pipeline already does.
@@ -36,6 +47,7 @@ import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { projectAll } from '../js/model.js';
 import { hydrate } from '../js/prior.js';
+import { carryForward, schemaFor } from './lib/archive-schema.mjs';
 
 const FPL = 'https://fantasy.premierleague.com/api';
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36';
@@ -56,6 +68,14 @@ await mkdir(DIR, { recursive: true });
 const prior = await readJSON('data/draft/prior-2526.json', null);
 const espn = await readJSON('data/espn-history.json', null);
 const now = Date.now();
+
+/** Coerce to a finite number, or 0. FPL sends some counts as strings. */
+const num = (v) => {
+  const n = typeof v === 'number' ? v : parseFloat(v);
+  return Number.isFinite(n) ? n : 0;
+};
+/** Two decimals, or null — never a guessed zero for a value we do not have. */
+const r2 = (v) => (Number.isFinite(v) ? Math.round(v * 100) / 100 : null);
 
 /** classic element id -> code, the identifier both games share. */
 const codeOf = new Map(boot.elements.map((e) => [e.id, e.code]));
@@ -93,6 +113,16 @@ for (const ev of boot.events) {
      its own deadline and carries no such note. Preserved across rewrites so the
      provenance cannot be quietly lost when the actuals land. */
   const projectedFrom = existing?.projectedFrom ?? null;
+  /* Availability and model diagnostics are frozen at the SAME instant as the
+     projection — inside this branch, never outside it. Captured after the
+     deadline they would describe a squad already announced, which is exactly
+     the hindsight this file exists to prevent. Preserved across later rewrites
+     the same way `projectedFrom` is, so settling the actuals cannot overwrite
+     what was believed beforehand. */
+  let availability = null;
+  let diagnostics = null;
+  let news = null;
+
   if (beforeDeadline) {
     const rows = projectAll(prior ? hydrate(boot, prior, {}, espn) : boot,
       fixtures, { horizon: 1, fromEvent: ev.id }).rows;
@@ -102,6 +132,39 @@ for (const ev of boot.events) {
         return code ? [code, Math.round(r.proj * 100) / 100] : null;
       })
       .filter(Boolean));
+
+    /* Compact arrays rather than objects: 610 players x 38 gameweeks is a lot
+       of repeated keys, and the field order is documented here and asserted in
+       scripts/test.mjs. `null` is preserved as null throughout — FPL leaves
+       `chance_of_playing_*` unset for players it has no doubt about, so a
+       missing value is itself the evidence and must never be filled in with a
+       guessed 100. */
+    availability = {};
+    diagnostics = {};
+    news = {};
+    for (const e of boot.elements) {
+      const code = e.code ?? codeOf.get(e.id);
+      if (!code) continue;
+      availability[code] = [
+        e.id,
+        e.status ?? null,
+        e.chance_of_playing_this_round ?? null,
+        e.chance_of_playing_next_round ?? null,
+        num(e.minutes),
+        num(e.starts),
+        e.news_added ?? null,
+      ];
+      if (e.news && e.news.trim()) news[code] = e.news.trim();
+    }
+    for (const r of rows) {
+      const code = r.code ?? codeOf.get(r.id);
+      const q = r.parts;
+      if (!code || !q) continue;
+      diagnostics[code] = [
+        r2(q.expMins), r2(q.pStart), r2(q.pPlay), r2(q.p60),
+        r2(q.productionConfidence ?? q.evidence), r2(q.minutesConfidence),
+      ];
+    }
   }
 
   /* ---- the actuals, once every match has been played ---- */
@@ -128,6 +191,18 @@ for (const ev of boot.events) {
     highestScore: ev.highest_score ?? null,
     updatedAt: new Date().toISOString(),
     ...(projectedFrom ? { projectedFrom } : {}),
+    /* Schema 2 adds availability/diagnostics/news. Gameweeks archived before
+       it simply lack those keys and stay readable — they are NOT backfilled,
+       because today's availability is not what was known at their deadline. */
+    schema: schemaFor(availability ?? existing?.availability, existing?.schema),
+    /* [ elementId, status, chanceThisRound, chanceNextRound, minutes, starts, newsAdded ] */
+    ...(carryForward(existing?.availability, availability)
+      ? { availability: carryForward(existing?.availability, availability) } : {}),
+    /* [ expMins, pStart, pPlay, p60, productionConfidence, minutesConfidence ] */
+    ...(carryForward(existing?.diagnostics, diagnostics)
+      ? { diagnostics: carryForward(existing?.diagnostics, diagnostics) } : {}),
+    ...(Object.keys(carryForward(existing?.news, news) || {}).length
+      ? { news: carryForward(existing?.news, news) } : {}),
     projected,
     actual,
   })}\n`);

@@ -27,6 +27,7 @@ import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scor
   RATING_WEIGHTS, RATING_HORIZONS, RATING_FLOOR } from '../js/rating.js';
 import { topMoves, bestMove } from '../js/transfer-advice.js';
 import { groupByDay, MATCH_VIEWS } from '../js/matches.js';
+import { carryForward, schemaFor, ARCHIVE_SCHEMA, AVAILABILITY_FIELDS, DIAGNOSTIC_FIELDS } from './lib/archive-schema.mjs';
 
 let failures = 0;
 let checks = 0;
@@ -292,6 +293,111 @@ console.log('\nLive points');
     const total = xi.reduce((t, [, m, pts]) => t + livePointsFor(live(pts), { multiplier: m }), 0);
     return total === 37;
   })());
+}
+
+/* ------------------------------------------------------------------ *
+ * the availability archive
+ * ------------------------------------------------------------------ *
+ * Historical FPL data cannot tell "injured" from "benched" from "not in the
+ * squad" — all three are simply an absence of minutes, and `history_past`
+ * carries season totals with no availability at all. P(start | available) is
+ * therefore unestimable from anything already on disk, and the only remedy is
+ * to write down what was known before each deadline from now on.
+ *
+ * These checks guard the one property that makes that dataset worth having:
+ * pre-deadline evidence must never be contaminated by anything learned later.
+ */
+console.log('\nAvailability archive');
+{
+  const gwDir = 'data/history/gw';
+  const files = fs.existsSync(gwDir) ? fs.readdirSync(gwDir).filter((f) => f.endsWith('.json')) : [];
+  ok('the gameweek archive exists', files.length > 0, `${files.length} files`);
+  const load = (f) => JSON.parse(fs.readFileSync(`${gwDir}/${f}`, 'utf8'));
+  const archives = files.map(load);
+
+  /* C — older gameweeks stay readable after the schema change. */
+  ok('every archived gameweek still parses and names its event',
+    archives.every((a) => Number.isFinite(a.event) && a.deadline));
+  ok('every archived gameweek declares a schema',
+    archives.every((a) => a.schema === 1 || a.schema === 2), archives.map((a) => a.schema).join(','));
+  ok('schema 1 gameweeks are still readable without the new keys',
+    archives.filter((a) => a.schema === 1).every((a) => a.projected && !a.availability));
+
+  /* E — code is the durable identity, not element id. Draft and classic
+     disagree on ids for 21 of 587 players; ids also move between seasons. */
+  const codes = new Set(boot.elements.map((e) => e.code));
+  const ids = new Set(boot.elements.map((e) => e.id));
+  for (const a of archives) {
+    ok(`GW${a.event} is keyed by code`, a.keyedBy === 'code');
+    const keys = Object.keys(a.projected || {}).map(Number);
+    if (keys.length) {
+      const asCodes = keys.filter((k) => codes.has(k)).length;
+      const asIds = keys.filter((k) => ids.has(k)).length;
+      ok(`GW${a.event} projection keys resolve as codes, not ids`, asCodes > asIds,
+        `codes ${asCodes} ids ${asIds}`);
+    }
+  }
+
+  const withAvail = archives.filter((a) => a.availability);
+  if (withAvail.length) {
+    const a = withAvail[0];
+    /* A — the fields are actually saved. */
+    ok('availability rows carry every documented field',
+      Object.values(a.availability).every((r) => r.length === AVAILABILITY_FIELDS.length),
+      `expected ${AVAILABILITY_FIELDS.length}`);
+    ok('availability covers the whole player pool',
+      Object.keys(a.availability).length > 400, `${Object.keys(a.availability).length}`);
+    const statusIdx = AVAILABILITY_FIELDS.indexOf('status');
+    ok('every availability row records a status',
+      Object.values(a.availability).every((r) => typeof r[statusIdx] === 'string'));
+    ok('a flagged player is recorded as flagged',
+      Object.values(a.availability).some((r) => r[statusIdx] !== 'a'));
+
+    /* B — the nulls are the evidence. FPL leaves `chance_of_playing_*` unset
+       for players it has no doubt about; filling that in with a guessed 100
+       would destroy exactly the signal this archive is being built to capture. */
+    const chanceIdx = AVAILABILITY_FIELDS.indexOf('chanceThisRound');
+    const nulls = Object.values(a.availability).filter((r) => r[chanceIdx] === null).length;
+    ok('missing chance-of-playing is preserved as null, never guessed', nulls > 0, `${nulls} nulls`);
+    ok('and it is null rather than zero',
+      Object.values(a.availability).every((r) => r[chanceIdx] === null || typeof r[chanceIdx] === 'number'));
+
+    /* F — the model's own beliefs are frozen alongside FPL's report. */
+    ok('diagnostics are frozen with the same snapshot', !!a.diagnostics);
+    ok('diagnostic rows carry every documented field',
+      Object.values(a.diagnostics).every((r) => r.length === DIAGNOSTIC_FIELDS.length));
+    const pStartIdx = DIAGNOSTIC_FIELDS.indexOf('pStart');
+    ok('frozen P(start) is a probability',
+      Object.values(a.diagnostics).every((r) => r[pStartIdx] === null
+        || (r[pStartIdx] >= 0 && r[pStartIdx] <= 1)));
+    ok('availability and diagnostics describe the same players',
+      Object.keys(a.diagnostics).length === Object.keys(a.availability).length);
+  }
+
+  /* D — GW1's deadline is long past, so it can never gain pre-deadline
+     evidence. Backfilling it from today would be pure hindsight. */
+  const gw1 = archives.find((a) => a.event === 1);
+  if (gw1) {
+    ok('GW1 is not backfilled with availability it never had', !gw1.availability);
+    ok('GW1 still declares the schema it was written under', gw1.schema === 1, `${gw1.schema}`);
+    ok('GW1 keeps its recovered-projection provenance', !!gw1.projectedFrom);
+  }
+
+  /* G — the settlement pass must not overwrite what was believed beforehand.
+     `carryForward(existing, captured)` is what every later run goes through:
+     captured is null once the deadline has passed, and the archived value wins. */
+  const preDeadline = { 1: ['a', 100] };
+  const settlement = null;                       // a post-deadline run captures nothing
+  ok('a later settlement pass preserves pre-deadline availability',
+    carryForward(preDeadline, settlement) === preDeadline);
+  ok('a pre-deadline run overwrites with the fresher snapshot',
+    carryForward(preDeadline, { 1: ['d', 50] }) !== preDeadline);
+  ok('nothing archived and nothing captured stays null',
+    carryForward(null, null) === null);
+  ok('schema is not upgraded for a gameweek with no pre-deadline evidence',
+    schemaFor(null, 1) === 1);
+  ok('schema is upgraded once pre-deadline evidence exists',
+    schemaFor({ 1: [] }, 1) === ARCHIVE_SCHEMA);
 }
 
 /* ------------------------------------------------------------------ *
@@ -1308,9 +1414,16 @@ console.log('\nGameweek archive');
     }
   }
 
-  /* Stays cheap: the archive exists instead of keeping 38 copies of live.json. */
+  /* Stays cheap: the archive exists instead of keeping 38 copies of live.json.
+     The bar moved from 40KB to 96KB when schema 2 began storing pre-deadline
+     availability and model diagnostics for all 610 players — about 62KB a
+     gameweek, ~2.3MB across a season. That is a deliberate trade, not drift:
+     the alternative is being unable to estimate P(start | available) at all,
+     because no historical source distinguishes injured from benched. For
+     comparison the pipeline already rewrites a 112KB data/live.json every
+     thirty minutes, and data/draft/ alone is 1.6MB. */
   const bytes = files.reduce((t, f) => t + fs.statSync(`${dir}/${f}`).size, 0);
-  ok('the archive stays small', bytes / files.length < 40 * 1024,
+  ok('the archive stays small', bytes / files.length < 96 * 1024,
     `${(bytes / files.length / 1024).toFixed(1)}KB average`);
 }
 
