@@ -36,7 +36,7 @@
  * Because every player is scaled by the same figure, `inferGamesPlayed` recovers
  * it exactly and the ratio each player needs survives.
  */
-import { inferGamesPlayed } from './model.js';
+import { inferGamesPlayed, DEFAULTS as MODEL_DEFAULTS } from './model.js';
 import { isAllowedSeason, CURRENT_SEASON } from './seasons.js';
 
 const num = (v) => {
@@ -57,6 +57,45 @@ export const PRIOR_DEFAULTS = {
    * Worth revisiting once there is a real season to fit against.
    */
   lastSeasonWeight: 0.5,
+  /**
+   * Opportunity is pooled on its own terms, NOT on the production constant
+   * above. The two were sharing `lastSeasonWeight`, which is how an injury-hit
+   * prior season came to suppress a player's present expected minutes: the
+   * same 0.5 that is right for a shooting rate was being applied to how often
+   * he is picked.
+   *
+   * These weights were fitted, not chosen. Predicting a player's next-season
+   * value from his previous one across every adjacent pair in `history_past`
+   * (n≈420), the MAE-minimising prior weight is:
+   *
+   *   xGI/90                      w* = 1.00   (production — persistent)
+   *   minutes per start           w* = 0.25   (role — persistent, MAE 2.5 min)
+   *   start rate given featured   w* = 0.25   (role)
+   *   featured rate               w* = 0.50, and it is by far the noisiest
+   *                                           quantity here (best MAE 0.20 on
+   *                                           a mean of 0.57) — which is why
+   *                                           it also gets shrunk toward the
+   *                                           population mean.
+   */
+  opportunityWeight: 0.25,
+  featuredWeight: 0.5,
+  /** Games of shrinkage applied to featured rate, toward `featuredRateMean`. */
+  featuredShrinkGames: 0,
+  /** Population featured rate across `history_past` adjacent season pairs. */
+  featuredRateMean: 0.574,
+  /**
+   * Measured on GW1 2026/27 per-match rows (summaries.json), not assumed:
+   *   started  n=174  mean 83.2 min   P(>=60) = 0.977
+   *   sub on   n= 42  mean 19.7 min   P(>=60) = 0.000
+   * A substitute never reaches sixty minutes; a starter almost always does.
+   */
+  /* One source of truth with js/model.js. These were duplicated as literals in
+     both modules, and only these copies actually bite: js/model.js reads its
+     own for the non-hydrated fallback path, so sweeping the constants there
+     produced exactly zero change in production and would have convinced anyone
+     tuning them that they did not matter. */
+  minutesPerStartMean: MODEL_DEFAULTS.minsPerStart,
+  minutesPerSub: MODEL_DEFAULTS.minsPerSub,
   /** Games in the season the prior was captured from. */
   lastSeasonGames: 38,
   /**
@@ -80,7 +119,70 @@ export const PRIOR_DEFAULTS = {
  * @param {object} opts    gamesThis, games (the shared basis), and the weights
  * @returns {object|null}  model fields, or null when there is nothing on record
  */
-export function poolPlayerSeasons(current, prior, { gamesThis, games, lastSeasonWeight, lastSeasonGames, priorSeason = CURRENT_SEASON - 1 }) {
+/**
+ * Split a season's totals into the two things that actually drive minutes.
+ *
+ * FPL gives `minutes` and `starts` per season, and nothing else — no
+ * appearances, no substitution minute. That is enough, because the split is
+ * identifiable once the two measured constants above are supplied:
+ *
+ *   minutes = starts x minutesPerStart + subAppearances x minutesPerSub
+ *
+ * `minutesPerStart` is read off the player himself (his own minutes divided by
+ * his own starts), shrunk toward the league mean by start count so a two-start
+ * sample cannot invent an 90-minute role. Sub appearances are then whatever
+ * minutes are left over, capped at the games he did not start.
+ *
+ * The reason this matters more than it looks: a raw start rate conflates "was
+ * not picked" with "was not available". Odegaard started 16 of 38 in 2025/26 —
+ * a start rate of 0.42 that reads like a rotation player — but he started 98%
+ * of the games he actually featured in, at 85 minutes a time. The 0.42 is 22
+ * games of injury. Separating `startRateGivenFeatured` from `featuredRate`
+ * keeps the role signal clean and leaves absence to the availability layer,
+ * which is where it belongs.
+ */
+export function decomposeOpportunity(season, games, o) {
+  const mins = num(season?.minutes);
+  const starts = num(season?.starts);
+  if (!(games > 0) || mins <= 0) return null;
+  const MPS = o.minutesPerStartMean;
+  /* `starts` is treated as a LOWER bound, because a hard physical constraint
+     beats a reported field: nobody accumulates N x 90 minutes in fewer than N
+     appearances. Without this a record carrying minutes but no start count —
+     an older prior file, an ESPN-derived row — decomposes into an impossible
+     player who came off the bench thirty-eight times for 3,420 minutes. */
+  const maxSubMinutes = games * o.minutesPerSub;
+  /* Minutes that substitute appearances cannot account for must have come from
+     starts. If every one of `games` appearances were a substitute appearance
+     they would contribute at most `games x 19.7` minutes; anything beyond that
+     needs starts, each worth at most a full ninety.
+     
+     Note this bounds STARTS, not appearances. An earlier version used
+     floor(minutes/90), which is a bound on appearances and quietly turned a
+     600-minute career substitute into a six-start player. */
+  const impliedStarts = mins > maxSubMinutes
+    ? Math.ceil((mins - maxSubMinutes) / (90 - o.minutesPerSub))
+    : 0;
+  const effStarts = Math.min(games, Math.max(starts, impliedStarts));
+  const raw = effStarts > 0 ? mins / effStarts : MPS;
+  /* Three starts of shrinkage: enough that a single 90-minute cameo does not
+     establish a role, little enough that a settled starter keeps his own. */
+  const w = effStarts / (effStarts + 3);
+  const minsPerStart = clamp(w * raw + (1 - w) * MPS, 45, 90);
+  const subMinutes = Math.max(0, mins - effStarts * minsPerStart);
+  const subApps = clamp(subMinutes / o.minutesPerSub, 0, Math.max(0, games - effStarts));
+  const featured = effStarts + subApps;
+  return {
+    minsPerStart,
+    starts: effStarts,
+    subApps,
+    featured,
+    featuredRate: clamp(featured / games, 0, 1),
+    startRateGivenFeatured: featured > 0 ? clamp(effStarts / featured, 0, 1) : 0,
+  };
+}
+
+export function poolPlayerSeasons(current, prior, { gamesThis, games, lastSeasonWeight, lastSeasonGames, priorSeason = CURRENT_SEASON - 1, opts = PRIOR_DEFAULTS }) {
   const lambda = lastSeasonWeight;
   /* The season boundary is enforced at the door. A prior labelled anything
      outside the window is dropped rather than blended — reaching further back
@@ -95,9 +197,91 @@ export function poolPlayerSeasons(current, prior, { gamesThis, games, lastSeason
 
   const rate = (a, b) => ((num(a) + lambda * num(b)) / pooled) * 90;
   const pr = priorUsable;
-  const mpgThis = gamesThis > 0 ? mThis / gamesThis : 0;
-  const mpgLast = lastSeasonGames > 0 ? mLast / lastSeasonGames : 0;
-  const mpg = clamp((mThis * mpgThis + wLast * mpgLast) / pooled, 0, 90);
+
+  /* ---------------- opportunity, pooled on its own constants ----------------
+   *
+   * This used to be one line — minutes-per-game pooled with the SAME lambda as
+   * the shooting rates above — and that single shared constant was the bug.
+   * Expected minutes and expected production are different questions answered
+   * by different evidence over different timescales, so they now pool
+   * separately, in games rather than minutes, through three quantities:
+   *
+   *   featuredRate            how often he is involved at all   (volatile)
+   *   startRateGivenFeatured  whether he starts when involved    (persistent)
+   *   minsPerStart            how long he lasts when he starts   (persistent)
+   *
+   * Each is pooled at its own fitted weight, and the volatile one is also
+   * shrunk toward the population mean because it is the least predictable
+   * quantity in the model.
+   */
+  const o = { ...PRIOR_DEFAULTS, ...opts };
+  const oThis = decomposeOpportunity(current, gamesThis, o);
+  const oLast = decomposeOpportunity(pr, lastSeasonGames, o);
+
+  /* Pool in GAMES. Minutes were the wrong unit for a per-match rate: a full
+     prior season carries 3,400 minutes against this season's 90, which buried
+     current selection evidence under a denominator it could never move. */
+  const gThis = oThis ? gamesThis : 0;
+  const gLast = oLast ? o.featuredWeight * lastSeasonGames : 0;
+  const gRole = oLast ? o.opportunityWeight * lastSeasonGames : 0;
+  const K = o.featuredShrinkGames;
+
+  /* NOT shrunk toward the population season mean, though the fit says that
+     minimises error when predicting a whole next season. That fit is measuring
+     something this model must not absorb: a season-long featured rate is low
+     partly because players get injured, and injury is already applied
+     downstream as its own multiplier. Shrinking toward 0.574 here charged every
+     player for absence twice and cost the whole board 10-25% of its
+     projection — a level shift, not better discrimination.
+     What belongs here is selection GIVEN available; absence belongs to
+     availability. So the only shrinkage is toward the player's own role
+     signal, which is availability-neutral. */
+  /* No shrinkage toward a population mean, and the constant is left at zero
+     rather than removed so the decision stays visible.
+     
+     Both candidate targets are wrong, in opposite directions. Shrinking toward
+     the season-long population rate (0.574) charges every player for injury
+     twice — once here, once in the availability multiplier downstream — and
+     measured, it took 10% off the entire board without improving any ranking.
+     Shrinking toward the player's own start-rate-given-featured is worse: they
+     are different quantities, and a career substitute has a start rate of zero,
+     which dragged his featured rate to nothing.
+     
+     Leaving it unshrunk is also what this codebase already says about role:
+     how much a player features is observed far sooner than how productive he
+     is, because every appearance reports it. Thin production samples are still
+     handled, by `evidenceMinutes` and the price-prior blend downstream. */
+  const roleBaseline = o.featuredRateMean;
+  const featuredRate = (gThis + gLast + K) > 0
+    ? clamp(((oThis?.featuredRate ?? 0) * gThis
+           + (oLast?.featuredRate ?? 0) * gLast
+           + roleBaseline * K) / (gThis + gLast + K), 0, 1)
+    : o.featuredRateMean;
+
+  /* Role terms weight by games FEATURED, not games elapsed — a player who
+     missed half a season tells us nothing about his role in the games he
+     missed, and should not be diluted toward the mean for having been absent. */
+  const fThis = oThis ? oThis.featured : 0;
+  const fLast = oLast ? o.opportunityWeight * oLast.featured : 0;
+  const roleDen = fThis + fLast;
+  const startRateGivenFeatured = roleDen > 0
+    ? clamp(((oThis?.startRateGivenFeatured ?? 0) * fThis
+           + (oLast?.startRateGivenFeatured ?? 0) * fLast) / roleDen, 0, 1)
+    : 0;
+
+  const sThis = oThis ? oThis.starts : 0;
+  const sLast = oLast ? o.opportunityWeight * oLast.starts : 0;
+  const minsPerStart = (sThis + sLast) > 0
+    ? clamp(((oThis?.minsPerStart ?? 0) * sThis
+           + (oLast?.minsPerStart ?? 0) * sLast) / (sThis + sLast), 45, 90)
+    : o.minutesPerStartMean;
+
+  /* The mixture. Expected minutes per team game is now an explicit statement
+     about how a player is used, rather than an average that cannot tell a
+     starter substituted on 70 from a rotation player who plays 20 twice. */
+  const startProbability = clamp(featuredRate * startRateGivenFeatured, 0, 1);
+  const subAppProbability = clamp(featuredRate - startProbability, 0, 1);
+  const mpg = clamp(startProbability * minsPerStart + subAppProbability * o.minutesPerSub, 0, 90);
   const minutes = mpg * games;
   const count = (per90) => (per90 * minutes) / 90;
 
@@ -112,6 +296,14 @@ export function poolPlayerSeasons(current, prior, { gamesThis, games, lastSeason
   return {
     modelMinutes: minutes,
     evidenceMinutes: pooled,
+    /* The opportunity model's own outputs, carried through to js/model.js so
+       appearance points are computed from selection probability rather than
+       re-derived from an average that has already thrown the distinction away. */
+    startProbability,
+    subAppProbability,
+    featuredRate,
+    startRateGivenFeatured,
+    minsPerStart,
     /* Role is observed sooner and more cheaply than production: every
        appearance reports minutes, while a shooting rate takes a season to mean
        anything. Same pooled minutes, but the model weighs it on its own scale. */
@@ -274,7 +466,7 @@ export function hydrate(boot, prior, opts = {}, espnHistory = null) {
     const pr = prior.players[e.code];
     if (!pr) return e;
     const pooled = poolPlayerSeasons(e, pr, {
-      gamesThis, games, lastSeasonWeight: lambda, lastSeasonGames: o.lastSeasonGames, priorSeason,
+      gamesThis, games, lastSeasonWeight: lambda, lastSeasonGames: o.lastSeasonGames, priorSeason, opts: o,
     });
 
     /* Tier 3. Only for players the Premier League cannot describe: anyone with
@@ -331,5 +523,6 @@ export function hydrate(boot, prior, opts = {}, espnHistory = null) {
     return { ...e, ...pooled };
   });
 
-  return { ...boot, elements };
+  /* State the basis rather than leaving it to be re-derived downstream. */
+  return { ...boot, elements, modelGamesBasis: games };
 }

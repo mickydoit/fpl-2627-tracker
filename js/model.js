@@ -46,6 +46,24 @@ export const DEFAULTS = {
   riskAversion: 0,     // 0..1, penalises players with injury/rotation doubt
   prior: null,          // (player) => pts/appearance; defaults to pricePrior
   bonusModel: null,     // (player) => expected bonus per appearance; defaults to the BPS logistic
+  /**
+   * The opportunity constants, as options rather than literals so they can be
+   * swept and refitted as the season's sample grows. Measured on GW1 2026/27
+   * per-match rows — ONE gameweek, so provisional:
+   *
+   *   minsPerStart   n=174  mean 83.2  sd 10.5  95% CI [81.7, 84.8]
+   *   minsPerSub     n= 42  mean 19.7  sd  9.8  95% CI [16.8, 22.7]
+   *   p60GivenStart  170/174 = 0.977   95% CI [0.955, 0.999]
+   *
+   * `p60GivenStart` is the one to distrust. Only four starters missed sixty
+   * minutes and all four were tactical (54, 55, 45, 55); GW1 carried no
+   * suspensions and produced no red cards among starters, so 0.977 is an
+   * optimistic read of a rate that must fall once those arrive. It is
+   * deliberately set BELOW the point estimate — see the note in DEFAULTS.
+   */
+  minsPerStart: 83.2,
+  minsPerSub: 19.7,
+  p60GivenStart: 0.977,
 };
 
 /* ------------------------------------------------------------------ *
@@ -128,7 +146,14 @@ export function livePointsFor(livePlayer, pick) {
   return num(livePlayer.total_points) * (m >= 1 ? m : 1);
 }
 
-export function inferGamesPlayed(players) {
+export function inferGamesPlayed(players, basis = null) {
+  /* Prefer the basis hydrate actually used. Inferring it from the busiest
+     player assumes somebody averages a full ninety on the pooled basis, which
+     was only ever approximately true: today it is pinned by ESPN-sourced
+     players whose minutes arrive through a different path entirely, and any
+     change to how minutes are estimated can shift it for everyone at once.
+     js/prior.js knows the number exactly, so it now says so. */
+  if (Number.isFinite(basis) && basis > 0) return Math.max(1, Math.round(basis));
   const max = players.reduce((m, p) => Math.max(m, modelMinutes(p)), 0);
   return Math.max(1, Math.round(max / 90));
 }
@@ -168,6 +193,20 @@ export function inferGamesPlayed(players) {
  * belongs.
  */
 const MINUTES_PRIOR = { 1: 24, 2: 30, 3: 27, 4: 21 };
+
+/**
+ * Measured on GW1 2026/27 per-match rows, not assumed.
+ *
+ *   started  n=174   mean 83.2 minutes   P(>=60) = 0.977
+ *   sub on   n= 42   mean 19.7 minutes   P(>=60) = 0.000   (0 of 42)
+ *
+ * The second line is the important one. Reaching sixty minutes is almost
+ * entirely a question of whether a player STARTS, and barely at all a question
+ * of how many minutes he averages — which is what the old `p60` formula asked.
+ */
+const MINS_PER_START = 83.2;
+const MINS_PER_SUB = 19.7;
+const P60_GIVEN_START = 0.977;
 function minutesPrior(p) {
   return MINUTES_PRIOR[p.element_type] ?? 27;
 }
@@ -286,8 +325,30 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
   const observedMpg = clamp(mins / games, 0, 90);
   const expMins = clamp(wMin * observedMpg + (1 - wMin) * minutesPrior(p), 0, 90);
   const minsFactor = expMins / 90;
-  const pPlay = clamp(expMins / 20, 0, 0.99);
-  const p60 = clamp((expMins - 25) / 45, 0, 0.97);
+
+  /* ---- appearance probabilities, from the mixture rather than the average ----
+   *
+   * Both of these used to be straight lines through expected minutes, and both
+   * saturated absurdly early: `expMins/20` made anyone averaging twenty minutes
+   * a certainty to appear, and `(expMins-25)/45` capped at 68.6 minutes, so a
+   * player expected to last 70 and one expected to last 90 scored identical
+   * appearance points. In the optimal five-gameweek XI that produced 9.8
+   * appearance points for all eleven players across a 71-90 minute spread.
+   *
+   * js/prior.js now supplies the selection probabilities directly. Where it has
+   * not run — raw bootstrap, unit tests — the same mixture is inverted from
+   * expected minutes, so both paths agree on what the number means.
+   */
+  const MPSTART = o.minsPerStart, MPSUB = o.minsPerSub;
+  const supplied = Number.isFinite(p.startProbability);
+  const pStart = supplied
+    ? clamp(num(p.startProbability), 0, 1)
+    : clamp((expMins - MPSUB) / (MPSTART - MPSUB), 0, 1);
+  const pSubApp = supplied
+    ? clamp(num(p.subAppProbability), 0, 1 - pStart)
+    : clamp((expMins - pStart * MPSTART) / MPSUB, 0, 1 - pStart);
+  const pPlay = clamp(pStart + pSubApp, 0, 0.99);
+  const p60 = clamp(pStart * o.p60GivenStart, 0, 0.99);
 
   const fdr = fixture?.difficulty ?? 3;
   const home = fixture?.home ?? true;
@@ -416,7 +477,7 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
     contrib,
     parts: {
       appearance, attack, cleanSheet, conceded, saves, defcon, bonus, cards,
-      expMins, pCS, xgcMatch, attMult, availability: avail,
+      expMins, pStart, pSubApp, pPlay, p60, pCS, xgcMatch, attMult, availability: avail,
       /* The minutes a game he has ACTUALLY played, before any shrinkage
          toward the positional prior. `expMins` is deliberately pulled toward
          that prior until 450 minutes of evidence exist, which is right for a
@@ -450,7 +511,7 @@ export function projectHorizon(p, ctx, opts = {}) {
   let total = 0;
   const perGW = {};
   const sum = { appearance: 0, attack: 0, cleanSheet: 0, conceded: 0, saves: 0, defcon: 0, bonus: 0, cards: 0, prior: 0 };
-  const acc = { expMins: 0, observedMpg: 0, pCS: 0, attMult: 0, availability: 0, evidence: 0, productionConfidence: 0, minutesConfidence: 0, minutesEvidence: 0 };
+  const acc = { expMins: 0, observedMpg: 0, pStart: 0, pSubApp: 0, pPlay: 0, p60: 0, pCS: 0, attMult: 0, availability: 0, evidence: 0, productionConfidence: 0, minutesConfidence: 0, minutesEvidence: 0 };
   let last = null;
   for (const f of fixtures) {
     const r = projectFixture(p, f, ctx, o);
@@ -474,6 +535,10 @@ export function projectHorizon(p, ctx, opts = {}) {
       ...sum,
       expMins: acc.expMins / n,
       observedMpg: acc.observedMpg / n,
+      pStart: acc.pStart / n,
+      pSubApp: acc.pSubApp / n,
+      pPlay: acc.pPlay / n,
+      p60: acc.p60 / n,
       pCS: acc.pCS / n,
       attMult: acc.attMult / n,
       availability: acc.availability / n,
@@ -542,7 +607,7 @@ export function buildContext(boot, fixtures, opts = {}) {
     .map((f) => f.event);
   const from = o.fromEvent ?? (unplayed.length ? Math.min(...unplayed) : next);
   return {
-    games: inferGamesPlayed(boot.elements),
+    games: inferGamesPlayed(boot.elements, boot.modelGamesBasis),
     defence: teamDefence(boot.elements, boot.teams),
     upcoming: upcomingByTeam(fixtures, from, o.horizon),
     teams: Object.fromEntries((boot.teams || []).map((t) => [t.id, t])),

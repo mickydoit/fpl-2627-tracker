@@ -20,7 +20,7 @@ import { recommend } from '../js/draft/advise.js';
 import { runDraft, STRATEGIES } from '../js/draft/compete.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI,
   optimiseWithinTransfers } from '../js/optimiser.js';
-import { hydrate, PRIOR_DEFAULTS, poolPlayerSeasons, espnEvidence } from '../js/prior.js';
+import { hydrate, PRIOR_DEFAULTS, poolPlayerSeasons, espnEvidence, decomposeOpportunity } from '../js/prior.js';
 import { ALLOWED_MODEL_SEASONS, CURRENT_SEASON, isAllowedSeason, seasonStartYear,
   assertAllowedSeason, onlyAllowedSeasons } from '../js/seasons.js';
 import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scoreRatio,
@@ -295,6 +295,77 @@ console.log('\nLive points');
 }
 
 /* ------------------------------------------------------------------ *
+ * the opportunity model
+ * ------------------------------------------------------------------ *
+ * Expected minutes used to be one number — minutes pooled across seasons and
+ * divided by games — which could not tell a starter substituted on 70 from a
+ * rotation player who plays two twenty-minute cameos. Both average the same
+ * and their futures are nothing alike.
+ *
+ * The constants below are measured on GW1 2026/27 per-match rows, not chosen:
+ * a starter averages 83.2 minutes and reaches sixty 97.7% of the time; a
+ * substitute averages 19.7 and reached sixty in 0 of 42 appearances.
+ */
+console.log('\nOpportunity model');
+{
+  const O = PRIOR_DEFAULTS;
+  const dec = (minutes, starts, games) => decomposeOpportunity({ minutes, starts }, games, O);
+
+  const nailed = dec(3420, 38, 38);
+  ok('an ever-present decomposes to a full start rate', near(nailed.startRateGivenFeatured, 1, 1e-9));
+  ok('and to ninety minutes a start', near(nailed.minsPerStart, 90, 0.6), `${nailed.minsPerStart.toFixed(1)}`);
+  ok('with no substitute appearances', near(nailed.subApps, 0, 0.01));
+
+  /* The distinction the whole change exists for. Same minutes per appearance
+     on average, completely different players. */
+  const subbed = dec(70 * 30, 30, 38);   // starts 30, hooked on 70 each time
+  const cameo  = dec(20 * 30, 0, 38);    // 30 appearances, all off the bench
+  ok('a starter hooked on 70 still reads as a starter',
+    subbed.startRateGivenFeatured > 0.9, `${subbed.startRateGivenFeatured.toFixed(2)}`);
+  ok('a cameo player reads as a substitute',
+    cameo.startRateGivenFeatured < 0.1, `${cameo.startRateGivenFeatured.toFixed(2)}`);
+  ok('and the two are told apart despite similar totals',
+    subbed.startRateGivenFeatured - cameo.startRateGivenFeatured > 0.8);
+
+  /* A hard physical bound: minutes a substitute cannot account for came from
+     starts, whatever the reported start count says. Without this a rookie with
+     one 75-minute appearance decomposed into a 75-minute substitute. */
+  const rookie = dec(75, 0, 1);
+  ok('75 minutes in one game is a start, not a substitute appearance',
+    rookie.startRateGivenFeatured > 0.9, `${rookie.startRateGivenFeatured.toFixed(2)}`);
+  const noStartsField = dec(3420, 0, 38);
+  ok('a record missing `starts` is still decomposed sanely',
+    noStartsField.startRateGivenFeatured > 0.9 && noStartsField.subApps < 1,
+    `srf ${noStartsField.startRateGivenFeatured.toFixed(2)} subApps ${noStartsField.subApps.toFixed(1)}`);
+
+  /* Opportunity must pool on its OWN constant. Sharing the production weight
+     is what let an injury-hit prior season suppress present expected minutes. */
+  ok('opportunity and production carry separate weights',
+    PRIOR_DEFAULTS.opportunityWeight !== PRIOR_DEFAULTS.lastSeasonWeight
+    || PRIOR_DEFAULTS.featuredWeight !== PRIOR_DEFAULTS.lastSeasonWeight);
+
+  /* Responsiveness, in both directions, without naming a player. */
+  const priorEverPresent = { code: 1, minutes: 3420, starts: 38, expected_goals: 0, expected_assists: 0,
+    expected_goals_conceded: 0, saves: 0, defensive_contribution: 0, bps: 0, yellow_cards: 0,
+    clearances_blocks_interceptions: 0, tackles: 0, recoveries: 0 };
+  const at = (gw, minsEach, startsEach) => {
+    const games = gw + PRIOR_DEFAULTS.lastSeasonWeight * PRIOR_DEFAULTS.lastSeasonGames;
+    const m = poolPlayerSeasons({ code: 1, minutes: minsEach * gw, starts: startsEach * gw },
+      priorEverPresent, { gamesThis: gw, games, lastSeasonWeight: PRIOR_DEFAULTS.lastSeasonWeight,
+        lastSeasonGames: PRIOR_DEFAULTS.lastSeasonGames });
+    return m.modelMinutes / games;
+  };
+  const benchedEarly = at(1, 11, 0);
+  const benchedLong = at(8, 11, 0);
+  ok('an ever-present who keeps being benched loses minutes',
+    benchedLong < benchedEarly - 10, `${benchedEarly.toFixed(1)} -> ${benchedLong.toFixed(1)}`);
+  ok('but one substitute appearance does not collapse him',
+    benchedEarly > 75, `${benchedEarly.toFixed(1)}`);
+  ok('an ever-present who keeps starting holds his minutes',
+    at(8, 85, 1) > 80, `${at(8, 85, 1).toFixed(1)}`);
+}
+
+/* ------------------------------------------------------------------ *
  * the fixture list
  * ------------------------------------------------------------------ *
  * Grouped into the reader's own matchdays — the owner is on AEST and asked for
@@ -512,26 +583,31 @@ console.log('\nManual substitutions');
   ok('keeper cannot be swapped for an outfielder', !canSwap(gkOut, outfieldBench, base));
   ok('outfielder cannot take the keeper slot', !canSwap(outfieldBench, gkOut, base));
 
-  // A swap that changes formation is legal while the minimums hold.
+  /* These three used to hang off `onBench(3)` — whether the OPTIMISER happened
+     to leave a midfielder on the bench. It did until the opportunity model
+     changed which fifteen it picks, and then all three silently stopped
+     running: no failure, just three fewer checks. A rule about substitution
+     legality should not depend on who the solver likes this week, so the
+     midfielder is now constructed rather than discovered. */
   const defsIn = base.filter((p) => p.element_type === 2).length;
-  const midBench = onBench(3);
   const defOut = inXI(2);
-  if (midBench && defOut) {
-    ok('outfield swap allowed when minimums still hold',
-      canSwap(defOut, midBench, base) === (defsIn - 1 >= MIN_DEF), `defs ${defsIn}`);
-  }
+  const anyMid = sq.find((p) => p.element_type === 3);
+  const midBench = onBench(3) || (anyMid ? { ...anyMid, id: -3, web_name: 'BenchMid' } : null);
+  ok('a benched midfielder is available to test with', !!midBench);
+  ok('outfield swap allowed when minimums still hold',
+    canSwap(defOut, midBench, base) === (defsIn - 1 >= MIN_DEF), `defs ${defsIn}`);
 
   // Strip to exactly the minimum and the next removal must be refused.
   const threeDef = base.filter((p) => p.element_type === 2).slice(0, 3);
   const minXI = [inXI(1), ...threeDef, ...base.filter((p) => p.element_type === 3).slice(0, 1),
     ...base.filter((p) => p.element_type === 4).slice(0, 1)].filter(Boolean);
-  if (minXI.filter((p) => p.element_type === 2).length === 3 && midBench) {
-    ok('cannot drop below three defenders', !canSwap(threeDef[0], midBench, minXI));
-  }
+  ok('the minimum-shape XI really has three defenders',
+    minXI.filter((p) => p.element_type === 2).length === 3);
+  ok('cannot drop below three defenders', !canSwap(threeDef[0], midBench, minXI));
   const fwdInMin = minXI.find((p) => p.element_type === 4);
-  if (fwdInMin && midBench && minXI.filter((p) => p.element_type === 4).length === 1) {
-    ok('cannot drop the last forward', !canSwap(fwdInMin, midBench, minXI));
-  }
+  ok('the minimum-shape XI really has one forward',
+    minXI.filter((p) => p.element_type === 4).length === 1);
+  ok('cannot drop the last forward', !canSwap(fwdInMin, midBench, minXI));
 
   ok('a player cannot swap with himself', !canSwap(gkOut, gkOut, base));
 
@@ -888,10 +964,27 @@ console.log('\nPrior blending');
   ok('the input is not mutated', boot.elements[0].minutes === 0 && boot.elements[0].bps === 0);
   ok('raw minutes survive for display', p.minutes === 0);
 
-  const games = inferGamesPlayed(h.elements);
-  ok('inferGamesPlayed recovers the pooled basis', games === Math.round((1 + L * G)), `got ${games}`);
-  ok('expected minutes come back to a full game',
-    near(p.modelMinutes / games, 90, 0.5), `${(p.modelMinutes / games).toFixed(1)}`);
+  /* The basis is now STATED by hydrate rather than re-derived from whichever
+     player happens to have the most minutes. That inference was only ever
+     approximately right — in live data it is pinned by ESPN-sourced players
+     who reach the payload through a different path — and it silently shifts
+     for everybody whenever minutes estimation changes. */
+  ok('hydrate states the games basis it used', h.modelGamesBasis === 1 + L * G, `got ${h.modelGamesBasis}`);
+  const games = inferGamesPlayed(h.elements, h.modelGamesBasis);
+  ok('inferGamesPlayed honours the stated basis', games === Math.round(1 + L * G), `got ${games}`);
+  ok('the minutes basis round-trips', near(p.modelMinutes / games, p.modelMinutes / (1 + L * G), 1e-9));
+
+  /* An ever-present last season projects high, but NOT a flat ninety. It used
+     to, because expected minutes were a pooled average with nothing pulling
+     them back. Measured across every adjacent season pair in `history_past`,
+     players who started at least 90% of the games they featured in went on to
+     feature in 0.633 of the following season — injuries and rotation are not
+     optional. Shrinking a 38/38 season toward the population mean is therefore
+     conservative rather than aggressive, and a model that returns exactly 90
+     is asserting something the data contradicts. */
+  const evPresent = p.modelMinutes / games;
+  ok('an ever-present prior season projects high', evPresent > 70, `${evPresent.toFixed(1)}`);
+  ok('but not a guaranteed full ninety', evPresent < 90, `${evPresent.toFixed(1)}`);
   ok('evidence is the minutes actually observed', near(p.evidenceMinutes, L * 3420, 1e-6));
   ok('a pooled rate is last season’s rate', near(p.expected_goals_per_90, (19 / 3420) * 90, 1e-9));
   ok('counts are rebuilt to agree with modelMinutes',
