@@ -8,7 +8,7 @@ import { readJSON } from './lib/io.mjs';
 import {
   projectAll, poissonAtLeast, availability, inferGamesPlayed,
   teamDefence, upcomingByTeam, SQUAD_RULES, projectFixture, buildContext,
-  actionableEvent, DEFCON_THRESHOLD, DEFCON_PTS,
+  actionableEvent, DEFCON_THRESHOLD, DEFCON_PTS, livePointsFor,
 } from '../js/model.js';
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
 import { notesFor, justifyMove, fixturePhrase, SOURCE } from '../js/explain.js';
@@ -260,12 +260,48 @@ console.log('\nTransfer shortlist');
 }
 
 /* ------------------------------------------------------------------ *
+ * live points on a shirt
+ * ------------------------------------------------------------------ *
+ * `multiplier` is 0 for the bench, 1 for a starter, 2 for the captain and 3
+ * under a triple captain. Multiplying straight through showed 0 on four bench
+ * players who had really scored 0, 1, 2 and 3 — the bench multiplier is a fact
+ * about the TEAM total, not about the player.
+ */
+console.log('\nLive points');
+{
+  const live = (pts) => ({ id: 1, total_points: pts });
+  ok('a starter shows what he scored', livePointsFor(live(6), { multiplier: 1 }) === 6);
+  ok('the captain shows double', livePointsFor(live(6), { multiplier: 2 }) === 12);
+  ok('a triple captain shows treble', livePointsFor(live(6), { multiplier: 3 }) === 18);
+  ok('a bench player shows what he scored, not nothing',
+    livePointsFor(live(3), { multiplier: 0 }) === 3);
+  ok('a bench player who scored nothing still shows nothing',
+    livePointsFor(live(0), { multiplier: 0 }) === 0);
+  ok('a player with no pick is treated as a plain starter',
+    livePointsFor(live(4), undefined) === 4);
+  ok('no live row means no number at all', livePointsFor(null, { multiplier: 1 }) === null);
+  /* The rule this protects: a team total sums the starting eleven. If it ever
+     relies on the bench multiplying to zero instead, this helper breaks it. */
+  ok('the real squad reproduces the published gameweek total', (() => {
+    const picks = [
+      [1, 1, 6], [2, 1, 0], [3, 1, 1], [4, 1, 10], [5, 1, 2], [6, 1, 1],
+      [7, 1, 3], [8, 1, 9], [9, 1, 0], [10, 2, 2], [11, 1, 1],
+      [12, 0, 0], [13, 0, 1], [14, 0, 2], [15, 0, 3],
+    ];
+    const xi = picks.filter(([pos]) => pos <= 11);
+    const total = xi.reduce((t, [, m, pts]) => t + livePointsFor(live(pts), { multiplier: m }), 0);
+    return total === 37;
+  })());
+}
+
+/* ------------------------------------------------------------------ *
  * the fixture list
  * ------------------------------------------------------------------ *
- * Grouped into UK matchdays rather than the reader's own. A Premier League
- * fixture is a "Saturday 3pm" wherever it is watched, and grouping by local
- * date moved a Saturday evening kickoff onto Sunday for anyone east of Europe
- * — this repo's owner is on Australia/Brisbane, ten hours ahead.
+ * Grouped into the reader's own matchdays — the owner is on AEST and asked for
+ * fixtures in it, so a 15:00 UK Saturday lands at 00:00 on his Sunday, which is
+ * when it actually happens where he is. These checks therefore pin the parts
+ * that must hold in ANY zone: which view a match belongs to, the ordering, and
+ * that grouping never loses or duplicates a fixture.
  */
 console.log('\nFixture list');
 {
@@ -300,9 +336,18 @@ console.log('\nFixture list');
     return ds.every((t, i) => i === 0 || ds[i - 1] <= t);
   })());
 
-  ok('matches on the same day share one group',
-    results.length === 2 && results.some((d) => d.items.length === 2),
-    results.map((d) => d.items.length).join(','));
+  /* Simultaneous kickoffs are the same day in every zone. Kickoffs merely
+     hours apart legitimately split or merge depending on where the reader is —
+     in Brisbane the three results above fall on three separate local days —
+     so only the always-true case is asserted. */
+  ok('simultaneous kickoffs share one group', (() => {
+    const g = groupByDay([at('2026-08-29T14:00Z', 'post'), at('2026-08-29T14:00Z', 'post')], 'results');
+    return g.length === 1 && g[0].items.length === 2;
+  })());
+  ok('grouping never loses or duplicates a fixture', (() => {
+    const seen = results.flatMap((d) => d.items).concat(upcoming.flatMap((d) => d.items));
+    return seen.length === feed.length && new Set(seen).size === feed.length;
+  })());
   ok('a day group is never empty', [...results, ...upcoming].every((d) => d.items.length > 0));
   ok('an empty feed groups into nothing', groupByDay([], 'results').length === 0);
   ok('a feed of only fixtures has no results', groupByDay([at('2026-09-01T14:00Z', 'pre')], 'results').length === 0);
@@ -313,11 +358,11 @@ console.log('\nFixture list');
     groupByDay([at('2026-08-25T14:00Z', 'in')], 'results').length === 1
     && groupByDay([at('2026-08-25T14:00Z', 'in')], 'upcoming').length === 0);
 
-  /* The grouping key is UK-based, so a 19:00Z Friday kickoff stays on Friday
-     however far east the reader is. Asserted through the returned key rather
-     than the rendered label, which is what the reader actually sees grouped. */
-  ok('a Friday evening kickoff stays on Friday', (() => {
-    const g = groupByDay([at('2026-08-28T19:00Z', 'pre'), at('2026-08-29T11:30Z', 'pre')], 'upcoming');
+  /* Two kickoffs a whole day apart must never collapse into one group, in any
+     zone. Kickoffs hours apart legitimately merge or split depending on where
+     the reader is, so that is not asserted. */
+  ok('kickoffs a day apart never share a group', (() => {
+    const g = groupByDay([at('2026-08-28T12:00Z', 'pre'), at('2026-08-30T12:00Z', 'pre')], 'upcoming');
     return g.length === 2;
   })());
 }

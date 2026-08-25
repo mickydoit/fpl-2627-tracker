@@ -778,12 +778,20 @@ tr.mine { background: rgba(159, 237, 0, 0.08); }
 .hub-two { display: grid; gap: 1rem; }
 @media (min-width: 40rem) { .hub-two { grid-template-columns: 1fr 1fr; } }
 .hub-list { list-style: none; margin: 0; padding: 0; }
-.hub-player { display: flex; align-items: baseline; gap: .5rem; padding: .3rem 0; border-bottom: 1px solid var(--hair-soft, #37383a); }
+/* Wraps, so `.hp-news` can take the line its `flex-basis: 100%` always asked
+   for. Without wrapping it stayed on the first line and shrank everything else
+   to fit, which squeezed "25% risk" into a column narrow enough to break it
+   across two lines. */
+.hub-player {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: .35rem .5rem; padding: .35rem 0;
+  border-bottom: 1px solid var(--hair-soft, #37383a);
+}
 .hp-pos { font-size: .6rem; font-weight: 900; color: var(--muted); width: 2.2rem; flex: none; letter-spacing: .06em; }
-.hp-name { font-weight: 700; }
+.hp-name { font-weight: 700; min-width: 0; }
 .hp-flag { color: var(--red, #ff6b5e); font-weight: 900; }
-.hp-val { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 800; }
-.hp-news { flex-basis: 100%; font-size: .72rem; color: var(--muted); }
+.hp-val { margin-left: auto; flex: none; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 800; }
+.hp-news { flex-basis: 100%; min-width: 0; font-size: .72rem; color: var(--muted); }
 
 /* ------------------------------------------------------------------ *
  * activity rings — Apple Fitness idiom, in the app's accents
@@ -1077,11 +1085,19 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
    its own font. This derives ONE height from the label's type and hands it to
    both, so a change to either can no longer separate them. */
 :root {
-  --sec-pill-font: clamp(0.85rem, 4.5vw, 57.6px);
-  --sec-pill-pad-y: clamp(0.35rem, 1.4vw, 18px);
-  --sec-pill-pad-x: clamp(0.5rem, 0.94vw, 12px);
-  --sec-pill-radius: clamp(6px, 1.17vw, 15px);
+  /* A section heading is not the biggest thing on the page. At 57.6px it was
+     larger than the product nav (48.4px) and nearly four times the page nav
+     (15.2px), so "My team" shouted over the links used to leave the page. The
+     ladder at 1440px is now 48 product nav / 28 section / 19 page nav / 15
+     body, which descends in the order the reader needs them. */
+  --sec-pill-font: clamp(1rem, 2vw, 28px);
+  --sec-pill-pad-y: clamp(0.3rem, 0.65vw, 9px);
+  --sec-pill-pad-x: clamp(0.6rem, 1.1vw, 16px);
+  --sec-pill-radius: clamp(6px, 0.72vw, 10px);
   --sec-pill-h: calc(var(--sec-pill-font) + 2 * var(--sec-pill-pad-y) + 4px);
+  /* The control's own type, a step under the label's, as the frame draws it. */
+  --sec-ctl-font: clamp(0.72rem, 1.45vw, 20px);
+  --sec-arrow: clamp(11px, 1.15vw, 16px);
 }
 
 .seclabel, .secctl > * {
@@ -1115,7 +1131,7 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
   text-transform: none;
   letter-spacing: 0;
   flex: 0 1 auto;
-  min-width: min(100%, 12rem);
+  min-width: min(100%, 7rem);
 }
 .secctl { display: flex; align-items: center; gap: clamp(0.4rem, 1.4vw, 18px); flex-wrap: wrap; justify-content: center; }
 /* A section with no control still built an empty control box, and an empty
@@ -1140,9 +1156,9 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
   border: none;
   font-family: var(--font-body);
   font-weight: 900;
-  font-size: clamp(0.75rem, 3vw, 38px);
+  font-size: var(--sec-ctl-font);
   border-radius: var(--sec-pill-radius);
-  padding-inline: clamp(0.7rem, 1.6vw, 22px);
+  padding-inline: clamp(0.5rem, 1vw, 14px);
 }
 .secctl .inline-metric { align-items: baseline; gap: 0.3rem; }
 .secctl .inline-metric b {
@@ -1157,10 +1173,10 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
 }
 
 /* The stepper: arrow, label, arrow — the frame's own SVGs, not drawn here. */
-.gwstep { display: flex; align-items: center; gap: clamp(0.5rem, 9.6vw, 123px); }
+.gwstep { display: flex; align-items: center; gap: clamp(0.6rem, 2.4vw, 34px); }
 .gwstep button {
   background: none; border: none; padding: 0; cursor: pointer;
-  width: clamp(14px, 3.3vw, 42px); height: clamp(14px, 3.3vw, 42px);
+  width: var(--sec-arrow); height: var(--sec-arrow); min-height: 0;
   background-repeat: no-repeat; background-size: contain; background-position: center;
   text-indent: -9999px; overflow: hidden;
 }
@@ -1172,7 +1188,9 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
 .gwstep button:disabled { opacity: 0.3; cursor: default; }
 .gwstep-label {
   font-family: var(--font-body); font-weight: 900;
-  font-size: clamp(0.85rem, 4.5vw, 57.6px); line-height: 1; color: var(--ink);
+  /* The page's own gameweek control, one step above a section's control so it
+     reads as page-level, but no longer at heading size. */
+  font-size: clamp(0.8rem, 1.6vw, 22px); line-height: 1; color: var(--ink);
 }
 
 /* The metrics row. Figma 244:1566: no boxes at all — mint text on coal, value
@@ -1494,9 +1512,9 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
 
 /* ---------- the cycler ----------
    The frame's control, and now the app's only selector for a short ordered
-   list: a filled pill with the current option between two arrows. An arrow is
-   replaced by a same-width spacer at either end of the range, so the label
-   does not jump sideways as you step through.
+   list: a filled pill with the current option between two arrows. Both arrows
+   always draw; the one with nowhere to go is dimmed, so the label neither
+   jumps sideways nor ends up with ink on only one side of it.
 
    Styled standalone rather than only inside a section header, because it also
    stands in for the dropdowns in the filter rows. The section-header rule
@@ -1505,16 +1523,15 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.4rem, 1.6vw, 1.6rem);
+  gap: clamp(0.35rem, 0.9vw, 0.85rem);
   background: var(--mint-2);
   color: var(--ink);
-  border-radius: clamp(6px, 1.17vw, 15px);
-  padding: clamp(0.3rem, 1.1vw, 14px) clamp(0.5rem, 0.94vw, 12px);
+  border-radius: var(--sec-pill-radius);
+  padding: clamp(0.3rem, 0.65vw, 9px) clamp(0.5rem, 1vw, 14px);
 }
-.hzcycle button,
-.hzcycle .spacer {
-  width: clamp(14px, 2.6vw, 34px);
-  height: clamp(14px, 2.6vw, 34px);
+.hzcycle button {
+  width: var(--sec-arrow);
+  height: var(--sec-arrow);
   flex: none;
 }
 .hzcycle button {
@@ -1526,11 +1543,15 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
   min-height: 0;
 }
 .hzcycle button:hover { border-color: transparent; opacity: 0.65; }
+/* The end of the range. Dimmed rather than removed, so the pill keeps the same
+   ink on both sides of its label — see the note on cycler() in js/ui.js. */
+.hzcycle button:disabled { opacity: 0.22; cursor: default; }
+.hzcycle button:disabled:hover { opacity: 0.22; }
 .hzcycle button.prev { transform: rotate(180deg); }
 .hzcycle-label {
   font-family: var(--font-body);
   font-weight: 900;
-  font-size: clamp(0.75rem, 3vw, 38px);
+  font-size: var(--sec-ctl-font);
   line-height: 1;
   color: var(--ink);
   white-space: nowrap;
@@ -1548,8 +1569,7 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
      base.css floors those at 37px plus a border. */
   min-height: 40px;
 }
-.hzcycle.compact button,
-.hzcycle.compact .spacer { width: 13px; height: 13px; }
+.hzcycle.compact button { width: 13px; height: 13px; }
 .hzcycle.compact .hzcycle-label {
   font-size: 0.72rem;
   letter-spacing: 0.02em;

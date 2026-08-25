@@ -261,10 +261,13 @@ p:last-child { margin-bottom: 0; }
 .pagenav::-webkit-scrollbar { display: none; }
 .pagenav a {
   font-family: var(--font-display);
-  font-size: clamp(0.66rem, 1.15vw, 0.95rem);
+  /* Sits between the body text and the section headings. It was 15.2px against
+     a 57.6px heading, which made the page's own navigation the quietest thing
+     on it. */
+  font-size: clamp(0.9rem, 1.35vw, 1.2rem);
   letter-spacing: 0.04em;
   color: var(--mint-2);
-  padding: 0.16rem 0.4rem;
+  padding: 0.28rem 0.6rem;
   border-radius: 6px;
   white-space: nowrap;
   opacity: 0.62;

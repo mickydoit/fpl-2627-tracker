@@ -10,13 +10,15 @@
  *
  * Times come from ESPN's `date`, which is UTC (the payload's Z suffix).
  *
- * They are grouped and shown in UK time, not the reader's. A Premier League
- * fixture is a "Saturday 3pm" wherever you watch it, the rest of this site
- * already quotes UK deadlines and price changes, and grouping by local date
- * moved a Saturday evening kickoff onto Sunday for anyone east of Europe —
- * this machine is on Australia/Brisbane, where a 15:00 kickoff rendered as
- * 00:00 the next day. Where the reader's own zone differs, the local time is
- * shown underneath, since that is the one that answers "when can I watch".
+ * They are grouped and shown in the READER'S zone, which is what answers "when
+ * can I watch this" — the owner is on AEST and asked for fixtures in it. So a
+ * 15:00 UK Saturday kickoff appears at 00:00 under Sunday for him, which is
+ * genuinely when it happens where he is.
+ *
+ * The UK time is kept underneath rather than dropped. Fixtures are discussed
+ * as "Saturday 3pm" everywhere else in football, and this site quotes UK
+ * deadlines and price changes throughout, so losing the reference would make
+ * the fixture list the one place that disagreed with the rest of it.
  */
 import { el, setKids, section, cycler } from './ui.js';
 
@@ -34,7 +36,7 @@ const localZone = (() => {
 })();
 const showLocal = localZone !== UK;
 
-const dayKey = (d) => d.toLocaleDateString('en-GB', { timeZone: UK, year: 'numeric', month: '2-digit', day: '2-digit' });
+const dayKey = (d) => d.toLocaleDateString('en-GB', { timeZone: localZone, year: 'numeric', month: '2-digit', day: '2-digit' });
 const dayLabel = (d) => {
   const today = new Date();
   const k = dayKey(d);
@@ -43,16 +45,17 @@ const dayLabel = (d) => {
   if (k === dayKey(tom)) return 'Tomorrow';
   const yst = new Date(today.getTime() - 864e5);
   if (k === dayKey(yst)) return 'Yesterday';
-  return d.toLocaleDateString('en-GB', { timeZone: UK, weekday: 'long', day: 'numeric', month: 'long' });
+  return d.toLocaleDateString('en-GB', { timeZone: localZone, weekday: 'long', day: 'numeric', month: 'long' });
 };
-const kickoff = (d) => d.toLocaleTimeString('en-GB', { timeZone: UK, hour: '2-digit', minute: '2-digit' });
-/* Same instant in the reader's zone, with the weekday when it lands on a
-   different day from the UK one — "21:30" alone would be a lie on a Sunday. */
-const localKickoff = (d) => {
+const kickoff = (d) => d.toLocaleTimeString('en-GB', { timeZone: localZone, hour: '2-digit', minute: '2-digit' });
+/* The same instant in UK time, carrying its weekday when the two zones fall on
+   different days — "15:00 UK" under a Sunday heading would otherwise look like
+   a second Sunday match rather than the Saturday one it is. */
+const ukKickoff = (d) => {
   const sameDay = d.toLocaleDateString('en-GB', { timeZone: UK })
     === d.toLocaleDateString('en-GB', { timeZone: localZone });
-  return d.toLocaleTimeString('en-GB', { timeZone: localZone, hour: '2-digit', minute: '2-digit' })
-    + (sameDay ? '' : ` ${d.toLocaleDateString('en-GB', { timeZone: localZone, weekday: 'short' })}`);
+  const t = d.toLocaleTimeString('en-GB', { timeZone: UK, hour: '2-digit', minute: '2-digit' });
+  return sameDay ? `${t} UK` : `${d.toLocaleDateString('en-GB', { timeZone: UK, weekday: 'short' })} ${t} UK`;
 };
 
 function matchRow(m) {
@@ -68,7 +71,7 @@ function matchRow(m) {
       el('span', { class: 'st' },
         m.state === 'in' ? (m.clock || 'LIVE')
           : m.state === 'post' ? 'FT'
-            : showLocal ? `${localKickoff(d)} your time` : 'KO')),
+            : showLocal ? ukKickoff(d) : 'KO')),
     el('div', { class: 't a' }, el('span', {}, m.away.short || m.away.name), badge(m.away)));
 }
 
@@ -125,7 +128,8 @@ export function matchesSection(events, { initial = 'results' } = {}) {
   let view = initial;
   const sec = section('Matches', {
     flush: true,
-    hint: `Results and fixtures from ESPN, in UK time${showLocal ? ` — your zone is ${localZone}` : ''}`,
+    hint: `Results and fixtures from ESPN, in your own time zone (${localZone})`
+      + `${showLocal ? ', with the UK kickoff underneath' : ''}`,
   });
   const paint = () => setKids(sec.body, matchList(events, view));
   setKids(sec.ctl, cycler(view, MATCH_VIEWS, (v) => { view = v; paint(); }));

@@ -401,10 +401,8 @@ export function compact(n) {
  * keeps the reader's eye on the page instead of in a menu, and the current
  * value stays readable at display size instead of shrinking to fit a control.
  *
- * The end arrows disappear rather than wrapping. Wrapping from the last option
- * back to the first on a forward press reads as a glitch, and the reference
- * frame draws the first option with only a forward arrow. The vacated arrow is
- * replaced by a same-width spacer so the label does not shift as you step.
+ * The end arrows disable rather than wrap. Wrapping from the last option back
+ * to the first on a forward press reads as a glitch.
  *
  * NOT for long lists. Reaching one of twenty clubs, or one of fifteen league
  * sizes, would take up to nineteen clicks — those keep their dropdown, which is
@@ -433,9 +431,18 @@ export function cycler(value, options, onChange, { title = '', compact = false }
       node = fresh;
       onChange(next.value);
     };
-    const arrow = (dir, to) => (to
-      ? el('button', { class: dir, title: to.label, onClick: () => step(dir === 'prev' ? -1 : 1) }, to.label)
-      : el('span', { class: 'spacer' }));
+    /* Both arrows always render; the one with nowhere to go is disabled rather
+       than removed. Removing it and reserving the space with a spacer kept the
+       geometry symmetric but not the ink — with nothing drawn on the left, the
+       visible "Next Gameweek →" sat about 57px right of the pill's centre and
+       read as uncentred. A dimmed arrow says "this is the end of the range",
+       which is what .gwstep already does. */
+    const arrow = (dir, to) => el('button', {
+      class: dir,
+      title: to ? to.label : '',
+      disabled: !to,
+      onClick: () => step(dir === 'prev' ? -1 : 1),
+    }, to ? to.label : dir);
     return el('div', { class: `hzcycle ${compact ? 'compact' : ''}`, title },
       arrow('prev', opts[i - 1]),
       el('span', { class: 'hzcycle-label' }, opts[i]?.label ?? ''),

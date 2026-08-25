@@ -19,7 +19,7 @@
  * and bestMove are called exactly as the pages they came from called them.
  */
 import { loadAll, getState, setState, resolveSquadIds, readGameweek } from '../data.js';
-import { projectAll, SQUAD_RULES, actionableEvent } from '../model.js';
+import { projectAll, SQUAD_RULES, actionableEvent, livePointsFor } from '../model.js';
 import { bestXI, scoreSquad, legalXI, optimiseWithinTransfers, squadCost, suggestTransfers } from '../optimiser.js';
 import { rateSquad, RATING_HORIZONS } from '../rating.js';
 import { topMoves, recommendedHorizon } from '../transfer-advice.js';
@@ -148,7 +148,9 @@ if (squadIds.length !== SQUAD_RULES.size) {
   const livePts = (p) => {
     const l = liveById.get(p.id);
     if (!l) return null;
-    return l.total_points * (pickMap.get(p.id)?.multiplier ?? 1);
+    /* See livePointsFor: a bench multiplier of 0 must not zero the shirt. The
+       XI total is unaffected — it sums `chosenXi` and never touches the bench. */
+    return livePointsFor(l, pickMap.get(p.id));
   };
 
   const pitchHost = el('div');

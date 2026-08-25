@@ -104,6 +104,30 @@ const modelMinutes = (p) => num(p.modelMinutes) || num(p.minutes);
  * Once a prior is blended in this is the pooled basis rather than a count of
  * real matches, which is what `modelMinutes` is expressed against.
  */
+/**
+ * What to show on a player's shirt during a live gameweek.
+ *
+ * `multiplier` in `entry/{id}/event/{gw}/picks` is 0 for every bench player,
+ * 1 for a starter, 2 for the captain and 3 under a triple captain. Multiplying
+ * straight through is right for the TEAM total — the bench does not count —
+ * and wrong for the shirt, where it displayed 0 for four bench players who had
+ * actually scored 0, 1, 2 and 3. FPL's own app shows what a benched player
+ * scored, because seeing what you left out is the entire reason to look at a
+ * bench.
+ *
+ * So a multiplier below 1 is treated as 1 for display. Team totals must sum
+ * over the starting eleven rather than relying on the bench multiplying to
+ * nothing.
+ *
+ * @param {object} livePlayer a row from `event/{gw}/live` elements
+ * @param {object} [pick]     the matching entry pick, if there is one
+ */
+export function livePointsFor(livePlayer, pick) {
+  if (!livePlayer) return null;
+  const m = pick?.multiplier ?? 1;
+  return num(livePlayer.total_points) * (m >= 1 ? m : 1);
+}
+
 export function inferGamesPlayed(players) {
   const max = players.reduce((m, p) => Math.max(m, modelMinutes(p)), 0);
   return Math.max(1, Math.round(max / 90));
