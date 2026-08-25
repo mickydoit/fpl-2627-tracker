@@ -81,6 +81,13 @@ const openPlayer = (p) => playerCard(p, {
 /* ------------------------------------------------------------------ *
  * gameweek strip
  * ------------------------------------------------------------------ */
+/* The gameweek stepper sits alone above everything, as in the frame — it is a
+   page-level control, not a section's. It walks back through gameweeks that
+   have been archived so the review pitch below can show them. */
+const playedGws = d.boot.events.filter((e) => e.id < ctx.nextEvent).map((e) => e.id).sort((a, b) => b - a);
+let reviewGw = playedGws[0] ?? null;
+const stepperHost = el('div', { class: 'sechead pagestep' });
+
 const entry = d.entry?.entry;
 const gwStrip = el('div', { class: 'metrics' });
 /* Four metrics, matching Figma 244:1566 — deadline, points, value, transfers.
@@ -96,7 +103,7 @@ if (entry) {
     metric(String(freeTransfers), 'Transfers'),
   );
 }
-addKids(app, gwStrip);
+addKids(app, stepperHost, gwStrip);
 
 /* ------------------------------------------------------------------ *
  * the squad
@@ -181,11 +188,19 @@ if (squadIds.length !== SQUAD_RULES.size) {
   const liveTotal = () => chosenXi.map((id) => byId(5).get(id)).filter(Boolean)
     .reduce((t, p) => t + (livePts(p) ?? 0), 0);
 
-  const squadSec = section(isLiveGW ? `GW${currentEvent.id} live` : 'My squad', {
-    hint: source === 'fpl' ? 'From your FPL team' : 'From your saved squad',
-    flush: true,
+  /* No pill above this one. The frame puts the squad straight under the
+     metrics and only introduces pills to separate it from the review below. */
+  const squadSec = section('', { flush: true });
+  squadSec.head.remove();
+  addKids(squadSec.body, pitchHost);
+
+  /* The pills that separate the two boards, exactly as the frame has them:
+     an outline label on the left, a filled control on the right. */
+  const splitSec = section('Projections', {
+    hint: 'What the squad is projected to do, against what it actually did',
   });
-  const paintHead = () => setKids(squadSec.wrap.querySelector('.secctl'),
+  splitSec.body.remove();
+  const paintHead = () => setKids(splitSec.ctl,
     el('span', { class: 'inline-metric' },
       el('b', {}, isLiveGW ? String(Math.round(liveTotal())) : fmt.pts(xiTotal())),
       el('i', {}, isLiveGW ? 'pts' : `over ${lineupH === 1 ? 'GW' : `${lineupH} GW`}`)),
@@ -194,15 +209,13 @@ if (squadIds.length !== SQUAD_RULES.size) {
       setState({ [LINEUP_HZ]: n });
       paintPitch(); paintHead();
     }, { options: [1, 3, 5, 8] }));
-  addKids(squadSec.wrap.querySelector('.sechead'), el('div', { class: 'secctl' }));
   paintHead();
-  addKids(squadSec.body, pitchHost);
 
   /* Two columns from 900px: the pitch holds its shape on the left while the
      numbers that read as a list — rating, suggestion, this week's move — stack
      beside it. Widening the pitch instead would just inflate the kits. */
   const sideCol = el('div', { class: 'sidecol' });
-  addKids(app, el('div', { class: 'pitch-and-side' }, squadSec.wrap, sideCol));
+  addKids(app, squadSec.wrap, splitSec.wrap, sideCol);
 
   /* ---------------- the review pitch ----------------
    *
@@ -216,34 +229,25 @@ if (squadIds.length !== SQUAD_RULES.size) {
    * are not recomputed, because a projection recalculated today would be using
    * evidence that did not exist before that deadline.
    */
-  const played = d.boot.events.filter((e) => e.id < ctx.nextEvent).map((e) => e.id).sort((a, b) => b - a);
-  if (played.length) {
-    let reviewGw = played[0];
+  if (playedGws.length) {
     const reviewHost = el('div');
     const paintReview = async () => {
       const g = await readGameweek(reviewGw);
       const step = (delta) => {
-        const i = played.indexOf(reviewGw);
-        const next = played[i + delta];
+        const next = playedGws[playedGws.indexOf(reviewGw) + delta];
         if (next != null) { reviewGw = next; paintReview(); }
       };
-      const sec = section(`GW${reviewGw} review`, {
-        hint: g?.projectedFrom
-          ? `Projection recovered from ${g.projectedFrom}`
-          : 'Projection as it stood before the deadline, against what was actually scored',
-        control: el('div', { class: 'gwstep' },
-          el('button', {
-            class: 'prev', disabled: played.indexOf(reviewGw) >= played.length - 1,
-            title: 'Earlier gameweek', onClick: () => step(1),
-          }, 'Earlier'),
-          el('span', { class: 'gwstep-label' }, `GW${reviewGw}`),
-          el('button', {
-            class: 'next', disabled: played.indexOf(reviewGw) <= 0,
-            title: 'Later gameweek', onClick: () => step(-1),
-          }, 'Later')),
-        flush: true,
-      });
+      /* The stepper lives at the top of the page, not on this section — it is
+         the page's gameweek, and the board below is what it shows. */
+      setKids(stepperHost, el('div', { class: 'gwstep' },
+        el('button', { class: 'prev', disabled: playedGws.indexOf(reviewGw) >= playedGws.length - 1,
+          title: 'Earlier gameweek', onClick: () => step(1) }, 'Earlier'),
+        el('span', { class: 'gwstep-label' }, `GW${reviewGw}`),
+        el('button', { class: 'next', disabled: playedGws.indexOf(reviewGw) <= 0,
+          title: 'Later gameweek', onClick: () => step(-1) }, 'Later')));
 
+      const sec = section('', { flush: true });
+      sec.head.remove();
       if (!g?.actual) {
         setKids(sec.body, el('p', { class: 'empty tight' }, `GW${reviewGw} has not been archived yet.`));
       } else {
@@ -252,13 +256,12 @@ if (squadIds.length !== SQUAD_RULES.size) {
         const bench = benchOrder.length
           ? benchOrder.map((id) => rest.find((p) => p.id === id)).filter(Boolean)
           : rest;
-        /* By `code`, never by element id — the archive is keyed that way
-           because Draft and classic disagree on ids for 21 of 587 players. */
+        /* By `code` — the archive is keyed that way because Draft and classic
+           disagree on element ids for 21 of 587 players. */
         const compare = (p) => {
           const proj = g.projected?.[p.code];
           const act = g.actual?.[p.code]?.[0];
           if (act == null) return { left: proj == null ? '—' : proj.toFixed(1), right: '—' };
-          /* A tenth either way is not a miss. Beyond that, over or under. */
           const hit = proj == null ? 'met'
             : act >= proj - 0.1 ? (act > proj + 0.1 ? 'over' : 'met') : 'under';
           return { left: proj == null ? '—' : proj.toFixed(1), right: String(act), hit };

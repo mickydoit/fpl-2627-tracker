@@ -202,9 +202,10 @@ ${modules.map((m) => `<link rel="modulepreload" href="${m}?v=${v}" />`).join('\n
   <nav class="productnav" aria-label="Product">
 ${PRODUCTS.map((pr) => `    <a href="${pr.home}.html"${pr.id === p.product ? ' class="active" aria-current="true"' : ''}>${pr.label}</a>`).join('\n')}
   </nav>
+  <!-- Mark only. The wordmark under it was removed on request; the alt text
+       carries the name so the link still has an accessible label. -->
   <a class="brand" href="${PRODUCTS.find((pr) => pr.id === p.product).home}.html">
-    <img class="brand-logo" src="img/logo-fpl.svg?v=${cssV}" alt="" />
-    <span class="brand-text"><i>FPL</i>Tracker</span>
+    <img class="brand-logo" src="img/logo-fpl.svg?v=${cssV}" alt="FPL Tracker" />
   </a>
 </header>
 <nav class="pagenav" aria-label="${p.product === 'draft' ? 'Draft' : 'Classic'} pages">

@@ -277,8 +277,12 @@ table.players .proj { color: var(--accent); font-weight: 900; }
 /* ---------- a player ----------
    Kit, then surname on a plate, then the number that varies. Sized so a full
    line of five still fits a 360px phone without wrapping. */
+/* Scales with the pitch rather than in steps. The pitch is now full width, and
+   fixed-width shirts left the squad small inside a large board — the shape has
+   to stay legible at every size, which is the whole reason for drawing a
+   formation instead of a list. */
 .shirt {
-  width: 4.3rem;
+  width: clamp(3.6rem, 6.4vw, 7.6rem);
   max-width: 100%;
   display: grid;
   justify-items: center;
@@ -287,10 +291,10 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   user-select: none;
 }
 .shirt .kit { position: relative; display: block; line-height: 0; }
-.shirt .kit img { width: 2.75rem; height: 2.75rem; object-fit: contain; display: block; }
+.shirt .kit img { width: clamp(2.2rem, 4vw, 4.6rem); height: clamp(2.2rem, 4vw, 4.6rem); object-fit: contain; display: block; }
 .shirt .kit-fallback {
   display: grid; place-items: center;
-  width: 2.75rem; height: 2.75rem;
+  width: clamp(2.2rem, 4vw, 4.6rem); height: clamp(2.2rem, 4vw, 4.6rem);
   background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
   font-family: var(--font-display); font-size: 0.7rem; color: var(--text);
 }
@@ -298,7 +302,7 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   width: 100%;
   background: var(--bg);
   color: #fff;
-  font-size: 0.63rem;
+  font-size: clamp(0.6rem, 1.05vw, 1.05rem);
   font-weight: 800;
   line-height: 1.5;
   text-align: center;
@@ -310,7 +314,7 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   width: 100%;
   background: var(--surface-2);
   color: var(--text);
-  font-size: 0.63rem;
+  font-size: clamp(0.6rem, 1.05vw, 1.05rem);
   font-weight: 700;
   line-height: 1.5;
   text-align: center;
@@ -378,10 +382,7 @@ table.players .proj { color: var(--accent); font-weight: 900; }
 .shirt.drop-hot .nm { outline: 2px solid var(--cyan); outline-offset: 1px; }
 
 @media (min-width: 760px) {
-  .pitch { min-height: 26rem; padding: 1.3rem 1rem 1.6rem; gap: 0.9rem; }
-  .shirt { width: 5rem; }
-  .shirt .kit img, .shirt .kit-fallback { width: 3.2rem; height: 3.2rem; }
-  .shirt .nm, .shirt .pt { font-size: 0.68rem; }
+  .pitch { min-height: clamp(26rem, 44vw, 52rem); padding: 1.6rem 1.2rem 2rem; gap: 1.1rem; }
 }
 .shirt .pr { font-size: 0.62rem; font-weight: 700; opacity: 0.78; font-variant-numeric: tabular-nums; }
 .shirt .pt {
@@ -904,30 +905,15 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
  * viewport, in step with their own type, so they stay in proportion instead of
  * shrinking relative to everything around them.
  */
+/* Full width. The frame gives the pitch 1156 of a 1280 canvas — it is the main
+   object on the page, and a 54rem cap left it rattling inside a wider column
+   once the layout went to one. */
 .pitch {
-  max-width: 54rem;
-  margin-inline: auto;
   width: 100%;
+  margin-inline: auto;
 }
 
-@media (min-width: 46rem) {
-  .shirt { width: 6.6rem; padding: 0.55rem 0.6rem 0.6rem; }
-  .shirt .nm { font-size: 0.8rem; }
-  .shirt .cl { font-size: 0.6rem; }
-  .shirt .pr { font-size: 0.64rem; }
-  .shirt .pt { font-size: 1.45rem; }
-  .pitch-row { gap: var(--s-md); }
-  .bench-strip { gap: var(--s-md); }
-  .pitch { padding: var(--s-xl) var(--s-lg); gap: var(--s-lg); }
-}
 
-@media (min-width: 75rem) {
-  .shirt { width: 7.4rem; padding: 0.65rem 0.7rem 0.7rem; }
-  .shirt .nm { font-size: 0.86rem; }
-  .shirt .pt { font-size: 1.65rem; }
-  .pitch-row { gap: var(--s-lg); }
-  .bench-strip { gap: var(--s-lg); }
-}
 
 /* The comparison view holds two pitches side by side, so they keep the
    compact scale — two full-size pitches would force a scrollbar. */
@@ -1052,9 +1038,12 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
 .secbody > :last-child { margin-bottom: 0; }
 
 /* Selectors wear the filled pill. */
+/* The filled pill, wherever a control sits — inside a section header or alone
+   at the top of the page as the gameweek stepper is. */
 .secctl select.hz-picker,
 .secctl .verdict,
-.secctl .gwstep {
+.secctl .gwstep,
+.pagestep .gwstep {
   background: var(--mint-2);
   color: var(--ink);
   border: none;
@@ -1225,17 +1214,11 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
 .seemore a:hover { color: var(--accent); }
 
 /* Desktop uses the width for columns rather than for bigger boxes. */
-@media (min-width: 900px) {
-  .pitch-and-side {
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    gap: var(--s-lg);
-    align-items: start;
-  }
-  .pitch-and-side .row.between.tight:first-child { margin-top: 0; }
-  .sidecol > :first-child .row.between.tight { margin-top: 0; }
-  .summary { grid-template-columns: repeat(5, 1fr); }
-}
+/* One column, always.
+   The frame stacks the pitches — squad, then the pills, then the review — and
+   a two-column desktop split put the review beside the squad where the eye had
+   to jump between two boards to compare them. Width goes to the pitch instead,
+   which is what the pitch is for. */
 
 /* The transfer verdict. It is the page's headline so it keeps emphasis, but at
    a size that leaves room for the move underneath it — it was running at the
@@ -1393,3 +1376,9 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
 }
 .row.between.tight.vp { margin: 0; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); }
 .metrics.wv { margin: 0; padding: 0.5rem 0.6rem; }
+
+.pitch-and-side { display: block; }
+.sidecol { display: block; }
+
+/* The page-level gameweek stepper: alone, centred, above the metrics. */
+.sechead.pagestep { margin: clamp(0.8rem, 2.5vw, 2rem) 0 0; }

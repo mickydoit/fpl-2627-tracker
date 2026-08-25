@@ -242,16 +242,8 @@ p:last-child { margin-bottom: 0; }
   gap: 0.1rem; color: var(--ink); flex: none; order: 2;
 }
 .brand:hover { text-decoration: none; }
-.brand-logo { display: block; height: clamp(24px, 5.6vw, 72px); width: auto; }
-.brand-text {
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: clamp(0.5rem, 1.53vw, 19.561px);
-  line-height: 1.036;
-  letter-spacing: -0.05em;
-  text-transform: none;
-}
-.brand-text i { font-style: italic; font-weight: 800; }
+.brand-logo { display: block; height: clamp(30px, 6.6vw, 85px); width: auto; }
+
 
 /* Not in the Figma frame — see the note above. Kept small on purpose so it
    reads as a route rather than as part of the design's own hierarchy. */
