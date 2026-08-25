@@ -140,11 +140,17 @@ export function notesFor(player, { fixtures, teams, fromEvent = 1, horizon = 5, 
  * "projects 4.2 more over 5 gameweeks and has three kind fixtures" can be
  * checked against the page it sits on.
  */
-export function justifyMove(out, inc, { fixtures, teams, fromEvent = 1, horizon = 5 } = {}) {
+export function justifyMove(out, inc, { fixtures, teams, fromEvent = 1, horizon = 5, horizonLabel = null } = {}) {
   const bits = [];
   const gain = (inc.proj ?? 0) - (out.proj ?? 0);
+  /* The window named here must be the window `proj` was computed over. Draft
+     board rows carry a rest-of-season projection, so labelling their difference
+     "over 5 gameweeks" attaches the wrong period to a real number — which is
+     worse than saying nothing. Callers whose rows are not an N-gameweek total
+     pass their own label. */
+  const period = horizonLabel || `over ${horizon} gameweek${horizon === 1 ? '' : 's'}`;
   if (Number.isFinite(gain) && Math.abs(gain) >= 0.05) {
-    bits.push(`projects ${gain > 0 ? '+' : ''}${gain.toFixed(1)} over ${horizon} gameweek${horizon === 1 ? '' : 's'}`);
+    bits.push(`projects ${gain > 0 ? '+' : ''}${gain.toFixed(1)} ${period}`);
   }
 
   if (out.news?.trim()) bits.push(`${out.web_name} is flagged — ${out.news.trim().toLowerCase()}`);
@@ -157,12 +163,34 @@ export function justifyMove(out, inc, { fixtures, teams, fromEvent = 1, horizon 
   const outMins = out.parts?.expMins;
   const incMins = inc.parts?.expMins;
   if (Number.isFinite(outMins) && Number.isFinite(incMins) && incMins - outMins > 15) {
-    bits.push(`and is more likely to start (${Math.round(incMins)} minutes against ${Math.round(outMins)})`);
+    bits.push(`is more likely to start (${Math.round(incMins)} minutes against ${Math.round(outMins)})`);
   }
 
-  if (inc.penalties_order === 1 && out.penalties_order !== 1) bits.push('and takes the penalties');
+  if (inc.penalties_order === 1 && out.penalties_order !== 1) bits.push('takes the penalties');
 
   if (!bits.length) return `${inc.web_name} projects slightly higher; nothing else separates them.`;
   const s = bits.join('; ');
   return s.charAt(0).toUpperCase() + s.slice(1) + '.';
+}
+
+
+/**
+ * The transfer table: out, in, and why.
+ *
+ * Shared by both products because the shape of the decision is the same even
+ * though the mechanics are not. Classic passes price (it has a budget); Draft
+ * passes none (it has no money, and inventing one would be describing a
+ * mechanic that game does not have). Everything else is identical.
+ *
+ * @param {Array} moves    [{out, in, gain}]
+ * @param {(p:object)=>Array} statsFor  the boxes under each tile
+ */
+export function transferRows(moves, { teams, fixtures, fromEvent, horizon, horizonLabel = null, statsFor, onPlayer, playerTile, el }) {
+  return el('div', { class: 'ttable' }, moves.map((m, i) =>
+    el('div', { class: 'trow' },
+      el('span', { class: 'tn' }, String(i + 1)),
+      el('span', { class: 'tout' }, playerTile(m.out, { teams, stats: statsFor(m.out, 'out'), onPlayer })),
+      el('span', { class: 'tarrow' }, '\u2192'),
+      el('span', { class: 'tin' }, playerTile(m.in, { teams, stats: statsFor(m.in, 'in'), onPlayer })),
+      el('span', { class: 'twhy' }, justifyMove(m.out, m.in, { fixtures, teams, fromEvent, horizon, horizonLabel })))));
 }

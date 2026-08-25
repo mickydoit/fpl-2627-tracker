@@ -23,8 +23,8 @@ import { projectAll, SQUAD_RULES, actionableEvent } from '../model.js';
 import { bestXI, scoreSquad, legalXI, optimiseWithinTransfers, squadCost, suggestTransfers } from '../optimiser.js';
 import { rateSquad, RATING_HORIZONS } from '../rating.js';
 import { bestMove, recommendedHorizon } from '../transfer-advice.js';
-import { squadPitch, playerCard, enableSwapping } from '../squadview.js';
-import { notesFor, justifyMove } from '../explain.js';
+import { squadPitch, playerCard, enableSwapping, playerTile } from '../squadview.js';
+import { notesFor, justifyMove, transferRows } from '../explain.js';
 import { horizonPicker, SEASON_HORIZON } from '../ui.js';
 import { $, el, fmt, dataBar, countdown, setKids, addKids, section, metric, compact } from '../ui.js';
 
@@ -378,15 +378,16 @@ if (squadIds.length !== SQUAD_RULES.size) {
     });
     addKids(sec.body,
       reach.moves.length
-        ? el('div', { class: 'rowlist' }, reach.moves.map((m) => el('div', { class: 'lrow with-why' },
-            el('span', { class: 'lo' }, m.out.web_name,
-              el('i', {}, teams[m.out.team]?.short_name || '')),
-            el('span', { class: 'la' }, '→'),
-            el('span', { class: 'li' }, m.in.web_name,
-              el('i', {}, teams[m.in.team]?.short_name || '')),
-            el('span', { class: 'lv up' }, fmt.signed(m.in.proj - m.out.proj)),
-            el('span', { class: 'why' }, justifyMove(m.out, m.in,
-              { fixtures: d.fixtures, teams, fromEvent: ctx.nextEvent, horizon: 8 })))))
+        ? transferRows(reach.moves, {
+            teams, fixtures: d.fixtures, fromEvent: ctx.nextEvent, horizon: 8,
+            /* Price and projection — the two numbers that decide a Classic
+               transfer. The club used to sit here and the kit says it better. */
+            statsFor: (p) => [
+              { label: 'Price', value: fmt.price(p.now_cost), tone: 'muted' },
+              { label: 'Projection over 8 gameweeks', value: fmt.pts(p.proj) },
+            ],
+            onPlayer: openPlayer, playerTile, el,
+          })
         : el('p', { class: 'empty tight' }, 'Nothing worth doing with those transfers.'));
     setKids(suggestHost, sec.wrap);
   };
@@ -415,13 +416,14 @@ if (squadIds.length !== SQUAD_RULES.size) {
     });
     addKids(wk.body,
       best?.move
-        ? el('div', { class: 'rowlist' }, el('div', { class: 'lrow with-why' },
-            el('span', { class: 'lo' }, best.move.out.web_name, el('i', {}, teams[best.move.out.team]?.short_name || '')),
-            el('span', { class: 'la' }, '→'),
-            el('span', { class: 'li' }, best.move.in.web_name, el('i', {}, teams[best.move.in.team]?.short_name || '')),
-            el('span', { class: 'lv up' }, fmt.signed(best.gain)),
-            el('span', { class: 'why' }, justifyMove(best.move.out, best.move.in,
-              { fixtures: d.fixtures, teams, fromEvent: ctx.nextEvent, horizon: rec.horizon }))))
+        ? transferRows([best.move], {
+            teams, fixtures: d.fixtures, fromEvent: ctx.nextEvent, horizon: rec.horizon,
+            statsFor: (p) => [
+              { label: 'Price', value: fmt.price(p.now_cost), tone: 'muted' },
+              { label: `Projection over ${rec.horizon} gameweeks`, value: fmt.pts(p.proj) },
+            ],
+            onPlayer: openPlayer, playerTile, el,
+          })
         : el('p', { class: 'empty tight' }, 'No move clears the bar this week.'),
       el('p', { class: 'seemore' }, el('a', { href: 'transfers.html' }, 'Every legal move →')));
     addKids(sideCol, wk.wrap);

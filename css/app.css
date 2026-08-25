@@ -1275,3 +1275,64 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
   line-height: 1.4;
   color: var(--muted);
 }
+
+/* ---------- player tile ----------
+   Kit, surname, set-piece duty, and the two numbers that decide a transfer.
+   No club line: the kit says it, and it said it better than three letters did. */
+.ptile { display: grid; justify-items: center; gap: 0.15rem; cursor: pointer; min-width: 0; }
+.ptile .kit { position: relative; line-height: 0; }
+.ptile .kit img { width: 2.1rem; height: 2.1rem; object-fit: contain; display: block; }
+.ptile .kit-fallback {
+  display: grid; place-items: center; width: 2.1rem; height: 2.1rem;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 5px; font-family: var(--font-display); font-size: 0.6rem;
+}
+.ptile-name {
+  display: flex; align-items: center; gap: 0.2rem; flex-wrap: wrap;
+  justify-content: center; font-size: 0.68rem; line-height: 1.2; text-align: center;
+}
+.ptile-name b { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 5.4rem; }
+.ptile-stats { display: flex; gap: 1px; }
+.ptile-stat {
+  background: var(--bg); color: var(--text);
+  font-size: 0.6rem; font-weight: 700; line-height: 1.5;
+  padding: 0 0.3rem; border-radius: 3px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.ptile-stat.good { background: var(--mint); color: var(--ink); }
+.ptile-stat.muted { background: var(--surface-2); color: var(--muted); }
+.ptile .badge.fk { background: var(--sage); color: var(--ink); }
+.ptile.flagged .ptile-name b { color: var(--yellow); }
+.ptile:hover .ptile-name b { text-decoration: underline; }
+
+/* ---------- transfer table ----------
+   Out, in, and why — the why spanning the full width beneath on a phone and
+   taking its own column once there is room. */
+.ttable { display: grid; }
+.trow {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr 1.1rem 1fr;
+  grid-template-areas: 'n out arrow in' 'why why why why';
+  gap: var(--s-sm) 0.4rem;
+  align-items: center;
+  padding: 0.55rem 0.5rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.trow:last-child { border-bottom: none; }
+.trow .tn { grid-area: n; font-family: var(--font-display); font-size: 0.8rem; color: var(--muted); text-align: center; }
+.trow .tout { grid-area: out; }
+.trow .tarrow { grid-area: arrow; text-align: center; color: var(--accent); font-size: 0.9rem; }
+.trow .tin { grid-area: in; }
+.trow .twhy { grid-area: why; font-size: 0.68rem; line-height: 1.4; color: var(--muted); }
+
+@media (min-width: 900px) {
+  .trow {
+    grid-template-columns: 1.6rem minmax(0, 1fr) 1.4rem minmax(0, 1fr) minmax(0, 1.5fr);
+    grid-template-areas: 'n out arrow in why';
+    align-items: center;
+  }
+  .trow .twhy { padding-left: var(--s-md); }
+}
+.row.between.tight.vp { margin: 0; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); }
+.metrics.wv { margin: 0; padding: 0.5rem 0.6rem; }

@@ -353,3 +353,46 @@ export function legalDraftXI(xi) {
   const n = (t) => xi.filter((p) => p.element_type === t).length;
   return n(1) === 1 && n(2) >= 3 && n(3) >= 2 && n(4) >= 1;
 }
+
+
+/**
+ * A player as a tile: kit, surname, set-piece duty, and up to two facts in
+ * boxes beneath.
+ *
+ * The club name is deliberately absent. It used to sit under the name — "LIV ·
+ * £7.0m · 15.0 proj" — and the kit already says it, more legibly than three
+ * letters do. What replaces it is the pair of numbers that actually decide a
+ * transfer.
+ *
+ * Draft passes no price, because Draft has no money. The tile shows one box
+ * instead of two rather than inventing a value for a mechanic that game does
+ * not have.
+ *
+ * @param {object[]} stats  up to two {label, value, tone} shown under the name
+ */
+export function playerTile(p, { teams, stats = [], onPlayer = null } = {}) {
+  const team = teams?.[p.team];
+  const kit = team?.short_name
+    ? `img/kits/shirt_${team.short_name}${p.element_type === 1 ? '_1' : ''}.png`
+    : null;
+  const flagged = p.status && p.status !== 'a';
+  return el('div', {
+    class: `ptile ${flagged ? 'flagged' : ''}`,
+    title: `${p.first_name || ''} ${p.second_name || p.web_name}`.trim() + ` — ${team?.name || ''}`,
+    onClick: onPlayer ? () => onPlayer(p) : null,
+  },
+    el('span', { class: 'kit' },
+      kit ? el('img', { src: kit, alt: '', loading: 'lazy', width: '34', height: '34' })
+        : el('span', { class: 'kit-fallback' }, team?.short_name || '?'),
+      flagged ? el('span', { class: 'shirt-flag', title: p.news || 'Doubtful' }, '!') : null),
+    el('span', { class: 'ptile-name' },
+      el('b', {}, p.web_name),
+      p.penalties_order === 1 ? el('span', { class: 'badge pen' }, 'PEN') : null,
+      p.direct_freekicks_order === 1 ? el('span', { class: 'badge fk' }, 'FK') : null),
+    stats.length
+      ? el('span', { class: 'ptile-stats' }, stats.map((st) =>
+          el('span', { class: `ptile-stat ${st.tone || ''}`, title: st.label },
+            st.value)))
+      : null,
+  );
+}

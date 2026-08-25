@@ -10,15 +10,15 @@
  * transfers or the Classic optimiser. The two dashboards share a tab strip and
  * nothing else.
  */
-import { el, setKids, fmt, horizonPicker, section } from '../ui.js';
+import { el, setKids, fmt, horizonPicker, section, metric } from '../ui.js';
 import { readSnapshot } from '../data.js';
 import { projectBoard, projectBoardAt } from '../draft/project.js';
 import { actionableEvent } from '../model.js';
 import { rateLeague, bestXI } from '../draft/rating.js';
 import { DRAFT_CONFIG, RATING_HORIZONS } from '../draft/config.js';
 import { bestWaiver } from '../draft/waiver.js';
-import { squadPitch, playerCard, activityRings, enableSwapping, legalDraftXI } from '../squadview.js';
-import { notesFor, justifyMove } from '../explain.js';
+import { squadPitch, playerCard, activityRings, enableSwapping, legalDraftXI, playerTile } from '../squadview.js';
+import { notesFor, justifyMove, transferRows } from '../explain.js';
 
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
@@ -382,7 +382,7 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
     want.has('head') ? headCard : null,
     want.has('squad') ? squadCard : null,
     want.has('risk') ? riskCard(mine, openPlayer) : null,
-    want.has('waiver') ? waiverCard(mine, pool, teams, openPlayer, rowsAt) : null,
+    want.has('waiver') ? waiverCard(mine, pool, teams, openPlayer, rowsAt, fixtures, actionable) : null,
     want.has('notes') ? notesCard(mine, fixtures, teams, actionable ?? 1, openPlayer) : null,
   ].filter(Boolean));
 
@@ -450,7 +450,7 @@ function riskCard(mine, openPlayer) {
  * Only gaps of at least `minimumImprovement` rest-of-season points are shown,
  * and the wording never implies the move is obligatory.
  */
-function waiverCard(mine, pool, teams, openPlayer, rowsAt) {
+function waiverCard(mine, pool, teams, openPlayer, rowsAt, fixtures, actionable) {
   /* Was a player-to-player comparison: the best free agent at a position
      against your weakest player there. That answers the wrong question. It
      ignored what the move does to the rest of the roster, agreed with itself at
@@ -468,16 +468,27 @@ function waiverCard(mine, pool, teams, openPlayer, rowsAt) {
     hint: 'Every legal add-drop over 1, 3, 5 and 8 gameweeks. A Draft drop is permanent, so a move must clear a real margin.',
   },
     advice
-      ? el('div', { class: `advice ${isMove ? 'good' : 'hold'}` },
-        el('p', { class: 'advice-verdict' }, advice.verdict),
-        el('p', { class: 'advice-move' },
-          el('span', { onClick: () => openPlayer(advice.move.out) }, `${advice.move.out.web_name} (${teams[advice.move.out.team]?.short_name || ''})`),
-          ' → ',
-          el('span', { onClick: () => openPlayer(advice.move.in) }, `${advice.move.in.web_name} (${teams[advice.move.in.team]?.short_name || ''})`)),
-        el('div', { class: 'tiles' }, advice.cross.gains.map((g) => el('div', { class: 'tile' },
-          el('span', { class: 'k' }, `Next ${g.horizon}`),
-          el('span', { class: 'v' }, `${g.gain >= 0 ? '+' : ''}${g.gain.toFixed(1)}`)))),
-        el('p', { class: 'hint' }, `Confidence ${advice.confidence}. ${advice.reasons.join('; ')}.`))
-      : el('p', { class: 'hint' }, 'Nothing on the wire improves this roster.'),
+      ? el('div', {},
+        el('div', { class: 'row between tight vp' },
+          el('span', { class: `verdict ${isMove ? 'go' : 'hold'}` }, advice.verdict),
+          el('span', { class: 'inline-metric' },
+            el('b', {}, `${advice.gain >= 0 ? '+' : ''}${(advice.gain ?? 0).toFixed(1)}`),
+            el('i', {}, `confidence ${String(advice.confidence).toLowerCase()}`))),
+        /* Same table as Classic, minus price. Draft has no money, and showing a
+           value there would describe a mechanic this game does not have. */
+        transferRows([advice.move], {
+          teams, fixtures, fromEvent: actionable ?? 1, horizon: 5,
+          /* Board rows are rest-of-season totals, not five-gameweek ones. */
+          horizonLabel: 'over the rest of the season',
+          statsFor: (p) => [
+            { label: 'Rest of season', value: fmt.pts(p.proj) },
+            ...(Number.isFinite(p.vorp) ? [{ label: 'Above the best free agent', value: fmt.pts(p.vorp), tone: 'muted' }] : []),
+          ],
+          onPlayer: openPlayer, playerTile, el,
+        }),
+        el('div', { class: 'metrics wv' }, advice.cross.gains.map((g) =>
+          metric(`${g.gain >= 0 ? '+' : ''}${g.gain.toFixed(1)}`, `${g.horizon} GW`,
+            { tone: g.horizon === 5 ? 'accent' : '' }))))
+      : el('p', { class: 'empty tight' }, 'Nothing on the wire improves this roster.'),
   );
 }
