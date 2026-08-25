@@ -26,6 +26,7 @@ import { ALLOWED_MODEL_SEASONS, CURRENT_SEASON, isAllowedSeason, seasonStartYear
 import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scoreRatio,
   RATING_WEIGHTS, RATING_HORIZONS, RATING_FLOOR } from '../js/rating.js';
 import { topMoves, bestMove } from '../js/transfer-advice.js';
+import { groupByDay, MATCH_VIEWS } from '../js/matches.js';
 
 let failures = 0;
 let checks = 0;
@@ -256,6 +257,69 @@ console.log('\nTransfer shortlist');
     return true;
   })());
   ok('no options in means no shortlist', topMoves([], gainAt).length === 0);
+}
+
+/* ------------------------------------------------------------------ *
+ * the fixture list
+ * ------------------------------------------------------------------ *
+ * Grouped into UK matchdays rather than the reader's own. A Premier League
+ * fixture is a "Saturday 3pm" wherever it is watched, and grouping by local
+ * date moved a Saturday evening kickoff onto Sunday for anyone east of Europe
+ * — this repo's owner is on Australia/Brisbane, ten hours ahead.
+ */
+console.log('\nFixture list');
+{
+  const at = (iso, state, extra = {}) => ({ date: iso, state, home: { short: 'AAA', score: '1' }, away: { short: 'BBB', score: '0' }, ...extra });
+  const feed = [
+    at('2026-08-22T11:30Z', 'post'),
+    at('2026-08-22T14:00Z', 'post'),
+    at('2026-08-23T15:00Z', 'post'),
+    at('2026-08-28T19:00Z', 'pre'),   // Fri 20:00 UK -> Sat 05:00 Brisbane
+    at('2026-08-29T11:30Z', 'pre'),
+    at('2026-08-29T14:00Z', 'pre'),
+  ];
+
+  ok('the two views are named for what they show',
+    MATCH_VIEWS.map((v) => v.value).join(',') === 'results,upcoming');
+
+  const results = groupByDay(feed, 'results');
+  const upcoming = groupByDay(feed, 'upcoming');
+  ok('results show only what has been played',
+    results.flatMap((d) => d.items).every((m) => m.state !== 'pre'));
+  ok('upcoming shows only what has not', 
+    upcoming.flatMap((d) => d.items).every((m) => m.state === 'pre'));
+  ok('every match appears in exactly one view',
+    results.flatMap((d) => d.items).length + upcoming.flatMap((d) => d.items).length === feed.length);
+
+  ok('results read newest first', (() => {
+    const ds = results.flatMap((d) => d.items).map((m) => new Date(m.date).getTime());
+    return ds.every((t, i) => i === 0 || ds[i - 1] >= t);
+  })());
+  ok('fixtures read soonest first', (() => {
+    const ds = upcoming.flatMap((d) => d.items).map((m) => new Date(m.date).getTime());
+    return ds.every((t, i) => i === 0 || ds[i - 1] <= t);
+  })());
+
+  ok('matches on the same day share one group',
+    results.length === 2 && results.some((d) => d.items.length === 2),
+    results.map((d) => d.items.length).join(','));
+  ok('a day group is never empty', [...results, ...upcoming].every((d) => d.items.length > 0));
+  ok('an empty feed groups into nothing', groupByDay([], 'results').length === 0);
+  ok('a feed of only fixtures has no results', groupByDay([at('2026-09-01T14:00Z', 'pre')], 'results').length === 0);
+
+  /* A live match is being played, so it belongs with the results — putting it
+     under "upcoming" would file a game in progress as not started. */
+  ok('a match in progress counts as played, not upcoming',
+    groupByDay([at('2026-08-25T14:00Z', 'in')], 'results').length === 1
+    && groupByDay([at('2026-08-25T14:00Z', 'in')], 'upcoming').length === 0);
+
+  /* The grouping key is UK-based, so a 19:00Z Friday kickoff stays on Friday
+     however far east the reader is. Asserted through the returned key rather
+     than the rendered label, which is what the reader actually sees grouped. */
+  ok('a Friday evening kickoff stays on Friday', (() => {
+    const g = groupByDay([at('2026-08-28T19:00Z', 'pre'), at('2026-08-29T11:30Z', 'pre')], 'upcoming');
+    return g.length === 2;
+  })());
 }
 
 /* ------------------------------------------------------------------ *

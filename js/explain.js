@@ -223,3 +223,34 @@ export function transferRows(moves, { teams, fixtures, fromEvent, horizon, horiz
         justifyMove(m.out, m.in, { fixtures, teams, fromEvent, horizon, horizonLabel })));
   }));
 }
+
+
+/**
+ * The notes panel: one row per player, and the row says WHO.
+ *
+ * The name used to be rendered and then hidden in CSS (`.noterow .nn` was
+ * `display: none`), which left a column of unattributed sentences — three
+ * consecutive lines reading "averaging 40 minutes a game" with no way to tell
+ * which three players they were about. That is what made the panel feel
+ * random: a note is a fact about somebody, and without the somebody it is
+ * just a mood.
+ *
+ * Built as a bordered list because that is what the fixture list and the
+ * transfer table are. It looked isolated partly because it was the only thing
+ * on the page with no container at all.
+ *
+ * @param {{p: object, notes: object[]}[]} rows
+ */
+export function noteRows(rows, { teams, onPlayer, el }) {
+  const label = (n) => (n.source === SOURCE.FPL ? 'FPL' : n.source === SOURCE.MANUAL ? 'NOTE' : 'MODEL');
+  return el('div', { class: 'notelist' }, rows.map(({ p, notes }) =>
+    el('div', { class: 'noterow', onClick: () => onPlayer?.(p) },
+      el('span', { class: 'nn' },
+        el('span', { class: 'nname' }, p.web_name),
+        el('span', { class: 'nteam' }, teams?.[p.team]?.short_name || '')),
+      el('span', { class: 'nb' }, notes.map((n) =>
+        el('span', { class: `note-line ${n.tone}` },
+          el('span', { class: `note-src ${n.source}` }, label(n)),
+          n.text,
+          n.date ? el('i', { class: 'ndate' }, ` (${n.date})`) : null))))));
+}

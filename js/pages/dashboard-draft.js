@@ -18,7 +18,7 @@ import { rateLeague, bestXI } from '../draft/rating.js';
 import { DRAFT_CONFIG, RATING_HORIZONS } from '../draft/config.js';
 import { topWaivers } from '../draft/waiver.js';
 import { squadPitch, playerCard, activityRings, enableSwapping, legalDraftXI, playerTile } from '../squadview.js';
-import { notesFor, justifyMove, transferRows } from '../explain.js';
+import { notesFor, justifyMove, transferRows, noteRows } from '../explain.js';
 
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
@@ -474,13 +474,7 @@ function notesCard(mine, fixtures, teams, fromEvent, openPlayer) {
     flush: true,
     hint: 'FPL\u2019s own words where they exist, otherwise derived from fixtures and projections',
   },
-    el('div', { class: 'notelist' }, rows.map(({ p, notes }) =>
-      el('div', { class: 'noterow', onClick: () => openPlayer(p) },
-        el('span', { class: 'nn' }, p.web_name),
-        el('span', { class: 'nb' }, notes.map((n) =>
-          el('span', { class: `note-line ${n.tone}` },
-            el('span', { class: `note-src ${n.source}` }, n.source === 'fpl' ? 'FPL' : n.source === 'manual' ? 'NOTE' : 'MODEL'),
-            n.text)))))));
+    noteRows(rows, { teams, onPlayer: openPlayer, el }));
 }
 
 const ord = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th');

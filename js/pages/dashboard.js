@@ -24,7 +24,8 @@ import { bestXI, scoreSquad, legalXI, optimiseWithinTransfers, squadCost, sugges
 import { rateSquad, RATING_HORIZONS } from '../rating.js';
 import { topMoves, recommendedHorizon } from '../transfer-advice.js';
 import { squadPitch, playerCard, enableSwapping, playerTile } from '../squadview.js';
-import { notesFor, justifyMove, transferRows } from '../explain.js';
+import { notesFor, justifyMove, transferRows, noteRows } from '../explain.js';
+import { matchesSection } from '../matches.js';
 import { horizonCycler, cycler, SEASON_HORIZON } from '../ui.js';
 import { $, el, fmt, dataBar, countdown, setKids, addKids, section, metric, compact } from '../ui.js';
 
@@ -292,7 +293,7 @@ if (squadIds.length !== SQUAD_RULES.size) {
    * something in it is one nobody reads.
    */
   {
-    const noteRows = squad
+    const rows = squad
       .map((p) => ({ p, notes: notesFor(p, { fixtures: d.fixtures, teams, fromEvent: ctx.nextEvent, horizon: 5 }) }))
       .filter((x) => x.notes.length)
       /* Loudest first: a flagged starter matters more than a set-piece note. */
@@ -300,18 +301,12 @@ if (squadIds.length !== SQUAD_RULES.size) {
         const rank = { bad: 0, warn: 1, good: 2, info: 3 };
         return rank[a.notes[0].tone] - rank[b.notes[0].tone] || b.p.proj - a.p.proj;
       });
-    if (noteRows.length) {
+    if (rows.length) {
       const sec = section('Notes', {
         hint: 'FPL’s own words where they exist, otherwise derived from fixtures and projections',
         flush: true,
       });
-      addKids(sec.body, el('div', { class: 'notelist' }, noteRows.map(({ p, notes }) =>
-        el('div', { class: 'noterow', onClick: () => openPlayer(p) },
-          el('span', { class: 'nn' }, p.web_name),
-          el('span', { class: 'nb' }, notes.map((n) =>
-            el('span', { class: `note-line ${n.tone}` },
-              el('span', { class: `note-src ${n.source}` }, n.source === 'fpl' ? 'FPL' : n.source === 'manual' ? 'NOTE' : 'MODEL'),
-              n.text)))))));
+      addKids(sec.body, noteRows(rows, { teams, onPlayer: openPlayer, el }));
       addKids(app, sec.wrap);
     }
   }
@@ -454,31 +449,8 @@ if (squadIds.length !== SQUAD_RULES.size) {
 /* ------------------------------------------------------------------ *
  * matches
  * ------------------------------------------------------------------ */
-const matches = (d.scoreboard?.events || [])
-  .filter((m) => {
-    const t = new Date(m.date).getTime();
-    return t > Date.now() - 3 * 864e5 && t < Date.now() + 8 * 864e5;
-  })
-  .sort((a, b) => new Date(a.date) - new Date(b.date))
-  .slice(0, 10);
-
-if (matches.length) {
-  const wrap = el('div', { class: 'matches' });
-  for (const m of matches) {
-    const cls = m.state === 'in' ? 'live' : m.state === 'post' ? 'done' : '';
-    addKids(wrap,
-      el('div', { class: `match ${cls}` },
-        el('div', { class: 't h' }, m.home.logo ? el('img', { src: m.home.logo, alt: '', loading: 'lazy' }) : null, m.home.short || m.home.name),
-        el('div', { class: 'sc' },
-          m.state === 'pre'
-            ? new Date(m.date).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
-            : `${m.home.score ?? 0} – ${m.away.score ?? 0}`,
-          el('span', { class: 'st' }, m.state === 'in' ? (m.clock || 'LIVE') : m.state === 'post' ? 'FT' : ''),
-        ),
-        el('div', { class: 't a' }, m.away.logo ? el('img', { src: m.away.logo, alt: '', loading: 'lazy' }) : null, m.away.short || m.away.name),
-      ));
-  }
-  const ms = section('Matches', { flush: true });
-  addKids(ms.body, wrap);
-  addKids(app, ms.wrap);
-}
+/* Grouped by day, with a control for looking forward as well as back — see
+   js/matches.js. The ESPN feed carries the whole window, so the filtering that
+   used to happen here is now the view's job. */
+const matchSec = matchesSection(d.scoreboard?.events || []);
+if (matchSec) addKids(app, matchSec);
