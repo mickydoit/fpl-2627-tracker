@@ -14,7 +14,7 @@ import { renderDraftDashboard } from './dashboard-draft.js';
 
 const meta = await readSnapshot('meta', null);
 if (meta) $('#databar').replaceWith(dataBar(meta));
-await renderDraftDashboard($('#app'), { sections: ['head', 'squad', 'risk', 'waiver'] });
+await renderDraftDashboard($('#app'), { sections: ['head', 'squad', 'risk', 'waiver', 'notes'] });
 
 /* Fixtures, same as Classic. The Draft board has no ESPN feed of its own — it
    is the same twenty clubs playing the same matches. */

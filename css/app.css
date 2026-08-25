@@ -1228,3 +1228,50 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
   font-family: var(--font-display); font-size: 0.78rem;
   letter-spacing: 0.04em; min-width: 3rem; text-align: center;
 }
+
+/* ---------- notes ----------
+   Each line says where it came from. A sentence FPL published and a sentence
+   the model inferred are different kinds of claim and must not look alike —
+   that badge is the whole point of the component. */
+.notelist { display: grid; }
+.noterow {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: var(--s-sm);
+  align-items: start;
+  padding: 0.45rem 0.6rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.noterow:last-child { border-bottom: none; }
+.noterow:hover { background: #3d3e40; }
+.noterow .nn { font-weight: 800; font-size: 0.76rem; overflow: hidden; text-overflow: ellipsis; }
+.noterow .nb { display: grid; gap: 0.2rem; min-width: 0; }
+.note-line { font-size: 0.72rem; color: var(--text); line-height: 1.35; }
+.note-line.bad  { color: #ff9d94; }
+.note-line.warn { color: var(--yellow); }
+.note-line.good { color: var(--mint); }
+.note-src {
+  display: inline-block;
+  font-size: 0.5rem; font-weight: 900; letter-spacing: 0.08em;
+  padding: 0.05rem 0.28rem; margin-right: 0.35rem;
+  border-radius: 3px; vertical-align: 0.08em;
+  background: var(--border); color: var(--text);
+}
+.note-src.fpl    { background: var(--cyan);  color: var(--ink); }
+.note-src.manual { background: var(--yellow); color: var(--ink); }
+
+/* A transfer row that carries its reasoning. The sentence spans the full width
+   under the move rather than squeezing into a column, because it is a sentence. */
+.lrow.with-why { grid-template-areas: 'out arrow in val' 'why why why why'; row-gap: 0.25rem; }
+.lrow.with-why .lo { grid-area: out; }
+.lrow.with-why .la { grid-area: arrow; }
+.lrow.with-why .li { grid-area: in; }
+.lrow.with-why .lv { grid-area: val; }
+.lrow .why {
+  grid-area: why;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--muted);
+}

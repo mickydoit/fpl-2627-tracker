@@ -107,6 +107,11 @@ const players = classicBoot.elements.map((p) => {
     now_cost: num(p.now_cost), // informational only — never used in ranking
     draft_rank: d ? num(d.draft_rank) : (prior.players[p.code]?.draft_rank ?? null),
     penalties_order: p.penalties_order ?? null,
+    /* Carried so the Draft notes can say the same things the Classic ones can:
+       who takes the free-kicks, and whether a player projected to start has
+       actually appeared this season. Both are facts rather than estimates. */
+    direct_freekicks_order: p.direct_freekicks_order ?? null,
+    minutes: num(p.minutes),
     prior: prior.players[p.code] ?? null,
   };
 }).filter((p) => p.prior);

@@ -18,6 +18,7 @@ import { rateLeague, bestXI } from '../draft/rating.js';
 import { DRAFT_CONFIG, RATING_HORIZONS } from '../draft/config.js';
 import { bestWaiver } from '../draft/waiver.js';
 import { squadPitch, playerCard, activityRings, enableSwapping, legalDraftXI } from '../squadview.js';
+import { notesFor, justifyMove } from '../explain.js';
 
 const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
@@ -41,7 +42,7 @@ const WAIVER_MIN_GAIN = DRAFT_CONFIG.minimumImprovement;
  * So the composition is a parameter and NOTHING below it changed: every card
  * is the one that was already working, rendered into a different page.
  */
-export const DRAFT_SECTIONS = ['head', 'squad', 'risk', 'waiver'];
+export const DRAFT_SECTIONS = ['head', 'squad', 'risk', 'waiver', 'notes'];
 
 export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } = {}) {
   const [board, fixtures, league, live, myPicks] = await Promise.all([
@@ -382,11 +383,39 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
     want.has('squad') ? squadCard : null,
     want.has('risk') ? riskCard(mine, openPlayer) : null,
     want.has('waiver') ? waiverCard(mine, pool, teams, openPlayer, rowsAt) : null,
+    want.has('notes') ? notesCard(mine, fixtures, teams, actionable ?? 1, openPlayer) : null,
   ].filter(Boolean));
 
   /* The League page needs the same rosters and pool this function just built.
      Returned rather than recomputed so the two pages cannot drift apart. */
   return { rostersBySlot, pool, league, mySlot, teams, byId, projected, openPlayer };
+}
+
+/**
+ * Notes about your own squad. Same rules as Classic: FPL's words quoted and
+ * marked as theirs, everything else derived from fixtures and projections, and
+ * nothing at all for a player with nothing remarkable about him.
+ */
+function notesCard(mine, fixtures, teams, fromEvent, openPlayer) {
+  const rows = mine
+    .map((p) => ({ p, notes: notesFor(p, { fixtures, teams, fromEvent, horizon: 5 }) }))
+    .filter((x) => x.notes.length)
+    .sort((a, b) => {
+      const rank = { bad: 0, warn: 1, good: 2, info: 3 };
+      return rank[a.notes[0].tone] - rank[b.notes[0].tone] || b.p.proj - a.p.proj;
+    });
+  if (!rows.length) return null;
+  return sectionOf('Notes', {
+    flush: true,
+    hint: 'FPL\u2019s own words where they exist, otherwise derived from fixtures and projections',
+  },
+    el('div', { class: 'notelist' }, rows.map(({ p, notes }) =>
+      el('div', { class: 'noterow', onClick: () => openPlayer(p) },
+        el('span', { class: 'nn' }, p.web_name),
+        el('span', { class: 'nb' }, notes.map((n) =>
+          el('span', { class: `note-line ${n.tone}` },
+            el('span', { class: `note-src ${n.source}` }, n.source === 'fpl' ? 'FPL' : n.source === 'manual' ? 'NOTE' : 'MODEL'),
+            n.text)))))));
 }
 
 const ord = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th');

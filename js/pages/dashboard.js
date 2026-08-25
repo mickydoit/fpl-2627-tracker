@@ -24,6 +24,7 @@ import { bestXI, scoreSquad, legalXI, optimiseWithinTransfers, squadCost, sugges
 import { rateSquad, RATING_HORIZONS } from '../rating.js';
 import { bestMove, recommendedHorizon } from '../transfer-advice.js';
 import { squadPitch, playerCard, enableSwapping } from '../squadview.js';
+import { notesFor, justifyMove } from '../explain.js';
 import { horizonPicker, SEASON_HORIZON } from '../ui.js';
 import { $, el, fmt, dataBar, countdown, setKids, addKids, section, metric, compact } from '../ui.js';
 
@@ -275,6 +276,39 @@ if (squadIds.length !== SQUAD_RULES.size) {
     addKids(sideCol, reviewHost);
   }
 
+  /* ---------------- notes ----------------
+   *
+   * Only what can be pointed at. FPL's own words are quoted and marked as
+   * theirs; everything else is derived from the fixtures and projections
+   * already on this page. Nothing is invented, and a player with nothing
+   * remarkable about him produces no note at all — a panel that always has
+   * something in it is one nobody reads.
+   */
+  {
+    const noteRows = squad
+      .map((p) => ({ p, notes: notesFor(p, { fixtures: d.fixtures, teams, fromEvent: ctx.nextEvent, horizon: 5 }) }))
+      .filter((x) => x.notes.length)
+      /* Loudest first: a flagged starter matters more than a set-piece note. */
+      .sort((a, b) => {
+        const rank = { bad: 0, warn: 1, good: 2, info: 3 };
+        return rank[a.notes[0].tone] - rank[b.notes[0].tone] || b.p.proj - a.p.proj;
+      });
+    if (noteRows.length) {
+      const sec = section('Notes', {
+        hint: 'FPL’s own words where they exist, otherwise derived from fixtures and projections',
+        flush: true,
+      });
+      addKids(sec.body, el('div', { class: 'notelist' }, noteRows.map(({ p, notes }) =>
+        el('div', { class: 'noterow', onClick: () => openPlayer(p) },
+          el('span', { class: 'nn' }, p.web_name),
+          el('span', { class: 'nb' }, notes.map((n) =>
+            el('span', { class: `note-line ${n.tone}` },
+              el('span', { class: `note-src ${n.source}` }, n.source === 'fpl' ? 'FPL' : n.source === 'manual' ? 'NOTE' : 'MODEL'),
+              n.text)))))));
+      addKids(app, sec.wrap);
+    }
+  }
+
   /* ---------------- rating + summary strip ---------------- */
   const RATING_HZ = 'ratingHorizon';
   let ratingH = RATING_HORIZONS.includes(getState()[RATING_HZ]) ? getState()[RATING_HZ] : 5;
@@ -344,13 +378,15 @@ if (squadIds.length !== SQUAD_RULES.size) {
     });
     addKids(sec.body,
       reach.moves.length
-        ? el('div', { class: 'rowlist' }, reach.moves.map((m) => el('div', { class: 'lrow' },
+        ? el('div', { class: 'rowlist' }, reach.moves.map((m) => el('div', { class: 'lrow with-why' },
             el('span', { class: 'lo' }, m.out.web_name,
               el('i', {}, teams[m.out.team]?.short_name || '')),
             el('span', { class: 'la' }, '→'),
             el('span', { class: 'li' }, m.in.web_name,
               el('i', {}, teams[m.in.team]?.short_name || '')),
-            el('span', { class: 'lv up' }, fmt.signed(m.in.proj - m.out.proj)))))
+            el('span', { class: 'lv up' }, fmt.signed(m.in.proj - m.out.proj)),
+            el('span', { class: 'why' }, justifyMove(m.out, m.in,
+              { fixtures: d.fixtures, teams, fromEvent: ctx.nextEvent, horizon: 8 })))))
         : el('p', { class: 'empty tight' }, 'Nothing worth doing with those transfers.'));
     setKids(suggestHost, sec.wrap);
   };
@@ -379,11 +415,13 @@ if (squadIds.length !== SQUAD_RULES.size) {
     });
     addKids(wk.body,
       best?.move
-        ? el('div', { class: 'rowlist' }, el('div', { class: 'lrow' },
+        ? el('div', { class: 'rowlist' }, el('div', { class: 'lrow with-why' },
             el('span', { class: 'lo' }, best.move.out.web_name, el('i', {}, teams[best.move.out.team]?.short_name || '')),
             el('span', { class: 'la' }, '→'),
             el('span', { class: 'li' }, best.move.in.web_name, el('i', {}, teams[best.move.in.team]?.short_name || '')),
-            el('span', { class: 'lv up' }, fmt.signed(best.gain))))
+            el('span', { class: 'lv up' }, fmt.signed(best.gain)),
+            el('span', { class: 'why' }, justifyMove(best.move.out, best.move.in,
+              { fixtures: d.fixtures, teams, fromEvent: ctx.nextEvent, horizon: rec.horizon }))))
         : el('p', { class: 'empty tight' }, 'No move clears the bar this week.'),
       el('p', { class: 'seemore' }, el('a', { href: 'transfers.html' }, 'Every legal move →')));
     addKids(sideCol, wk.wrap);

@@ -11,6 +11,7 @@ import {
   actionableEvent, DEFCON_THRESHOLD, DEFCON_PTS,
 } from '../js/model.js';
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
+import { notesFor, justifyMove, fixturePhrase, SOURCE } from '../js/explain.js';
 import { RATING_HORIZONS as DRAFT_RATING_HORIZONS } from '../js/draft/config.js';
 import { snakePicks, replacementRank, buildBoard, assignTiers } from '../js/draft/board.js';
 import { ownershipFrom, availableRows, deriveSlot, myRoster, positionsNeeded } from '../js/draft/live.js';
@@ -897,6 +898,72 @@ console.log('\nPooling against the frozen prior');
       near(priorShare(stale), priorShare(bareLive), 1e-9),
       `${(priorShare(stale) * 100).toFixed(0)}% vs bare ${(priorShare(bareLive) * 100).toFixed(0)}%`);
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * explanations
+ * ------------------------------------------------------------------ *
+ * The design asks for a sentence beside every suggestion. The rule this module
+ * exists to keep is that it only says things it can point at: FPL's words are
+ * quoted, the model's inferences are labelled as inferences, and a player with
+ * nothing remarkable about him produces no note at all.
+ */
+console.log('\nExplanations');
+{
+  const fx = (event, h, a, dh = 3, da = 3) => ({ event, team_h: h, team_a: a, team_h_difficulty: dh, team_a_difficulty: da });
+  const teamMap = { 1: { short_name: 'ARS' }, 2: { short_name: 'BUR' }, 3: { short_name: 'MCI' } };
+  const base = { id: 1, team: 1, web_name: 'Tester', proj: 5, parts: { expMins: 85 }, minutes: 900 };
+
+  ok('a player with nothing remarkable produces no note',
+    notesFor({ ...base }, { fixtures: [fx(1, 1, 2)], teams: teamMap, fromEvent: 1, horizon: 1 }).length === 0);
+
+  /* FPL's words, verbatim. Paraphrasing a medical note is how a 75% chance
+     becomes "doubtful" becomes "out" — the string is quoted or not used. */
+  const news = 'Thigh injury - 75% chance of playing';
+  const withNews = notesFor({ ...base, news, chance_of_playing_next_round: 75 },
+    { fixtures: [], teams: teamMap, fromEvent: 1, horizon: 5 });
+  ok('FPL news is quoted word for word', withNews.some((n) => n.text === news), JSON.stringify(withNews));
+  ok('FPL news is attributed to FPL', withNews[0].source === SOURCE.FPL);
+
+  ok('every note names a source',
+    withNews.every((n) => Object.values(SOURCE).includes(n.source)));
+
+  /* The gap that made Konsa project like a starter on zero minutes. */
+  const unplayed = notesFor({ ...base, minutes: 0 }, { fixtures: [], teams: teamMap, fromEvent: 1, horizon: 5 });
+  ok('a player who has not appeared this season is called out',
+    unplayed.some((n) => /not played a minute/.test(n.text)));
+  ok('that call-out is labelled as the model’s inference, not FPL’s',
+    unplayed.find((n) => /not played a minute/.test(n.text)).source === SOURCE.MODEL);
+  /* The Draft board sets `minutes` to last season's total, so the check has to
+     read seasonMinutes there or it never fires. */
+  const draftShaped = notesFor({ ...base, minutes: 3000, seasonMinutes: 0 },
+    { fixtures: [], teams: teamMap, fromEvent: 1, horizon: 5 });
+  ok('the same call-out works on a Draft row, where `minutes` is last season',
+    draftShaped.some((n) => /not played a minute/.test(n.text)));
+
+  /* An injured player is already explained by FPL; adding a rotation guess on
+     top would be the model talking over the source. */
+  ok('a flagged player does not also get a minutes guess',
+    !notesFor({ ...base, news, parts: { expMins: 20 } }, { fixtures: [], teams: teamMap, fromEvent: 1, horizon: 5 })
+      .some((n) => /not a certain starter/.test(n.text)));
+
+  /* Fixture phrasing only speaks up when a run stands out. */
+  const easy = [fx(1, 1, 2, 2, 4), fx(2, 1, 3, 2, 4), fx(3, 1, 2, 2, 4)];
+  ok('a kind run is described', fixturePhrase(base, easy, teamMap, 1, 3)?.tone === 'good');
+  const hard = [fx(1, 1, 2, 5, 2), fx(2, 1, 3, 4, 2), fx(3, 1, 2, 5, 2)];
+  ok('a hard run is described', fixturePhrase(base, hard, teamMap, 1, 3)?.tone === 'bad');
+  const flat = [fx(1, 1, 2, 3, 3), fx(2, 1, 3, 3, 3), fx(3, 1, 2, 3, 3)];
+  ok('an unremarkable run says nothing', fixturePhrase(base, flat, teamMap, 1, 3) === null);
+
+  /* Justification quotes the real gain rather than asserting superiority. */
+  const outP = { ...base, web_name: 'Out', proj: 4 };
+  const inP = { ...base, id: 2, web_name: 'In', proj: 8 };
+  const why = justifyMove(outP, inP, { fixtures: [], teams: teamMap, fromEvent: 1, horizon: 5 });
+  ok('a justification cites the projection gap', /\+4\.0 over 5 gameweeks/.test(why), why);
+  ok('a justification is a sentence', /^[A-Z].*\.$/.test(why), why);
+  ok('a justification never claims more than it has',
+    justifyMove(outP, { ...inP, proj: 4.01 }, { fixtures: [], teams: teamMap, fromEvent: 1, horizon: 5 })
+      .includes('nothing else separates them'));
 }
 
 /* ------------------------------------------------------------------ *

@@ -45,6 +45,12 @@ export function toModelRow(p) {
     now_cost: p.now_cost,
     draft_rank: p.draft_rank,
     penalties_order: p.penalties_order,
+    direct_freekicks_order: p.direct_freekicks_order ?? null,
+    /* THIS season's minutes, kept apart from `minutes` below, which the draft
+       board sets to the frozen prior's total. Conflating them would tell the
+       notes that a player with 3,000 minutes last season and none this one has
+       been playing. */
+    seasonMinutes: num(p.minutes),
     minutes: mins,
     expected_goals_per_90: per90(prior.expected_goals, mins),
     expected_assists_per_90: per90(prior.expected_assists, mins),
