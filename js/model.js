@@ -308,7 +308,7 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
   const mins = modelMinutes(p);
 
   const avail = availability(p);
-  if (avail <= 0) return { total: 0, parts: { unavailable: true } };
+  if (avail <= 0) return { total: 0, util: 0, parts: { unavailable: true } };
 
   /* ---- opportunity ----
    *
@@ -449,8 +449,21 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
   const prior = priorRate * minsFactor;
   const blended = w * modelled + (1 - w) * prior;
 
+  /* ---- expectation, and preference, kept apart ----------------------------
+   *
+   * `total` is the model's expected FPL points and nothing else. Availability
+   * belongs in it: if the model believes a player has a 50% chance of playing,
+   * half of six points IS three points, and that is an expectation, not a
+   * preference. What used to sit here as well was `riskMult`, a user setting,
+   * which turned that three into 2.25 and still called it expected points.
+   *
+   * The preference now lives in `util` — the same arithmetic, applied to a
+   * separate number that only ranking reads. Rankings are therefore unchanged;
+   * what changed is which number is allowed to be called an expectation.
+   */
+  const total = Math.max(0, blended * avail);
   const riskMult = 1 - o.riskAversion * (1 - avail);
-  const total = Math.max(0, blended * avail * riskMult);
+  const util = total * riskMult;
 
   /* The breakdown has to add up to the number it explains, or it is decoration.
      Each modelled route survives into the total only after the prior blend and
@@ -458,7 +471,7 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
      value times those same factors. What the prior supplies is a route in its
      own right — without it the components would silently fall short of the
      total by exactly the prior's share. */
-  const k = avail * riskMult;
+  const k = avail;
   const share = total > 0 ? w * k : 0;
   const contrib = {
     appearance: appearance * share,
@@ -474,6 +487,7 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
 
   return {
     total,
+    util,
     contrib,
     parts: {
       appearance, attack, cleanSheet, conceded, saves, defcon, bonus, cards,
@@ -506,9 +520,10 @@ export function projectHorizon(p, ctx, opts = {}) {
   const o = { ...DEFAULTS, ...opts };
   const fixtures = ctx.upcoming?.[p.team] || [];
   if (!fixtures.length) {
-    return { total: 0, perGW: {}, count: 0, parts: { noFixtures: true } };
+    return { total: 0, util: 0, perGW: {}, count: 0, parts: { noFixtures: true } };
   }
   let total = 0;
+  let util = 0;
   const perGW = {};
   const sum = { appearance: 0, attack: 0, cleanSheet: 0, conceded: 0, saves: 0, defcon: 0, bonus: 0, cards: 0, prior: 0 };
   const acc = { expMins: 0, observedMpg: 0, pStart: 0, pSubApp: 0, pPlay: 0, p60: 0, pCS: 0, attMult: 0, availability: 0, evidence: 0, productionConfidence: 0, minutesConfidence: 0, minutesEvidence: 0 };
@@ -516,6 +531,7 @@ export function projectHorizon(p, ctx, opts = {}) {
   for (const f of fixtures) {
     const r = projectFixture(p, f, ctx, o);
     total += r.total;
+    util += r.util ?? r.total;
     perGW[f.event] = (perGW[f.event] || 0) + r.total;
     if (r.contrib) for (const k of Object.keys(sum)) sum[k] += r.contrib[k] || 0;
     if (r.parts) {
@@ -529,6 +545,7 @@ export function projectHorizon(p, ctx, opts = {}) {
      expected-minutes figure summed over five fixtures would be meaningless. */
   return {
     total,
+    util,
     perGW,
     count: fixtures.length,
     parts: {
@@ -633,6 +650,8 @@ export function projectAll(boot, fixtures, opts = {}) {
       pos: POS[p.element_type],
       price,
       proj: proj.total,
+      /* Ranking score, never displayed. Equals `proj` at riskAversion 0. */
+      util: proj.util,
       projPerGW: proj.count ? proj.total / proj.count : 0,
       projByGW: proj.perGW,
       fixtureCount: proj.count,

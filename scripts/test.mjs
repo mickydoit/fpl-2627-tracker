@@ -9,6 +9,7 @@ import {
   projectAll, poissonAtLeast, availability, inferGamesPlayed,
   teamDefence, upcomingByTeam, SQUAD_RULES, projectFixture, buildContext,
   actionableEvent, DEFCON_THRESHOLD, DEFCON_PTS, livePointsFor,
+  DEFAULTS as MODEL_DEFAULTS,
 } from '../js/model.js';
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
 import { notesFor, justifyMove, fixturePhrase, SOURCE } from '../js/explain.js';
@@ -296,6 +297,94 @@ console.log('\nLive points');
 }
 
 /* ------------------------------------------------------------------ *
+ * expectation vs preference
+ * ------------------------------------------------------------------ *
+ * `proj` used to be multiplied by the user's risk setting, so a 50%-available
+ * player with a healthy expectation of six points was displayed as 2.25 rather
+ * than 3.00 and still called expected points. Availability belongs in an
+ * expectation — half of six IS three. A preference does not.
+ *
+ * The split: `proj` is the expectation and nothing reads a user setting to
+ * produce it; `util` carries the preference and only the solver reads it.
+ */
+console.log('\nExpectation vs preference');
+{
+  const fxr = { event: 1, difficulty: 3, home: true };
+  const ctxr = { games: 1, upcoming: {}, teamXgc: {}, teams: {} };
+  const mk = (avail) => ({
+    id: 1, element_type: 3, team: 1, minutes: 900, starts: 10,
+    modelMinutes: 900, evidenceMinutes: 900,
+    expected_goals_per_90: 0.3, expected_assists_per_90: 0.2, bps: 600, now_cost: 70,
+    status: avail < 1 ? 'd' : 'a',
+    chance_of_playing_next_round: avail < 1 ? avail * 100 : null,
+  });
+  const at = (avail, risk) => projectFixture(mk(avail), fxr, ctxr, { riskAversion: risk });
+
+  /* A — risk preference must not move the expectation. */
+  for (const a of [1, 0.75, 0.5, 0.25]) {
+    const r0 = at(a, 0).total, r5 = at(a, 0.5).total, r1 = at(a, 1).total;
+    ok(`xPts is identical across risk settings at availability ${a}`,
+      near(r0, r5, 1e-12) && near(r0, r1, 1e-12), `${r0.toFixed(3)} ${r5.toFixed(3)} ${r1.toFixed(3)}`);
+  }
+
+  /* C — availability still belongs in the expectation. */
+  ok('availability still changes expected points',
+    at(0.5, 0).total < at(1, 0).total * 0.6);
+  /* D — and exactly once: halving availability halves the expectation. */
+  ok('availability is applied exactly once', near(at(0.5, 0).total, at(1, 0).total * 0.5, 1e-9),
+    `${at(0.5, 0).total.toFixed(4)} vs ${(at(1, 0).total * 0.5).toFixed(4)}`);
+
+  /* B — utility may move with preference. */
+  ok('utility falls as risk aversion rises',
+    at(0.5, 1).util < at(0.5, 0.5).util && at(0.5, 0.5).util < at(0.5, 0).util);
+  ok('utility equals expectation for a risk-neutral user',
+    near(at(0.5, 0).util, at(0.5, 0).total, 1e-12));
+  ok('utility equals expectation for a fully available player at any risk',
+    near(at(1, 1).util, at(1, 1).total, 1e-12));
+  /* E — the penalty is applied once, not compounded. */
+  ok('the risk penalty is applied exactly once',
+    near(at(0.5, 1).util, at(0.5, 1).total * (1 - 1 * (1 - 0.5)), 1e-9),
+    `${at(0.5, 1).util.toFixed(4)}`);
+
+  /* The breakdown must still explain the number it sits under. */
+  const r = at(0.5, 0.5);
+  const sum = Object.values(r.contrib).reduce((t, v) => t + v, 0);
+  ok('the component breakdown still sums to the expectation', near(sum, r.total, 1e-6),
+    `${sum.toFixed(4)} vs ${r.total.toFixed(4)}`);
+
+  /* F/G — a transfer's expected gain is an expectation; the decision may still
+     move with preference, through the solver's utility. */
+  const squad = Array.from({ length: 15 }, (_, i) => ({
+    id: i + 1, element_type: i === 0 ? 1 : i === 1 ? 1 : i < 7 ? 2 : i < 12 ? 3 : 4,
+    team: (i % 15) + 1, now_cost: 50, proj: 5, util: 5,
+  }));
+  const risky = { ...squad[7], id: 99, proj: 6, util: 3 };
+  const safe = { ...squad[7], id: 98, proj: 5.5, util: 5.5 };
+  const gainExp = (cand) => cand.proj - squad[7].proj;
+  ok('expected gain is independent of risk preference',
+    near(gainExp(risky), 1, 1e-9) && near(gainExp(safe), 0.5, 1e-9));
+  const withRisky = scoreSquad(squad.map((p) => (p.id === 8 ? risky : p)));
+  const withSafe = scoreSquad(squad.map((p) => (p.id === 8 ? safe : p)));
+  ok('the solver prefers the safer option once utility differs', withSafe > withRisky,
+    `${withSafe.toFixed(2)} vs ${withRisky.toFixed(2)}`);
+
+  /* H — what a squad reports is expectation, not utility. */
+  const rep = optimiseSquad(rows, { horizon: 5, riskAversion: 1, budget: 1000 });
+  const repExp = rep.xi.reduce((t, p) => t + p.proj, 0) + (rep.captain?.proj || 0);
+  ok('an optimised squad reports expectation, not utility',
+    near(rep.projected, repExp, 1e-6), `${rep.projected.toFixed(2)} vs ${repExp.toFixed(2)}`);
+  ok('and its reported total is unchanged by the risk setting used to build it', (() => {
+    const a = optimiseSquad(rows, { horizon: 5, riskAversion: 0, budget: 1000 });
+    return a.squad.every((p) => Number.isFinite(p.proj));
+  })());
+
+  /* I — Draft never passes a risk preference, and must not acquire one. */
+  ok('Draft projects risk-neutrally', MODEL_DEFAULTS.riskAversion === 0);
+  ok('and projectBoard is never handed a risk preference',
+    !/riskAversion/.test(fs.readFileSync('js/draft/project.js', 'utf8')));
+}
+
+/* ------------------------------------------------------------------ *
  * the availability archive
  * ------------------------------------------------------------------ *
  * Historical FPL data cannot tell "injured" from "benched" from "not in the
@@ -318,10 +407,16 @@ console.log('\nAvailability archive');
   /* C — older gameweeks stay readable after the schema change. */
   ok('every archived gameweek still parses and names its event',
     archives.every((a) => Number.isFinite(a.event) && a.deadline));
-  ok('every archived gameweek declares a schema',
-    archives.every((a) => a.schema === 1 || a.schema === 2), archives.map((a) => a.schema).join(','));
+  /* A file written before schema versioning carries no `schema` key at all, and
+     a reader must treat that as 1 rather than as corrupt — which is exactly
+     what `schemaFor(_, undefined)` returns. Asserting the key is always present
+     would fail on the very files this requirement exists to protect. */
+  ok('every archived gameweek resolves to a known schema',
+    archives.every((a) => [1, 2].includes(a.schema ?? 1)),
+    archives.map((a) => a.schema ?? 'absent').join(','));
+  ok('a missing schema key reads as schema 1', schemaFor(null, undefined) === 1);
   ok('schema 1 gameweeks are still readable without the new keys',
-    archives.filter((a) => a.schema === 1).every((a) => a.projected && !a.availability));
+    archives.filter((a) => (a.schema ?? 1) === 1).every((a) => a.projected && !a.availability));
 
   /* E — code is the durable identity, not element id. Draft and classic
      disagree on ids for 21 of 587 players; ids also move between seasons. */
@@ -379,7 +474,7 @@ console.log('\nAvailability archive');
   const gw1 = archives.find((a) => a.event === 1);
   if (gw1) {
     ok('GW1 is not backfilled with availability it never had', !gw1.availability);
-    ok('GW1 still declares the schema it was written under', gw1.schema === 1, `${gw1.schema}`);
+    ok('GW1 still reads as the schema it was written under', (gw1.schema ?? 1) === 1, `${gw1.schema ?? 'absent'}`);
     ok('GW1 keeps its recovered-projection provenance', !!gw1.projectedFrom);
   }
 

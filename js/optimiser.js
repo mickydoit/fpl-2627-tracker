@@ -10,6 +10,20 @@
 
 import { SQUAD_RULES, DEFAULTS } from './model.js';
 
+/**
+ * The number the solver ranks on.
+ *
+ * `proj` is the model's expected FPL points and must stay that way — it is
+ * what the app displays, and a user's risk setting has no business altering
+ * an expectation. `util` is the same figure after that preference is applied,
+ * and only ranking reads it. At riskAversion 0 the two are identical, so a
+ * risk-neutral user optimises directly on expectation.
+ *
+ * Every ordering, swap test and objective below goes through here. Anything
+ * reporting a number to the reader uses `proj` instead.
+ */
+const score = (p) => (Number.isFinite(p?.util) ? p.util : (p?.proj ?? 0));
+
 const { budget: BUDGET, perClub: PER_CLUB, select: SELECT, minPlay: MIN_PLAY, maxPlay: MAX_PLAY } = SQUAD_RULES;
 
 /* ------------------------------------------------------------------ *
@@ -24,7 +38,7 @@ const { budget: BUDGET, perClub: PER_CLUB, select: SELECT, minPlay: MIN_PLAY, ma
 export function bestXI(squad) {
   const byPos = { 1: [], 2: [], 3: [], 4: [] };
   for (const p of squad) byPos[p.element_type].push(p);
-  for (const k of Object.keys(byPos)) byPos[k].sort((a, b) => b.proj - a.proj);
+  for (const k of Object.keys(byPos)) byPos[k].sort((a, b) => score(b) - score(a));
 
   const xi = [];
   const used = { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -36,7 +50,7 @@ export function bestXI(squad) {
   }
   const rest = [];
   for (const pos of [1, 2, 3, 4]) rest.push(...byPos[pos].slice(used[pos]));
-  rest.sort((a, b) => b.proj - a.proj);
+  rest.sort((a, b) => score(b) - score(a));
   for (const p of rest) {
     if (xi.length >= 11) break;
     const pos = p.element_type;
@@ -81,8 +95,8 @@ function dressXI(squad, xi) {
     ...benched.filter((p) => p.element_type === 1),
     ...benched.filter((p) => p.element_type !== 1).sort((a, b) => b.proj - a.proj),
   ];
-  const captain = xi.reduce((best, p) => (!best || p.proj > best.proj ? p : best), null);
-  const vice = xi.filter((p) => p !== captain).reduce((best, p) => (!best || p.proj > best.proj ? p : best), null);
+  const captain = xi.reduce((best, p) => (!best || score(p) > score(best) ? p : best), null);
+  const vice = xi.filter((p) => p !== captain).reduce((best, p) => (!best || score(p) > score(best) ? p : best), null);
 
   const formation = `${used[2]}-${used[3]}-${used[4]}`;
   return { xi, bench, captain, vice, formation };
@@ -120,9 +134,9 @@ export function splitXI(squad, starterIds) {
 export function scoreSquad(squad, opts = {}) {
   const o = { ...DEFAULTS, ...opts };
   const { xi, bench, captain } = bestXI(squad);
-  const xiPts = xi.reduce((s, p) => s + p.proj, 0);
-  const benchPts = bench.reduce((s, p) => s + p.proj, 0);
-  return xiPts + (captain?.proj || 0) + benchPts * o.benchWeight;
+  const xiPts = xi.reduce((s, p) => s + score(p), 0);
+  const benchPts = bench.reduce((s, p) => s + score(p), 0);
+  return xiPts + (captain ? score(captain) : 0) + benchPts * o.benchWeight;
 }
 
 export function squadCost(squad) {
@@ -157,14 +171,14 @@ function poolByPosition(players, { exclude = new Set(), maxPool = 90 } = {}) {
   const pool = { 1: [], 2: [], 3: [], 4: [] };
   for (const p of players) {
     if (exclude.has(p.id)) continue;
-    if (p.proj <= 0) continue;
+    if (score(p) <= 0) continue;
     pool[p.element_type].push(p);
   }
   for (const pos of [1, 2, 3, 4]) {
-    const byProj = [...pool[pos]].sort((a, b) => b.proj - a.proj).slice(0, maxPool);
+    const byProj = [...pool[pos]].sort((a, b) => score(b) - score(a)).slice(0, maxPool);
     const byValue = [...pool[pos]].sort((a, b) => b.value - a.value).slice(0, maxPool);
     // Cheap enablers matter as much as premiums — a good 15 needs both ends.
-    const cheap = [...pool[pos]].sort((a, b) => a.now_cost - b.now_cost || b.proj - a.proj).slice(0, 25);
+    const cheap = [...pool[pos]].sort((a, b) => a.now_cost - b.now_cost || score(b) - score(a)).slice(0, 25);
     const seen = new Set();
     pool[pos] = [...byProj, ...byValue, ...cheap].filter((p) => {
       if (seen.has(p.id)) return false;
@@ -231,7 +245,7 @@ function greedySquad(pool, { budget, locked = [], noise = 0, rng = Math.random }
       // Rank by value density, jittered so restarts explore different squads.
       const scored = candidates.map((p) => ({
         p,
-        s: (p.proj / Math.max(1, p.now_cost / 10)) * (1 + (rng() - 0.5) * 2 * noise),
+        s: (score(p) / Math.max(1, p.now_cost / 10)) * (1 + (rng() - 0.5) * 2 * noise),
       }));
       scored.sort((a, b) => b.s - a.s);
       const pick = scored[0].p;
@@ -276,7 +290,7 @@ function bestSingleSwap(current, pool, { budget, lockedIds, opts, best, accept =
       if (ids.has(inc.id)) continue;
       if (spend + inc.now_cost > budget) continue;
       if ((clubs[inc.team] || 0) >= PER_CLUB) continue;
-      if (inc.proj <= out.proj && inc.now_cost >= out.now_cost) continue; // strictly dominated
+      if (score(inc) <= score(out) && inc.now_cost >= out.now_cost) continue; // strictly dominated
 
       const trial = [...rest, inc];
       // Checked before scoring: rejecting a trial is far cheaper than valuing it.
@@ -307,15 +321,15 @@ function bestPairSwap(current, pool, { budget, lockedIds, opts, best, accept = n
   const upgradesFor = current.map((out) =>
     lockedIds.has(out.id) ? [] :
       pool[out.element_type]
-        .filter((p) => !owned.has(p.id) && p.proj > out.proj && p.now_cost > out.now_cost)
-        .sort((a, b) => b.proj - a.proj)
+        .filter((p) => !owned.has(p.id) && score(p) > score(out) && p.now_cost > out.now_cost)
+        .sort((a, b) => score(b) - score(a))
         .slice(0, upgradeK),
   );
   const downgradesFor = current.map((out) =>
     lockedIds.has(out.id) ? [] :
       pool[out.element_type]
         .filter((p) => !owned.has(p.id) && p.now_cost < out.now_cost)
-        .sort((a, b) => b.proj - a.proj)
+        .sort((a, b) => score(b) - score(a))
         .slice(0, downgradeK),
   );
 
@@ -458,6 +472,8 @@ export function optimiseSquad(players, options = {}) {
     score: best.score,
     cost: squadCost(squad),
     remaining: budget - squadCost(squad),
+    /* Reported, so expectation rather than utility — this is the number a
+       reader sees as the squad's projected points. */
     projected: xi.reduce((t, p) => t + p.proj, 0) + (captain?.proj || 0),
   };
 }
