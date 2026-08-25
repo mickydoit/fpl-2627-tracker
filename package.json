@@ -7,7 +7,8 @@
   "scripts": {
     "fetch": "node scripts/fetch-all.mjs",
     "derive": "node scripts/derive.mjs",
-    "refresh": "node scripts/fetch-all.mjs && node scripts/derive.mjs",
+    "refresh": "node scripts/fetch-all.mjs && node scripts/archive-gameweek.mjs && node scripts/derive.mjs",
+    "archive": "node scripts/archive-gameweek.mjs",
     "seed": "node scripts/make-sample.mjs",
     "seed:draft": "node scripts/make-draft-sample.mjs",
     "refresh:draft": "node scripts/fetch-draft.mjs",

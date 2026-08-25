@@ -900,6 +900,55 @@ console.log('\nPooling against the frozen prior');
 }
 
 /* ------------------------------------------------------------------ *
+ * gameweek archive
+ * ------------------------------------------------------------------ *
+ * The squad view can step back through finished gameweeks and show what each
+ * player was PROJECTED to score against what he actually scored. That only
+ * means anything if the projection was captured before the deadline — FPL
+ * wipes and refills the season totals at that moment, so a projection
+ * recomputed afterwards is a different quantity wearing the same name.
+ */
+console.log('\nGameweek archive');
+{
+  const dir = 'data/history/gw';
+  const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.json')) : [];
+  ok('at least one gameweek is archived', files.length > 0, `${files.length} files`);
+
+  const archives = files.map((f) => JSON.parse(fs.readFileSync(`${dir}/${f}`, 'utf8')));
+  ok('every archive names its gameweek and deadline',
+    archives.every((g) => Number.isFinite(g.event) && typeof g.deadline === 'string'));
+  ok('no archive is written for a gameweek that has not happened',
+    archives.every((g) => g.projected || g.actual));
+
+  /* The point of the whole file: both halves, keyed the same way. */
+  const withBoth = archives.filter((g) => g.projected && g.actual);
+  ok('a completed gameweek carries projected AND actual', withBoth.length > 0,
+    `${withBoth.length} of ${archives.length}`);
+  for (const g of withBoth) {
+    const acts = Object.values(g.actual);
+    ok(`GW${g.event} actuals are [points, minutes, bonus, bps]`,
+      acts.every((a) => Array.isArray(a) && a.length === 4 && a.every(Number.isFinite)));
+    ok(`GW${g.event} projections are finite and non-negative`,
+      Object.values(g.projected).every((v) => Number.isFinite(v) && v >= 0));
+    /* A projection nobody can be compared against is useless, so most of the
+       league should appear in both halves. */
+    const overlap = Object.keys(g.projected).filter((id) => g.actual[id]).length;
+    ok(`GW${g.event} projections and actuals overlap`, overlap > 400,
+      `${overlap} players in both`);
+    /* Anything reconstructed after the fact says so. */
+    if (g.projectedFrom) {
+      ok(`GW${g.event} records where a recovered projection came from`,
+        /^git:[0-9a-f]{7,}/.test(g.projectedFrom), g.projectedFrom);
+    }
+  }
+
+  /* Stays cheap: the archive exists instead of keeping 38 copies of live.json. */
+  const bytes = files.reduce((t, f) => t + fs.statSync(`${dir}/${f}`).size, 0);
+  ok('the archive stays small', bytes / files.length < 40 * 1024,
+    `${(bytes / files.length / 1024).toFixed(1)}KB average`);
+}
+
+/* ------------------------------------------------------------------ *
  * navigation shell
  * ------------------------------------------------------------------ *
  * Classic and Draft are separate products sharing one shell. These checks are

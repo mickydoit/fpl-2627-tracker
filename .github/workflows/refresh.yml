@@ -90,6 +90,14 @@ jobs:
         run: node scripts/fetch-espn-matches.mjs
         continue-on-error: true
 
+      # Must run BEFORE derive, and before the deadline it is capturing. The
+      # projection for a gameweek is only a prediction until its deadline
+      # passes; afterwards FPL wipes and refills the season totals, so anything
+      # recomputed later is a different number wearing the same name.
+      - name: Archive the gameweek
+        run: node scripts/archive-gameweek.mjs
+        continue-on-error: true
+
       - name: Rebuild projections
         run: node scripts/derive.mjs
 

@@ -124,7 +124,22 @@ export function shirt(p, { teams, captain, vice, value, sub, onPlayer, variant =
       flagged ? el('span', { class: 'shirt-flag', title: p.news || 'Doubtful' }, '!') : null,
     ),
     el('span', { class: 'nm' }, p.web_name),
-    el('span', { class: 'pt' }, value(p)),
+    /* One box, or two side by side.
+     *
+     * `value` may return a plain value — one box — or {left, right, hit}, which
+     * draws the pair the design uses to compare what a player was projected to
+     * score against what he actually scored. `hit` colours the right box only:
+     * the projection is not a claim that can be right or wrong on its own, it
+     * is the thing the result is measured against. */
+    (() => {
+      const v = value(p);
+      if (v && typeof v === 'object' && 'left' in v) {
+        return el('span', { class: 'ptpair' },
+          el('span', { class: 'pt half' }, v.left),
+          el('span', { class: `pt half ${v.hit || ''}` }, v.right));
+      }
+      return el('span', { class: 'pt' }, v);
+    })(),
     sub ? el('span', { class: 'pr' }, sub(p)) : null,
   );
 }

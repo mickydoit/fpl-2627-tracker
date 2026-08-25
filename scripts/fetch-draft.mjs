@@ -355,3 +355,38 @@ if (!LEAGUE_ID) {
     console.log(`  ${managers.length} managers, ${Object.keys(ownership).length} owned players${changed ? '' : ' (unchanged)'}`);
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * 6. my lineup
+ * ------------------------------------------------------------------ *
+ * Ownership says which fifteen are mine; it does not say which eleven I
+ * STARTED, nor the order the bench would come on. Those are a separate
+ * endpoint, and without them the app draws a plausible eleven rather than the
+ * one on the Draft site — which is the one thing a squad view must never do.
+ *
+ * `position` 1-11 is the eleven named, 12-15 the bench in substitution order.
+ * Element ids here are the DRAFT game's, matching data/draft/players.json;
+ * they disagree with classic ids for 21 of 587 players, so this must not be
+ * translated. See CLAUDE.md.
+ */
+if (MY_ENTRY_ID) {
+  console.log('→ my Draft lineup');
+  const gw = liveGW || 1;
+  const mine = await getJSON(`${DRAFT_API}/entry/${MY_ENTRY_ID}/event/${gw}`, { browserUA: true })
+    .catch(() => null);
+  if (mine?.picks?.length) {
+    const changed = await writeJSONIfChanged(`${DIR}/picks.json`, {
+      fetchedAt: new Date().toISOString(),
+      entryId: MY_ENTRY_ID,
+      event: gw,
+      picks: mine.picks
+        .map((p) => ({ element: p.element, position: p.position }))
+        .sort((a, b) => a.position - b.position),
+      subs: mine.subs ?? [],
+      history: mine.entry_history ?? null,
+    });
+    console.log(`  ${mine.picks.length} picks for GW${gw}${changed ? '' : ' (unchanged)'}`);
+  } else {
+    console.log('  no lineup published yet');
+  }
+}

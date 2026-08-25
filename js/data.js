@@ -109,3 +109,30 @@ export function resolveSquadIds(entry, state) {
   if (manual.length) return { ids: manual, source: 'manual-partial' };
   return { ids: [], source: 'none' };
 }
+
+
+/**
+ * A finished gameweek, as it was.
+ *
+ * `projected` is what the model said before that deadline; `actual` is what the
+ * player scored. They are stored together by scripts/archive-gameweek.mjs so
+ * the comparison is honest — recomputing a projection after the fact would use
+ * evidence that did not exist at the time, and FPL wipes the season totals at
+ * the deadline anyway, so the recomputed number is a different quantity.
+ *
+ * @returns {Promise<{event:number, projected:object, actual:object}|null>}
+ */
+export async function readGameweek(n) {
+  const g = await load(`history/gw/${n}`, null);
+  return g?.event ? g : null;
+}
+
+/** Which gameweeks have something archived, newest first. */
+export async function archivedGameweeks(events = []) {
+  const found = [];
+  for (const ev of events) {
+    const g = await readGameweek(ev.id);
+    if (g?.actual) found.push(ev.id);
+  }
+  return found.sort((a, b) => b - a);
+}

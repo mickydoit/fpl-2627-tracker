@@ -1204,3 +1204,27 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
 .advice .metrics { margin: 0 0 0.4rem; }
 .advice .hint { margin: 0; font-size: 0.7rem; }
 .advice p { margin: 0 0 0.4rem; }
+
+/* Projected against actual, as two boxes under the name plate.
+   Only the right box is coloured: a projection cannot be right or wrong by
+   itself, it is the line the result is measured against. Green when the player
+   met or beat it, red when he fell short of it by a clear margin. */
+.shirt .ptpair { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; width: 100%; }
+.shirt .pt.half { border-radius: 0; }
+.shirt .ptpair .pt.half:first-child { border-radius: 0 0 0 3px; }
+.shirt .ptpair .pt.half:last-child { border-radius: 0 0 3px 0; }
+.shirt .pt.half.over  { background: var(--mint); color: var(--ink); }
+.shirt .pt.half.under { background: #5a2320; color: #ff9d94; }
+.shirt .pt.half.met   { background: var(--surface-2); color: var(--text); }
+
+/* Gameweek stepper — ‹ GW1 › */
+.gwstep { display: flex; align-items: center; gap: 0.15rem; }
+.gwstep button {
+  padding: 0.1rem 0.42rem; font-size: 0.95rem; line-height: 1.1;
+  border-radius: 5px; min-width: 1.6rem;
+}
+.gwstep button:disabled { opacity: 0.3; cursor: default; }
+.gwstep-label {
+  font-family: var(--font-display); font-size: 0.78rem;
+  letter-spacing: 0.04em; min-width: 3rem; text-align: center;
+}

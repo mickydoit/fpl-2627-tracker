@@ -18,7 +18,7 @@
  * not compute. projectAll, rateSquad, optimiseWithinTransfers, suggestTransfers
  * and bestMove are called exactly as the pages they came from called them.
  */
-import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
+import { loadAll, getState, setState, resolveSquadIds, readGameweek } from '../data.js';
 import { projectAll, SQUAD_RULES, actionableEvent } from '../model.js';
 import { bestXI, scoreSquad, legalXI, optimiseWithinTransfers, squadCost, suggestTransfers } from '../optimiser.js';
 import { rateSquad, RATING_HORIZONS } from '../rating.js';
@@ -125,9 +125,15 @@ if (squadIds.length !== SQUAD_RULES.size) {
   let lineupH = getState()[LINEUP_HZ] ?? 1;
   const valueAt = (p) => byId(lineupH).get(p.id)?.proj ?? p.proj ?? 0;
 
+  /* FPL's own order, not the model's. `position` 1-11 is the eleven you named
+     and 12-15 is the bench IN THE ORDER IT WOULD BE USED — first sub on, second,
+     third. Sorting the bench by projection showed a different squad from the one
+     on your FPL account, which is the one thing this view must never do. */
+  const byPosition = [...picks].sort((a, b) => a.position - b.position);
   let chosenXi = picks.length
-    ? picks.filter((p) => p.position <= 11).map((p) => p.element)
+    ? byPosition.filter((p) => p.position <= 11).map((p) => p.element)
     : bestXI(squad).xi.map((p) => p.id);
+  const benchOrder = byPosition.filter((p) => p.position > 11).map((p) => p.element);
   const savedXi = getState().myXi;
   if (!isLiveGW && Array.isArray(savedXi) && savedXi.length === 11) {
     const rows = savedXi.map((id) => byId(5).get(id)).filter(Boolean);
@@ -143,7 +149,13 @@ if (squadIds.length !== SQUAD_RULES.size) {
   const pitchHost = el('div');
   const paintPitch = () => {
     const xi = chosenXi.map((id) => byId(5).get(id)).filter(Boolean);
-    const benchRows = squad.filter((p) => !chosenXi.includes(p.id));
+    const rest = squad.filter((p) => !chosenXi.includes(p.id));
+    /* Bench in FPL's substitution order where we have it, and only falling back
+       to whatever remains when we do not. */
+    const benchRows = benchOrder.length
+      ? benchOrder.map((id) => rest.find((p) => p.id === id)).filter(Boolean)
+        .concat(rest.filter((p) => !benchOrder.includes(p.id)))
+      : rest;
     const cap = xi.some((p) => p.id === captain?.id) ? captain : null;
     const pitch = squadPitch({
       xi, bench: benchRows, teams, captain: cap, vice, variant: 'classic',
@@ -194,6 +206,74 @@ if (squadIds.length !== SQUAD_RULES.size) {
      beside it. Widening the pitch instead would just inflate the kits. */
   const sideCol = el('div', { class: 'sidecol' });
   addKids(app, el('div', { class: 'pitch-and-side' }, squadSec.wrap, sideCol));
+
+  /* ---------------- the review pitch ----------------
+   *
+   * The same eleven, showing what each player was PROJECTED to score in a
+   * finished gameweek against what he actually scored. Two boxes, and only the
+   * right one is coloured: the projection is the line, the result is what is
+   * being judged against it.
+   *
+   * The gameweek stepper walks back through completed gameweeks. Anything it
+   * shows was frozen at the time by scripts/archive-gameweek.mjs — the numbers
+   * are not recomputed, because a projection recalculated today would be using
+   * evidence that did not exist before that deadline.
+   */
+  const played = d.boot.events.filter((e) => e.id < ctx.nextEvent).map((e) => e.id).sort((a, b) => b - a);
+  if (played.length) {
+    let reviewGw = played[0];
+    const reviewHost = el('div');
+    const paintReview = async () => {
+      const g = await readGameweek(reviewGw);
+      const step = (delta) => {
+        const i = played.indexOf(reviewGw);
+        const next = played[i + delta];
+        if (next != null) { reviewGw = next; paintReview(); }
+      };
+      const sec = section(`GW${reviewGw} review`, {
+        hint: g?.projectedFrom
+          ? `Projection recovered from ${g.projectedFrom}`
+          : 'Projection as it stood before the deadline, against what was actually scored',
+        control: el('div', { class: 'gwstep' },
+          el('button', {
+            class: 'ghost', disabled: played.indexOf(reviewGw) >= played.length - 1,
+            title: 'Earlier gameweek', onClick: () => step(1),
+          }, '‹'),
+          el('span', { class: 'gwstep-label' }, `GW${reviewGw}`),
+          el('button', {
+            class: 'ghost', disabled: played.indexOf(reviewGw) <= 0,
+            title: 'Later gameweek', onClick: () => step(-1),
+          }, '›')),
+        flush: true,
+      });
+
+      if (!g?.actual) {
+        setKids(sec.body, el('p', { class: 'empty tight' }, `GW${reviewGw} has not been archived yet.`));
+      } else {
+        const xi = chosenXi.map((id) => byId(5).get(id)).filter(Boolean);
+        const rest = squad.filter((p) => !chosenXi.includes(p.id));
+        const bench = benchOrder.length
+          ? benchOrder.map((id) => rest.find((p) => p.id === id)).filter(Boolean)
+          : rest;
+        const compare = (p) => {
+          const proj = g.projected?.[p.id];
+          const act = g.actual?.[p.id]?.[0];
+          if (act == null) return { left: proj == null ? '—' : proj.toFixed(1), right: '—' };
+          /* A tenth either way is not a miss. Beyond that, over or under. */
+          const hit = proj == null ? 'met'
+            : act >= proj - 0.1 ? (act > proj + 0.1 ? 'over' : 'met') : 'under';
+          return { left: proj == null ? '—' : proj.toFixed(1), right: String(act), hit };
+        };
+        setKids(sec.body, squadPitch({
+          xi, bench, teams, captain, vice, variant: 'classic',
+          value: compare, onPlayer: openPlayer,
+        }));
+      }
+      setKids(reviewHost, sec.wrap);
+    };
+    paintReview();
+    addKids(sideCol, reviewHost);
+  }
 
   /* ---------------- rating + summary strip ---------------- */
   const RATING_HZ = 'ratingHorizon';

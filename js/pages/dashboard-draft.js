@@ -44,11 +44,12 @@ const WAIVER_MIN_GAIN = DRAFT_CONFIG.minimumImprovement;
 export const DRAFT_SECTIONS = ['head', 'squad', 'risk', 'waiver'];
 
 export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } = {}) {
-  const [board, fixtures, league, live] = await Promise.all([
+  const [board, fixtures, league, live, myPicks] = await Promise.all([
     readSnapshot('draft/players'),
     readSnapshot('fixtures', []),
     readSnapshot('draft/league', null),
     readSnapshot('draft/live', null),
+    readSnapshot('draft/picks', null),
   ]);
 
   if (!board?.players?.length) {
@@ -219,18 +220,42 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
   };
   let byGw = (p) => valuesAt(lineupH).get(p.id) ?? p.proj;
   let optimal = bestXI(mine, byGw);
-  let chosen = optimal.xi.map((p) => p.id);
-  try {
-    const saved = JSON.parse(localStorage.getItem(XI_KEY) || 'null');
-    if (Array.isArray(saved) && saved.length === 11) {
-      const rows = saved.map((id) => mine.find((p) => p.id === id)).filter(Boolean);
-      if (rows.length === 11 && legalDraftXI(rows)) chosen = saved;
-    }
-  } catch { /* unreadable storage is not worth failing over */ }
+  /* The eleven you actually STARTED on the Draft site, and the bench in the
+     order it would come on. Ownership alone cannot say this — it only says
+     which fifteen are yours — so without scripts/fetch-draft.mjs pulling the
+     lineup the page drew a plausible eleven instead of the real one.
+     `position` 1-11 is the XI, 12-15 the bench in substitution order. */
+  const fplOrder = [...(myPicks?.picks || [])].sort((a, b) => a.position - b.position);
+  const fplXi = fplOrder.filter((p) => p.position <= 11).map((p) => p.element);
+  const benchOrder = fplOrder.filter((p) => p.position > 11).map((p) => p.element);
+  const ownsAll = (ids) => ids.length === 11 && ids.every((id) => mine.some((p) => p.id === id));
+  /* FPL's lineup wins.
+   *
+   * `draftXi.v1` exists so you can drag players around and see what a change
+   * would cost. It is a scratchpad, not a record — and while it was restored on
+   * load it silently overrode the real lineup, so the page showed an eleven you
+   * had never named. The requirement here is the opposite: what is on screen
+   * must be what is on the Draft site. The saved arrangement is only used when
+   * FPL has published no lineup at all. */
+  let chosen = ownsAll(fplXi) ? fplXi : optimal.xi.map((p) => p.id);
+  if (!ownsAll(fplXi)) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(XI_KEY) || 'null');
+      if (Array.isArray(saved) && saved.length === 11) {
+        const rows = saved.map((id) => mine.find((p) => p.id === id)).filter(Boolean);
+        if (rows.length === 11 && legalDraftXI(rows)) chosen = saved;
+      }
+    } catch { /* unreadable storage is not worth failing over */ }
+  }
 
   const paintSquad = (into) => {
     const xi = chosen.map((id) => mine.find((p) => p.id === id)).filter(Boolean);
-    const bench = mine.filter((p) => !chosen.includes(p.id));
+    /* Bench in the Draft site's own substitution order where we have it. */
+    const restRows = mine.filter((p) => !chosen.includes(p.id));
+    const bench = benchOrder.length
+      ? benchOrder.map((id) => restRows.find((p) => p.id === id)).filter(Boolean)
+        .concat(restRows.filter((p) => !benchOrder.includes(p.id)))
+      : restRows;
     const chosenTotal = xi.reduce((t, p) => t + byGw(p), 0);
     const lost = optimal.total - chosenTotal;
     const gwTotal = xi.reduce((t, p) => t + (livePts(p) ?? 0), 0);
