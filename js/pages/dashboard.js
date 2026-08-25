@@ -256,9 +256,11 @@ if (squadIds.length !== SQUAD_RULES.size) {
         const bench = benchOrder.length
           ? benchOrder.map((id) => rest.find((p) => p.id === id)).filter(Boolean)
           : rest;
+        /* By `code`, never by element id — the archive is keyed that way
+           because Draft and classic disagree on ids for 21 of 587 players. */
         const compare = (p) => {
-          const proj = g.projected?.[p.id];
-          const act = g.actual?.[p.id]?.[0];
+          const proj = g.projected?.[p.code];
+          const act = g.actual?.[p.code]?.[0];
           if (act == null) return { left: proj == null ? '—' : proj.toFixed(1), right: '—' };
           /* A tenth either way is not a miss. Beyond that, over or under. */
           const hit = proj == null ? 'met'
@@ -354,11 +356,17 @@ if (squadIds.length !== SQUAD_RULES.size) {
   /* ---------------- suggested squad ---------------- */
   const OPT_HZ = 'optimiserTransfers';
   let plannedTransfers = getState()[OPT_HZ] ?? freeTransfers;
+  /* The window the suggestion is judged over. It was fixed at eight, which is
+     the right default for a squad you keep — but "best over the next gameweek"
+     and "best over eight" are different questions and the reader should be able
+     to ask either. Same option list as the lineup picker so the two agree. */
+  const SUGGEST_HZ = 'suggestHorizon';
+  let suggestH = [1, 3, 5, 8].includes(getState()[SUGGEST_HZ]) ? getState()[SUGGEST_HZ] : 8;
   const suggestHost = el('div');
   const paintSuggest = () => {
-    const rows = rowsAt(8);
+    const rows = rowsAt(suggestH);
     const reach = optimiseWithinTransfers(squadIds, rows, {
-      bank, transfers: plannedTransfers, horizon: 8, riskAversion,
+      bank, transfers: plannedTransfers, horizon: suggestH, riskAversion,
     });
     if (reach.error) { setKids(suggestHost, el('p', { class: 'empty' }, reach.error)); return; }
     const sec = section('Suggested squad', {
@@ -366,7 +374,9 @@ if (squadIds.length !== SQUAD_RULES.size) {
       control: [
         el('span', { class: 'inline-metric' },
           el('b', { class: reach.gain > 0 ? 'up' : '' }, reach.gain > 0 ? fmt.signed(reach.gain) : '—'),
-          el('i', {}, 'over 8 GW')),
+          el('i', {}, `over ${suggestH === 1 ? 'GW' : `${suggestH} GW`}`)),
+        horizonPicker(suggestH, (n) => { suggestH = n; setState({ [SUGGEST_HZ]: n }); paintSuggest(); },
+          { options: [1, 3, 5, 8] }),
         el('select', {
           class: 'hz hz-picker hz-next5',
           title: 'Transfers to spend',
@@ -379,12 +389,12 @@ if (squadIds.length !== SQUAD_RULES.size) {
     addKids(sec.body,
       reach.moves.length
         ? transferRows(reach.moves, {
-            teams, fixtures: d.fixtures, fromEvent: ctx.nextEvent, horizon: 8,
+            teams, fixtures: d.fixtures, fromEvent: ctx.nextEvent, horizon: suggestH,
             /* Price and projection — the two numbers that decide a Classic
                transfer. The club used to sit here and the kit says it better. */
             statsFor: (p) => [
               { label: 'Price', value: fmt.price(p.now_cost), tone: 'muted' },
-              { label: 'Projection over 8 gameweeks', value: fmt.pts(p.proj) },
+              { label: `Projection over ${suggestH} gameweek${suggestH === 1 ? '' : 's'}`, value: fmt.pts(p.proj) },
             ],
             onPlayer: openPlayer, playerTile, el,
           })

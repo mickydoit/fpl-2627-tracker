@@ -11,7 +11,7 @@
  * nothing else.
  */
 import { el, setKids, fmt, horizonPicker, section, metric } from '../ui.js';
-import { readSnapshot } from '../data.js';
+import { readSnapshot, readGameweek } from '../data.js';
 import { projectBoard, projectBoardAt } from '../draft/project.js';
 import { actionableEvent } from '../model.js';
 import { rateLeague, bestXI } from '../draft/rating.js';
@@ -42,7 +42,7 @@ const WAIVER_MIN_GAIN = DRAFT_CONFIG.minimumImprovement;
  * So the composition is a parameter and NOTHING below it changed: every card
  * is the one that was already working, rendered into a different page.
  */
-export const DRAFT_SECTIONS = ['head', 'squad', 'risk', 'waiver', 'notes'];
+export const DRAFT_SECTIONS = ['head', 'squad', 'review', 'risk', 'waiver', 'notes'];
 
 export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } = {}) {
   const [board, fixtures, league, live, myPicks] = await Promise.all([
@@ -377,10 +377,72 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
   };
   paintHead();
 
+  /* ---------------- the review pitch ----------------
+   *
+   * The same eleven you started, showing what each player was PROJECTED to
+   * score in a finished gameweek against what he actually scored. Identical
+   * treatment to Classic, and reading the same archive — which is keyed by
+   * `code` precisely so both games can use it. Reading it by Draft element id
+   * would mis-attribute 21 of 587 players with nothing on screen to show it.
+   */
+  const reviewHost = el('div');
+  if (sections.includes('review')) {
+    const playedGws = (board.events || [])
+      .map((e) => e.id)
+      .filter((id) => id < (actionable ?? 1))
+      .sort((a, b) => b - a);
+    if (playedGws.length) {
+      let reviewGw = playedGws[0];
+      const paintReview = async () => {
+        const g = await readGameweek(reviewGw);
+        const step = (delta) => {
+          const next = playedGws[playedGws.indexOf(reviewGw) + delta];
+          if (next != null) { reviewGw = next; paintReview(); }
+        };
+        const sec = section(`GW${reviewGw} review`, {
+          hint: g?.projectedFrom
+            ? `Projection recovered from ${g.projectedFrom}`
+            : 'Projection as it stood before the deadline, against what was actually scored',
+          control: el('div', { class: 'gwstep' },
+            el('button', { class: 'ghost', disabled: playedGws.indexOf(reviewGw) >= playedGws.length - 1,
+              title: 'Earlier gameweek', onClick: () => step(1) }, '\u2039'),
+            el('span', { class: 'gwstep-label' }, `GW${reviewGw}`),
+            el('button', { class: 'ghost', disabled: playedGws.indexOf(reviewGw) <= 0,
+              title: 'Later gameweek', onClick: () => step(-1) }, '\u203a')),
+          flush: true,
+        });
+        if (!g?.actual) {
+          setKids(sec.body, el('p', { class: 'empty tight' }, `GW${reviewGw} has not been archived yet.`));
+        } else {
+          const xiRows = chosen.map((id) => mine.find((p) => p.id === id)).filter(Boolean);
+          const restRows = mine.filter((p) => !chosen.includes(p.id));
+          const benchRows = benchOrder.length
+            ? benchOrder.map((id) => restRows.find((p) => p.id === id)).filter(Boolean)
+            : restRows;
+          const compare = (p) => {
+            const proj = g.projected?.[p.code];
+            const act = g.actual?.[p.code]?.[0];
+            if (act == null) return { left: proj == null ? '\u2014' : proj.toFixed(1), right: '\u2014' };
+            const hit = proj == null ? 'met'
+              : act >= proj - 0.1 ? (act > proj + 0.1 ? 'over' : 'met') : 'under';
+            return { left: proj == null ? '\u2014' : proj.toFixed(1), right: String(act), hit };
+          };
+          setKids(sec.body, squadPitch({
+            xi: xiRows, bench: benchRows, teams, variant: 'draft',
+            value: compare, onPlayer: openPlayer,
+          }));
+        }
+        setKids(reviewHost, sec.wrap);
+      };
+      paintReview();
+    }
+  }
+
   const want = new Set(sections);
   setKids(host, ...[
     want.has('head') ? headCard : null,
     want.has('squad') ? squadCard : null,
+    want.has('review') ? reviewHost : null,
     want.has('risk') ? riskCard(mine, openPlayer) : null,
     want.has('waiver') ? waiverCard(mine, pool, teams, openPlayer, rowsAt, fixtures, actionable) : null,
     want.has('notes') ? notesCard(mine, fixtures, teams, actionable ?? 1, openPlayer) : null,

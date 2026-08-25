@@ -25,6 +25,12 @@
  * each is written a handful of times and then never again. `data/live.json` is
  * 112KB rewritten every half hour, so this adds nothing next to what the
  * pipeline already does.
+ *
+ * **Keyed by `code`, never by element id.** The live endpoint returns classic
+ * ids, but Draft and classic disagree on ids for 21 of 587 players — reading
+ * this file with a Draft id would silently show one player another player's
+ * score, in 21 places, with nothing on screen to indicate it. `code` is stable
+ * across both games and across seasons. See CLAUDE.md.
  */
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -51,11 +57,17 @@ const prior = await readJSON('data/draft/prior-2526.json', null);
 const espn = await readJSON('data/espn-history.json', null);
 const now = Date.now();
 
+/** classic element id -> code, the identifier both games share. */
+const codeOf = new Map(boot.elements.map((e) => [e.id, e.code]));
+
 /** Trim to what the squad view needs. Arrays, not objects — 9KB against 112KB. */
-const trimActual = (rows) => Object.fromEntries(rows.map((e) => {
-  const s = e.stats || e;
-  return [e.id, [s.total_points ?? 0, s.minutes ?? 0, s.bonus ?? 0, s.bps ?? 0]];
-}));
+const trimActual = (rows) => Object.fromEntries(rows
+  .map((e) => {
+    const st = e.stats || e;
+    const code = codeOf.get(e.id);
+    return code ? [code, [st.total_points ?? 0, st.minutes ?? 0, st.bonus ?? 0, st.bps ?? 0]] : null;
+  })
+  .filter(Boolean));
 
 let wrote = 0;
 for (const ev of boot.events) {
@@ -84,7 +96,12 @@ for (const ev of boot.events) {
   if (beforeDeadline) {
     const rows = projectAll(prior ? hydrate(boot, prior, {}, espn) : boot,
       fixtures, { horizon: 1, fromEvent: ev.id }).rows;
-    projected = Object.fromEntries(rows.map((r) => [r.id, Math.round(r.proj * 100) / 100]));
+    projected = Object.fromEntries(rows
+      .map((r) => {
+        const code = r.code ?? codeOf.get(r.id);
+        return code ? [code, Math.round(r.proj * 100) / 100] : null;
+      })
+      .filter(Boolean));
   }
 
   /* ---- the actuals, once every match has been played ---- */
@@ -105,6 +122,8 @@ for (const ev of boot.events) {
     /* Frozen only after FPL's confirmation pass. Until then bonus can still
        move, so the file stays open to correction. */
     final: Boolean(ev.data_checked),
+    /* Stated in the file so a consumer cannot guess wrong. */
+    keyedBy: 'code',
     averageScore: ev.average_entry_score ?? null,
     highestScore: ev.highest_score ?? null,
     updatedAt: new Date().toISOString(),

@@ -984,6 +984,24 @@ console.log('\nGameweek archive');
   const archives = files.map((f) => JSON.parse(fs.readFileSync(`${dir}/${f}`, 'utf8')));
   ok('every archive names its gameweek and deadline',
     archives.every((g) => Number.isFinite(g.event) && typeof g.deadline === 'string'));
+
+  /* Keyed by `code`, and the file says so. The live endpoint returns CLASSIC
+     element ids, and Draft disagrees with classic on ids for 21 of 587 players
+     — reading this by id from a Draft page would show 21 players another
+     player's score, silently. `code` is stable across both games. */
+  ok('every archive declares it is keyed by code',
+    archives.every((g) => g.keyedBy === 'code'), archives.map((g) => g.keyedBy).join(','));
+  if (boot?.elements?.length) {
+    const codes = new Set(boot.elements.map((e) => e.code));
+    const ids = new Set(boot.elements.map((e) => e.id));
+    for (const g of archives.filter((x) => x.actual)) {
+      const keys = Object.keys(g.actual).map(Number);
+      ok(`GW${g.event} keys are codes, not element ids`,
+        keys.filter((k) => codes.has(k)).length > keys.length * 0.95
+        && keys.filter((k) => ids.has(k)).length < keys.length * 0.5,
+        `${keys.filter((k) => codes.has(k)).length} match codes, ${keys.filter((k) => ids.has(k)).length} match ids`);
+    }
+  }
   ok('no archive is written for a gameweek that has not happened',
     archives.every((g) => g.projected || g.actual));
 
