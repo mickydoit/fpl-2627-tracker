@@ -10,13 +10,13 @@
  * transfers or the Classic optimiser. The two dashboards share a tab strip and
  * nothing else.
  */
-import { el, setKids, fmt, horizonPicker, section, metric } from '../ui.js';
+import { el, setKids, fmt, horizonPicker, horizonCycler, section, metric } from '../ui.js';
 import { readSnapshot, readGameweek } from '../data.js';
 import { projectBoard, projectBoardAt } from '../draft/project.js';
 import { actionableEvent } from '../model.js';
 import { rateLeague, bestXI } from '../draft/rating.js';
 import { DRAFT_CONFIG, RATING_HORIZONS } from '../draft/config.js';
-import { bestWaiver } from '../draft/waiver.js';
+import { topWaivers } from '../draft/waiver.js';
 import { squadPitch, playerCard, activityRings, enableSwapping, legalDraftXI, playerTile } from '../squadview.js';
 import { notesFor, justifyMove, transferRows } from '../explain.js';
 
@@ -263,7 +263,10 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
 
     const pitch = squadPitch({
       xi, bench, teams,
-      value: (p) => (gwLive ? String(livePts(p) ?? 0) : fmt.pts(byGw(p))),
+      /* Live points only while the window IS the live gameweek — stepping to
+         3, 5 or 8 asks to look forward, and answering with this week's actual
+         scores made the control appear inert. Same rule as the classic side. */
+      value: (p) => (gwLive && lineupH === 1 ? String(livePts(p) ?? 0) : fmt.pts(byGw(p))),
       sub: (p) => POS[p.element_type],
       onPlayer: openPlayer,
           variant: 'draft',
@@ -271,13 +274,13 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
 
     setKids(into,
       el('div', { class: 'row between' }, el('h2', {}, 'Squad'),
-        horizonPicker(lineupH, (n) => {
+        horizonCycler(lineupH, (n) => {
           lineupH = n;
           try { localStorage.setItem(HZ_KEY, String(n)); } catch { /* ignore */ }
           byGw = (p) => valuesAt(lineupH).get(p.id) ?? p.proj;
           optimal = bestXI(mine, byGw);
           paintSquad(into);
-        })),
+        }, { options: [1, 3, 5, 8] })),
       el('p', { class: 'hint' },
         `Ranked by projected points over ${lineupH === 1 ? 'the next gameweek' : `the next ${lineupH} gameweeks`}`
         + ' — change the window top right. Drag a player onto another to swap them; hold to lift on a phone.'),
@@ -519,7 +522,11 @@ function waiverCard(mine, pool, teams, openPlayer, rowsAt, fixtures, actionable)
      only one horizon, and could not tell a proven player from a projection made
      mostly of prior. It now runs the season adviser, which evaluates the whole
      roster over four horizons and is allowed to say no. */
-  const advice = rowsAt ? bestWaiver(mine, pool, rowsAt) : null;
+  /* Five ranked claims rather than one. On waiver day you submit an ordered
+     set, so the list is the shape of the decision — but only claims that clear
+     the bar are listed, so a quiet wire still shows one row or none. */
+  const claims = rowsAt ? topWaivers(mine, pool, rowsAt, { limit: 5 }) : [];
+  const advice = claims[0] ?? null;
   const isMove = advice && (advice.verdict === 'STRONG ADD' || advice.verdict === 'GOOD ADD');
   /* The explanation moved to the label's tooltip: a Draft drop is permanent —
      unique ownership means there is no buying him back — so a move has to beat
@@ -538,7 +545,7 @@ function waiverCard(mine, pool, teams, openPlayer, rowsAt, fixtures, actionable)
             el('i', {}, `confidence ${String(advice.confidence).toLowerCase()}`))),
         /* Same table as Classic, minus price. Draft has no money, and showing a
            value there would describe a mechanic this game does not have. */
-        transferRows([advice.move], {
+        transferRows(claims.map((c) => c.move), {
           teams, fixtures, fromEvent: actionable ?? 1, horizon: 5,
           /* Board rows are rest-of-season totals, not five-gameweek ones. */
           horizonLabel: 'over the rest of the season',
@@ -547,7 +554,13 @@ function waiverCard(mine, pool, teams, openPlayer, rowsAt, fixtures, actionable)
             ...(Number.isFinite(p.vorp) ? [{ label: 'Above the best free agent', value: fmt.pts(p.vorp), tone: 'muted' }] : []),
           ],
           onPlayer: openPlayer, playerTile, el,
+          verdictFor: (m, i) => claims[i]?.verdict ?? null,
         }),
+        claims.length > 1
+          ? el('p', { class: 'seemore muted' },
+              `${claims.length} claims in priority order — the numbers below describe the first. `
+              + 'Only the rows marked STRONG or GOOD clear the bar, and a Draft drop is permanent.')
+          : null,
         el('div', { class: 'metrics wv' }, advice.cross.gains.map((g) =>
           metric(`${g.gain >= 0 ? '+' : ''}${g.gain.toFixed(1)}`, `${g.horizon} GW`,
             { tone: g.horizon === 5 ? 'accent' : '' }))))

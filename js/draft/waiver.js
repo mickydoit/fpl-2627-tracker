@@ -205,17 +205,25 @@ export function classifyWaiver({ gain, cross, scarcity = 0, evidence = 1, outRis
 }
 
 /**
- * The single best add-drop available, or nothing.
+ * The best add-drops available, ranked, one row per player being ADDED.
  *
- * Returns ONE candidate on purpose. A list of marginal claims invites you to
- * make all of them, and every one costs a player permanently.
+ * The old version returned exactly one, on the reasoning that a list of
+ * marginal claims invites you to make all of them and every one costs a
+ * player permanently. That reasoning is still right, and it is now carried by
+ * the verdict rather than by the length of the list: HOLD rows are dropped
+ * instead of padding the list out, so a quiet wire still shows one line or
+ * none. What a waiver list has to answer is "who is worth claiming", and on
+ * waiver day you submit an ordered set of claims, not one.
+ *
+ * Deduplicated on the player coming in, for the same reason as the classic
+ * side: five rows differing only in who you drop are one suggestion.
  *
  * @param {object[]} roster    the manager's own players, projected
  * @param {object[]} freeAgents unowned players, projected
  * @param {(h:number)=>Map}  rowsAt  id -> projected row at horizon h
  */
-export function bestWaiver(roster, freeAgents, rowsAt, { cfg = WAIVER_CONFIG, maxCandidates = 40 } = {}) {
-  if (!roster?.length || !freeAgents?.length) return null;
+export function topWaivers(roster, freeAgents, rowsAt, { cfg = WAIVER_CONFIG, maxCandidates = 40, limit = 5 } = {}) {
+  if (!roster?.length || !freeAgents?.length) return [];
 
   const base = rosterValue(roster);
   const ids = roster.map((p) => p.id);
@@ -230,7 +238,7 @@ export function bestWaiver(roster, freeAgents, rowsAt, { cfg = WAIVER_CONFIG, ma
     .filter((p) => !ownHere.has(p.id))
     .sort((a, b) => b.proj - a.proj)
     .slice(0, maxCandidates);
-  if (!wire.length) return null;
+  if (!wire.length) return [];
   const moves = [];
   for (const inc of wire) {
     for (const out of roster) {
@@ -242,8 +250,12 @@ export function bestWaiver(roster, freeAgents, rowsAt, { cfg = WAIVER_CONFIG, ma
       moves.push({ out, in: inc, gain });
     }
   }
-  if (!moves.length) return null;
+  if (!moves.length) return [];
   moves.sort((a, b) => b.gain - a.gain);
+
+  const bestPerAdd = new Map();
+  for (const m of moves) if (!bestPerAdd.has(m.in.id)) bestPerAdd.set(m.in.id, m);
+  const distinct = [...bestPerAdd.values()];
 
   const gainAtFor = (move) => (h) => {
     const at = rowsAt(h);
@@ -256,7 +268,7 @@ export function bestWaiver(roster, freeAgents, rowsAt, { cfg = WAIVER_CONFIG, ma
     return rosterValue(trial) - rosterValue(sq);
   };
 
-  const scored = moves.slice(0, 12).map((move) => {
+  const scored = distinct.slice(0, Math.max(12, limit * 3)).map((move) => {
     const cross = crossHorizon(gainAtFor(move), cfg.horizons);
     const planning = cross.gains.find((g) => g.horizon === cfg.planning)?.gain ?? move.gain;
     const scarcity = positionScarcity(freeAgents, roster, move.out.element_type);
@@ -270,5 +282,13 @@ export function bestWaiver(roster, freeAgents, rowsAt, { cfg = WAIVER_CONFIG, ma
 
   const rank = { 'STRONG ADD': 3, 'GOOD ADD': 2, WATCH: 1, HOLD: 0 };
   scored.sort((a, b) => rank[b.verdict] - rank[a.verdict] || b.net - a.net);
-  return scored[0];
+  /* Ranked, each carrying its own verdict — see the note on the classic side.
+     A Draft drop is permanent, so the verdict on a row matters more here than
+     anywhere: the list is a priority order for claims, not five things to do. */
+  return scored.slice(0, limit);
+}
+
+/** The single best add-drop, or nothing. Kept for callers wanting one answer. */
+export function bestWaiver(roster, freeAgents, rowsAt, opts = {}) {
+  return topWaivers(roster, freeAgents, rowsAt, opts)[0] ?? null;
 }

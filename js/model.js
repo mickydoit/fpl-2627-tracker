@@ -393,6 +393,13 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
     parts: {
       appearance, attack, cleanSheet, conceded, saves, defcon, bonus, cards,
       expMins, pCS, xgcMatch, attMult, availability: avail,
+      /* The minutes a game he has ACTUALLY played, before any shrinkage
+         toward the positional prior. `expMins` is deliberately pulled toward
+         that prior until 450 minutes of evidence exist, which is right for a
+         projection and wrong for any question of the form "is he a starter" —
+         two gameweeks in, every ninety-minute player still shrinks to about
+         42. Anything asking about selection must read this instead. */
+      observedMpg,
       evidence: w, prior, priorRate, modelled, isPrior: w < 0.5,
       /* Kept apart on purpose. A new signing can be well understood as a
          footballer and poorly understood as a selection — 2,600 minutes last
@@ -419,7 +426,7 @@ export function projectHorizon(p, ctx, opts = {}) {
   let total = 0;
   const perGW = {};
   const sum = { appearance: 0, attack: 0, cleanSheet: 0, conceded: 0, saves: 0, defcon: 0, bonus: 0, cards: 0, prior: 0 };
-  const acc = { expMins: 0, pCS: 0, attMult: 0, availability: 0, evidence: 0, productionConfidence: 0, minutesConfidence: 0, minutesEvidence: 0 };
+  const acc = { expMins: 0, observedMpg: 0, pCS: 0, attMult: 0, availability: 0, evidence: 0, productionConfidence: 0, minutesConfidence: 0, minutesEvidence: 0 };
   let last = null;
   for (const f of fixtures) {
     const r = projectFixture(p, f, ctx, o);
@@ -442,6 +449,7 @@ export function projectHorizon(p, ctx, opts = {}) {
     parts: {
       ...sum,
       expMins: acc.expMins / n,
+      observedMpg: acc.observedMpg / n,
       pCS: acc.pCS / n,
       attMult: acc.attMult / n,
       availability: acc.availability / n,

@@ -182,6 +182,53 @@ export function classify({ gain, cross, hit = 0, incumbentRisk = 0, evidence = 1
  * @param {object[]} singles suggestTransfers() output at the planning horizon
  * @param {(move:object,h:number)=>number} gainAt re-score a move at horizon h
  */
+/**
+ * The best few moves available, ranked, one row per incoming player.
+ *
+ * Deliberately deduplicated on the player coming IN. Without it a list of five
+ * is usually the same signing paired with five different players to sell,
+ * which reads as five options and is one. The question a transfer list has to
+ * answer is "who do I bring in"; the player to sell is the consequence, so
+ * each incoming player keeps his best-gaining partner and appears once.
+ *
+ * These are ALTERNATIVES, not a plan. Each is costed against the same bank
+ * and the same starting squad, so taking two of them is not two rows added
+ * together — the second is re-costed once the first is made.
+ */
+export function topMoves(singles, gainAt, { hit = 0, cfg = TRANSFER_CONFIG, limit = 5 } = {}) {
+  if (!singles?.length) return [];
+
+  const bestPerIncoming = new Map();
+  for (const move of singles) {
+    const seen = bestPerIncoming.get(move.in.id);
+    if (!seen || move.gain > seen.gain) bestPerIncoming.set(move.in.id, move);
+  }
+  const distinct = [...bestPerIncoming.values()].sort((a, b) => b.gain - a.gain);
+
+  const scored = distinct.slice(0, Math.max(12, limit * 3)).map((move) => {
+    const cross = crossHorizon((h) => gainAt(move, h), cfg.horizons);
+    const planning = cross.gains.find((g) => g.horizon === 5)?.gain ?? move.gain;
+    const incumbentRisk = 1 - (move.out.availability ?? 1);
+    const evidence = move.in?.parts?.evidence ?? 1;
+    return {
+      move,
+      cross,
+      gain: planning,
+      ...classify({ gain: planning, cross, hit, incumbentRisk, evidence, cfg }),
+    };
+  });
+
+  const rank = { 'STRONG TRANSFER': 3, 'GOOD TRANSFER': 2, WATCH: 1, HOLD: 0 };
+  scored.sort((a, b) => rank[b.verdict] - rank[a.verdict] || b.net - a.net);
+  /* Every row keeps its verdict, and the caller shows it. The alternative —
+     truncating at the last move that clears the bar — silently returned two
+     options on a real squad where seventy-nine legal signings existed, which
+     reads as a broken list rather than as an honest one. Five ranked options
+     each labelled STRONG / GOOD / WATCH / HOLD says more than two unlabelled
+     ones, and says it without endorsing anything the classifier rejected. */
+  return scored.slice(0, limit);
+}
+
 export function bestMove(singles, gainAt, { hit = 0, cfg = TRANSFER_CONFIG } = {}) {
   if (!singles?.length) return null;
 

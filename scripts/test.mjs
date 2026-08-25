@@ -25,6 +25,7 @@ import { ALLOWED_MODEL_SEASONS, CURRENT_SEASON, isAllowedSeason, seasonStartYear
   assertAllowedSeason, onlyAllowedSeasons } from '../js/seasons.js';
 import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scoreRatio,
   RATING_WEIGHTS, RATING_HORIZONS, RATING_FLOOR } from '../js/rating.js';
+import { topMoves, bestMove } from '../js/transfer-advice.js';
 
 let failures = 0;
 let checks = 0;
@@ -205,6 +206,56 @@ for (const p of [...rows].filter((p) => p.status === 'a' && p.proj > 0).sort((a,
 if (weak.length === 15) {
   const weakSug = suggestTransfers(weak.map((p) => p.id), rows, { bank: 400, freeTransfers: 1, horizon: 5 });
   ok('a weak squad has improving transfers', weakSug.singles.length > 0 && weakSug.singles[0].net > 1, `best ${weakSug.singles[0]?.net.toFixed(2)}`);
+}
+
+/* ------------------------------------------------------------------ *
+ * a shortlist of transfers, not one
+ * ------------------------------------------------------------------ *
+ * The dashboard offers five options for one transfer. They are alternatives,
+ * each costed against the same bank and the same squad — so the list must not
+ * be five ways of describing the same signing, and must not pad itself out
+ * with moves the classifier already rejected.
+ */
+console.log('\nTransfer shortlist');
+{
+  const gainAt = (move, h) => move.gain;
+  const shortlist = topMoves(sug.singles, gainAt, { hit: 0, limit: 5 });
+  ok('the shortlist is capped at the limit asked for', shortlist.length <= 5, `${shortlist.length}`);
+  ok('every option brings in a different player', (() => {
+    const ids = shortlist.map((m) => m.move.in.id);
+    return new Set(ids).size === ids.length;
+  })(), shortlist.map((m) => m.move.in.id).join(','));
+  ok('the first option is the one bestMove returns', (() => {
+    const one = bestMove(sug.singles, gainAt, { hit: 0 });
+    return !shortlist.length || (one && one.move.in.id === shortlist[0].move.in.id);
+  })());
+  /* The shortlist is allowed to carry moves that do not clear the bar — on a
+     real squad only two of seventy-nine legal signings did, and a list that
+     truncated there looked broken rather than honest. What it may NOT do is
+     present them as recommendations, so every row must carry a verdict the
+     caller can render. */
+  ok('every option carries a verdict the caller can show',
+    shortlist.every((m) => ['STRONG TRANSFER', 'GOOD TRANSFER', 'WATCH', 'HOLD'].includes(m.verdict)),
+    shortlist.map((m) => m.verdict).join(','));
+  ok('endorsed options are never ranked below unendorsed ones', (() => {
+    const strong = (v) => /STRONG|GOOD/.test(v);
+    let seenWeak = false;
+    for (const m of shortlist) {
+      if (!strong(m.verdict)) seenWeak = true;
+      else if (seenWeak) return false;
+    }
+    return true;
+  })());
+  ok('options are ordered by verdict then by margin', (() => {
+    const rank = { 'STRONG TRANSFER': 3, 'GOOD TRANSFER': 2, WATCH: 1, HOLD: 0 };
+    for (let i = 1; i < shortlist.length; i++) {
+      const a = shortlist[i - 1]; const b = shortlist[i];
+      if (rank[a.verdict] < rank[b.verdict]) return false;
+      if (rank[a.verdict] === rank[b.verdict] && a.net < b.net - 1e-9) return false;
+    }
+    return true;
+  })());
+  ok('no options in means no shortlist', topMoves([], gainAt).length === 0);
 }
 
 /* ------------------------------------------------------------------ *
@@ -944,8 +995,36 @@ console.log('\nExplanations');
   /* An injured player is already explained by FPL; adding a rotation guess on
      top would be the model talking over the source. */
   ok('a flagged player does not also get a minutes guess',
-    !notesFor({ ...base, news, parts: { expMins: 20 } }, { fixtures: [], teams: teamMap, fromEvent: 1, horizon: 5 })
-      .some((n) => /not a certain starter/.test(n.text)));
+    !notesFor({ ...base, news, parts: { expMins: 20, observedMpg: 20 } }, { fixtures: [], teams: teamMap, fromEvent: 1, horizon: 5 })
+      .some((n) => /rotation risk/.test(n.text)));
+
+  /* --- the rotation note reads football, not the shrunk projection ---
+     `expMins` is pulled toward the positional prior until 450 minutes exist,
+     so two gameweeks in a full-time starter still reads about 42. Keying the
+     rotation note off it fired on 14 of 15 real players, Haaland and Fernandes
+     included. The note has to read minutes actually played. */
+  const nailed = { ...base, minutes: 90, seasonMinutes: 90, parts: { expMins: 42, observedMpg: 90 } };
+  ok('a player who has played every minute is never called a rotation risk',
+    !notesFor(nailed, { fixtures: [fx(1, 1, 2)], teams: teamMap, fromEvent: 1, horizon: 1 })
+      .some((n) => /rotation risk/.test(n.text)),
+    JSON.stringify(notesFor(nailed, { fixtures: [fx(1, 1, 2)], teams: teamMap, fromEvent: 1, horizon: 1 })));
+  const rotated = { ...base, minutes: 25, seasonMinutes: 25, parts: { expMins: 27, observedMpg: 25 } };
+  ok('a player who is actually being rotated is called out',
+    notesFor(rotated, { fixtures: [fx(1, 1, 2)], teams: teamMap, fromEvent: 1, horizon: 1 })
+      .some((n) => /rotation risk/.test(n.text)));
+  ok('the rotation note quotes the minutes it measured',
+    /25 minutes/.test(notesFor(rotated, { fixtures: [], teams: teamMap, fromEvent: 1, horizon: 1 })
+      .find((n) => /rotation risk/.test(n.text)).text));
+  /* The failure mode this replaced: a note that fires on everybody. */
+  ok('the rotation note does not fire across a whole squad of starters', (() => {
+    const squad = Array.from({ length: 15 }, (_, i) => ({
+      ...base, id: i + 1, minutes: 90, seasonMinutes: 90,
+      parts: { expMins: 42, observedMpg: 90 },
+    }));
+    const firing = squad.filter((p) => notesFor(p, { fixtures: [fx(1, 1, 2)], teams: teamMap, fromEvent: 1, horizon: 1 })
+      .some((n) => /rotation risk/.test(n.text)));
+    return firing.length === 0;
+  })());
 
   /* Fixture phrasing only speaks up when a run stands out. */
   const easy = [fx(1, 1, 2, 2, 4), fx(2, 1, 3, 2, 4), fx(3, 1, 2, 2, 4)];

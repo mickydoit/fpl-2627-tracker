@@ -22,10 +22,10 @@ import { loadAll, getState, setState, resolveSquadIds, readGameweek } from '../d
 import { projectAll, SQUAD_RULES, actionableEvent } from '../model.js';
 import { bestXI, scoreSquad, legalXI, optimiseWithinTransfers, squadCost, suggestTransfers } from '../optimiser.js';
 import { rateSquad, RATING_HORIZONS } from '../rating.js';
-import { bestMove, recommendedHorizon } from '../transfer-advice.js';
+import { topMoves, recommendedHorizon } from '../transfer-advice.js';
 import { squadPitch, playerCard, enableSwapping, playerTile } from '../squadview.js';
 import { notesFor, justifyMove, transferRows } from '../explain.js';
-import { horizonPicker, SEASON_HORIZON } from '../ui.js';
+import { horizonPicker, horizonCycler, SEASON_HORIZON } from '../ui.js';
 import { $, el, fmt, dataBar, countdown, setKids, addKids, section, metric, compact } from '../ui.js';
 
 const app = $('#app');
@@ -163,7 +163,13 @@ if (squadIds.length !== SQUAD_RULES.size) {
     const cap = xi.some((p) => p.id === captain?.id) ? captain : null;
     const pitch = squadPitch({
       xi, bench: benchRows, teams, captain: cap, vice, variant: 'classic',
-      value: (p) => (isLiveGW ? String(livePts(p) ?? 0) : fmt.pts(valueAt(p) * (p.id === cap?.id ? 2 : 1))),
+      /* Live points only while the window IS the live gameweek. Stepping the
+         cycler to 3, 5 or 8 is a request to look forward, and answering it
+         with this week's actual scores made the control appear to do nothing
+         for the whole of every gameweek — which is most of the time. */
+      value: (p) => (isLiveGW && lineupH === 1
+        ? String(livePts(p) ?? 0)
+        : fmt.pts(valueAt(p) * (p.id === cap?.id ? 2 : 1))),
       onPlayer: openPlayer,
     });
     setKids(pitchHost, pitch);
@@ -202,9 +208,9 @@ if (squadIds.length !== SQUAD_RULES.size) {
   splitSec.body.remove();
   const paintHead = () => setKids(splitSec.ctl,
     el('span', { class: 'inline-metric' },
-      el('b', {}, isLiveGW ? String(Math.round(liveTotal())) : fmt.pts(xiTotal())),
-      el('i', {}, isLiveGW ? 'pts' : `over ${lineupH === 1 ? 'GW' : `${lineupH} GW`}`)),
-    horizonPicker(lineupH, (n) => {
+      el('b', {}, isLiveGW && lineupH === 1 ? String(Math.round(liveTotal())) : fmt.pts(xiTotal())),
+      el('i', {}, isLiveGW && lineupH === 1 ? 'pts' : `over ${lineupH === 1 ? 'GW' : `${lineupH} GW`}`)),
+    horizonCycler(lineupH, (n) => {
       lineupH = n;
       setState({ [LINEUP_HZ]: n });
       paintPitch(); paintHead();
@@ -374,7 +380,7 @@ if (squadIds.length !== SQUAD_RULES.size) {
         el('span', { class: 'inline-metric' },
           el('b', { class: reach.gain > 0 ? 'up' : '' }, reach.gain > 0 ? fmt.signed(reach.gain) : '—'),
           el('i', {}, `over ${suggestH === 1 ? 'GW' : `${suggestH} GW`}`)),
-        horizonPicker(suggestH, (n) => { suggestH = n; setState({ [SUGGEST_HZ]: n }); paintSuggest(); },
+        horizonCycler(suggestH, (n) => { suggestH = n; setState({ [SUGGEST_HZ]: n }); paintSuggest(); },
           { options: [1, 3, 5, 8] }),
         el('select', {
           class: 'hz hz-picker hz-next5',
@@ -417,7 +423,10 @@ if (squadIds.length !== SQUAD_RULES.size) {
       const base = scoreSquad(sq, { horizon: h, riskAversion });
       return scoreSquad(sq.filter((p) => p.id !== move.out.id).concat(inc), { horizon: h, riskAversion }) - base;
     };
-    const best = bestMove(sug.singles, gainAt, { hit: freeTransfers >= 1 ? 0 : 4 });
+    /* Five ALTERNATIVES for one transfer, not a five-transfer plan. Each is
+       costed against the same bank and the same squad, so they do not stack. */
+    const options = topMoves(sug.singles, gainAt, { hit: freeTransfers >= 1 ? 0 : 4, limit: 5 });
+    const best = options[0] ?? null;
     const wk = section('This week', {
       hint: rec.why,
       control: el('span', { class: `verdict ${best?.move ? 'go' : 'hold'}` }, best?.verdict || 'HOLD'),
@@ -425,15 +434,21 @@ if (squadIds.length !== SQUAD_RULES.size) {
     });
     addKids(wk.body,
       best?.move
-        ? transferRows([best.move], {
+        ? transferRows(options.map((o) => o.move), {
             teams, fixtures: d.fixtures, fromEvent: ctx.nextEvent, horizon: rec.horizon,
             statsFor: (p) => [
               { label: 'Price', value: fmt.price(p.now_cost), tone: 'muted' },
               { label: `Projection over ${rec.horizon} gameweeks`, value: fmt.pts(p.proj) },
             ],
             onPlayer: openPlayer, playerTile, el,
+            verdictFor: (m, i) => options[i]?.verdict ?? null,
           })
         : el('p', { class: 'empty tight' }, 'No move clears the bar this week.'),
+      best?.move && options.length > 1
+        ? el('p', { class: 'seemore muted' },
+            `${options.length} alternatives for one transfer — take one, not all of them. `
+            + 'Only the rows marked STRONG or GOOD clear the bar.')
+        : null,
       el('p', { class: 'seemore' }, el('a', { href: 'transfers.html' }, 'Every legal move →')));
     addKids(sideCol, wk.wrap);
   }

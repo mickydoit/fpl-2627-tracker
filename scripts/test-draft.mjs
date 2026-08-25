@@ -22,7 +22,7 @@ import { estimateBps90, bonusFromBps90, draftBonusModel } from '../js/draft/scor
 import { runDraft, STRATEGIES } from '../js/draft/compete.js';
 import fs from 'node:fs';
 import { bestXI, depthCost, squadVorp, riskScore, rateSquad, rateLeague, positionalStrength } from '../js/draft/rating.js';
-import { draftXI, rosterValue, positionScarcity, classifyWaiver, bestWaiver, WAIVER_CONFIG } from '../js/draft/waiver.js';
+import { draftXI, rosterValue, positionScarcity, classifyWaiver, bestWaiver, topWaivers, WAIVER_CONFIG } from '../js/draft/waiver.js';
 import { actionableEvent, upcomingByTeam } from '../js/model.js';
 
 let failures = 0;
@@ -1022,6 +1022,49 @@ console.log('\nDraft season transactions');
   })());
   ok('nothing on the wire means no recommendation', bestWaiver(roster, [], rowsAt) === null);
   ok('an empty roster is refused', bestWaiver([], [upgrade], rowsAt) === null);
+
+  /* --- a list of claims, not one --- */
+  const wire = [mk(3, 95, { id: 9101 }), mk(3, 93, { id: 9102 }), mk(3, 91, { id: 9103 }),
+                mk(2, 90, { id: 9104 }), mk(2, 88, { id: 9105 }), mk(4, 86, { id: 9106 })];
+  const wireRows = () => new Map([...roster, ...wire].map((p) => [p.id, p]));
+  const claims = topWaivers(roster, wire, wireRows, { limit: 5 });
+  ok('the wire produces a ranked list, not a single answer', claims.length > 1,
+    `${claims.length} claims`);
+  ok('a list of claims is capped at the limit asked for', claims.length <= 5,
+    `${claims.length} claims`);
+  ok('the first claim is the one bestWaiver returns',
+    bestWaiver(roster, wire, wireRows).move.in.id === claims[0].move.in.id);
+  ok('every claim adds a different player', (() => {
+    const adds = claims.map((c) => c.move.in.id);
+    return new Set(adds).size === adds.length;
+  })(), claims.map((c) => c.move.in.id).join(','));
+  ok('claims are ordered by verdict then by margin', (() => {
+    const rank = { 'STRONG ADD': 3, 'GOOD ADD': 2, WATCH: 1, HOLD: 0 };
+    for (let i = 1; i < claims.length; i++) {
+      const a = claims[i - 1]; const b = claims[i];
+      if (rank[a.verdict] < rank[b.verdict]) return false;
+      if (rank[a.verdict] === rank[b.verdict] && a.net < b.net - 1e-9) return false;
+    }
+    return true;
+  })());
+  /* The reason the old adviser returned exactly one: a list of marginal claims
+     invites you to make all of them, and a Draft drop cannot be undone. That
+     is now carried by the verdict on each row rather than by the length of the
+     list, so every row has to have one. */
+  ok('every claim carries a verdict the caller can show',
+    claims.every((c) => ['STRONG ADD', 'GOOD ADD', 'WATCH', 'HOLD'].includes(c.verdict)),
+    claims.map((c) => c.verdict).join(','));
+  ok('endorsed claims are never ranked below unendorsed ones', (() => {
+    const strong = (v) => /STRONG|GOOD/.test(v);
+    let seenWeak = false;
+    for (const c of claims) {
+      if (!strong(c.verdict)) seenWeak = true;
+      else if (seenWeak) return false;
+    }
+    return true;
+  })());
+  ok('a quiet wire still returns nothing at all',
+    topWaivers(roster, [], wireRows).length === 0);
 
   const ps = positionalStrength(roster, [mk(3, 78), mk(2, 10), mk(4, 8), mk(1, 8)]);
   ok('a position with a strong replacement available scores low above replacement',

@@ -388,3 +388,37 @@ export function compact(n) {
   if (!Number.isFinite(v)) return '—';
   return v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e4 ? `${(v / 1e3).toFixed(0)}k` : v.toLocaleString('en-GB');
 }
+
+
+/**
+ * A window selector you step through rather than open.
+ *
+ * The Figma has no dropdown: it has a pill with arrows either side and the
+ * current option in the middle, and you cycle. That is a better fit for four
+ * ordered values than a select — the options ARE a sequence, and stepping
+ * along one keeps the reader's eye on the board rather than in a menu.
+ *
+ * The end arrows disappear at the ends rather than wrapping. Wrapping from
+ * "next 8" back to "next gameweek" on a forward press reads as a glitch, and
+ * the reference frame draws the first option with only a forward arrow.
+ *
+ * @param {number[]} options ascending gameweek counts
+ */
+export function horizonCycler(value, onChange, { options = [1, 3, 5, 8] } = {}) {
+  const label = (n) => (n >= SEASON_HORIZON ? 'Whole season'
+    : n === 1 ? 'Next Gameweek' : `Next ${n} GW`);
+  const i = Math.max(0, options.indexOf(value));
+  const step = (delta) => {
+    const next = options[i + delta];
+    if (next != null) onChange(next);
+  };
+  return el('div', { class: 'hzcycle' },
+    i > 0
+      ? el('button', { class: 'prev', title: label(options[i - 1]), onClick: () => step(-1) }, 'Shorter')
+      : el('span', { class: 'spacer' }),
+    el('span', { class: 'hzcycle-label' }, label(options[i])),
+    i < options.length - 1
+      ? el('button', { class: 'next', title: label(options[i + 1]), onClick: () => step(1) }, 'Longer')
+      : el('span', { class: 'spacer' }),
+  );
+}

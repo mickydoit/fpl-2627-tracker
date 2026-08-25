@@ -28,6 +28,10 @@ export const SOURCE = {
 const FDR_HARD = 4;
 const FDR_EASY = 2;
 
+/* Below this many minutes a game a player is not finishing matches, which is
+   the thing a manager needs told. A player averaging 72 does not need a note. */
+const ROTATION_MPG = 60;
+
 /** Upcoming fixtures for a player, as {event, opponent, home, difficulty}. */
 export function fixturesFor(player, fixtures, fromEvent, horizon) {
   return (fixtures || [])
@@ -85,13 +89,22 @@ export function notesFor(player, { fixtures, teams, fromEvent = 1, horizon = 5, 
   }
 
   /* Selected but not playing is different from injured, and the model is slow
-     to notice it — worth flagging in words rather than leaving to a number. */
-  const mins = player.parts?.expMins;
-  if (!player.news && Number.isFinite(mins) && mins > 0 && mins < 45) {
+     to notice it — worth flagging in words rather than leaving to a number.
+
+     This reads `observedMpg`, NOT `expMins`. `expMins` is shrunk toward the
+     positional prior until 450 minutes of evidence exist, so two gameweeks
+     into a season every ninety-minute starter still sits near 42 and a
+     threshold of "under 45 means rotation risk" fired on fourteen players out
+     of fifteen — Haaland and Fernandes among them, both of whom had played
+     every minute. A note that fires on the whole squad is not a note. The
+     rotation question is about football that happened, so it is answered from
+     minutes actually played. */
+  const mpg = player.parts?.observedMpg;
+  if (!player.news && Number.isFinite(mpg) && mpg > 0 && mpg < ROTATION_MPG) {
     out.push({
       source: SOURCE.MODEL,
       tone: 'warn',
-      text: `expected around ${Math.round(mins)} minutes — not a certain starter`,
+      text: `averaging ${Math.round(mpg)} minutes a game — rotation risk`,
     });
   }
 
@@ -163,7 +176,12 @@ export function justifyMove(out, inc, { fixtures, teams, fromEvent = 1, horizon 
   const outMins = out.parts?.expMins;
   const incMins = inc.parts?.expMins;
   if (Number.isFinite(outMins) && Number.isFinite(incMins) && incMins - outMins > 15) {
-    bits.push(`is more likely to start (${Math.round(incMins)} minutes against ${Math.round(outMins)})`);
+    /* Named, because without a subject this read "…; is more likely to start"
+       and the reader had to guess which of the two players it meant.
+       `expMins` rather than observed minutes on purpose: both sides are shrunk
+       toward their positional prior by the same rule, so the comparison
+       survives it, and it is far steadier than a one-match average. */
+    bits.push(`${inc.web_name} projects more minutes (${Math.round(incMins)} against ${Math.round(outMins)})`);
   }
 
   if (inc.penalties_order === 1 && out.penalties_order !== 1) bits.push('takes the penalties');
@@ -185,12 +203,23 @@ export function justifyMove(out, inc, { fixtures, teams, fromEvent = 1, horizon 
  * @param {Array} moves    [{out, in, gain}]
  * @param {(p:object)=>Array} statsFor  the boxes under each tile
  */
-export function transferRows(moves, { teams, fixtures, fromEvent, horizon, horizonLabel = null, statsFor, onPlayer, playerTile, el }) {
-  return el('div', { class: 'ttable' }, moves.map((m, i) =>
-    el('div', { class: 'trow' },
+/**
+ * @param {(move, i) => string|null} verdictFor
+ *   The classifier's word on each row. A list of five options where only the
+ *   first is worth making looks like five endorsements unless every row says
+ *   what it is, so anything showing more than the best move should pass this.
+ */
+export function transferRows(moves, { teams, fixtures, fromEvent, horizon, horizonLabel = null, statsFor, onPlayer, playerTile, el, verdictFor = null }) {
+  const strong = (v) => /STRONG|GOOD/.test(v || '');
+  return el('div', { class: 'ttable' }, moves.map((m, i) => {
+    const v = verdictFor ? verdictFor(m, i) : null;
+    return el('div', { class: `trow ${v && !strong(v) ? 'marginal' : ''}` },
       el('span', { class: 'tn' }, String(i + 1)),
       el('span', { class: 'tout' }, playerTile(m.out, { teams, stats: statsFor(m.out, 'out'), onPlayer })),
       el('span', { class: 'tarrow' }, '\u2192'),
       el('span', { class: 'tin' }, playerTile(m.in, { teams, stats: statsFor(m.in, 'in'), onPlayer })),
-      el('span', { class: 'twhy' }, justifyMove(m.out, m.in, { fixtures, teams, fromEvent, horizon, horizonLabel })))));
+      el('span', { class: 'twhy' },
+        v ? el('span', { class: `rowverdict ${strong(v) ? 'go' : 'hold'}` }, v) : null,
+        justifyMove(m.out, m.in, { fixtures, teams, fromEvent, horizon, horizonLabel })));
+  }));
 }
