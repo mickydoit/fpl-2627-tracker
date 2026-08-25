@@ -404,11 +404,11 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
             ? `Projection recovered from ${g.projectedFrom}`
             : 'Projection as it stood before the deadline, against what was actually scored',
           control: el('div', { class: 'gwstep' },
-            el('button', { class: 'ghost', disabled: playedGws.indexOf(reviewGw) >= playedGws.length - 1,
-              title: 'Earlier gameweek', onClick: () => step(1) }, '\u2039'),
+            el('button', { class: 'prev', disabled: playedGws.indexOf(reviewGw) >= playedGws.length - 1,
+              title: 'Earlier gameweek', onClick: () => step(1) }, 'Earlier'),
             el('span', { class: 'gwstep-label' }, `GW${reviewGw}`),
-            el('button', { class: 'ghost', disabled: playedGws.indexOf(reviewGw) <= 0,
-              title: 'Later gameweek', onClick: () => step(-1) }, '\u203a')),
+            el('button', { class: 'next', disabled: playedGws.indexOf(reviewGw) <= 0,
+              title: 'Later gameweek', onClick: () => step(-1) }, 'Later')),
           flush: true,
         });
         if (!g?.actual) {

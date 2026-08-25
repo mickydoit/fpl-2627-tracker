@@ -204,7 +204,7 @@ ${PRODUCTS.map((pr) => `    <a href="${pr.home}.html"${pr.id === p.product ? ' c
   </nav>
   <a class="brand" href="${PRODUCTS.find((pr) => pr.id === p.product).home}.html">
     <img class="brand-logo" src="img/logo-fpl.svg?v=${cssV}" alt="" />
-    <span class="brand-text">FPL<br />Tracker</span>
+    <span class="brand-text"><i>FPL</i>Tracker</span>
   </a>
 </header>
 <nav class="pagenav" aria-label="${p.product === 'draft' ? 'Draft' : 'Classic'} pages">

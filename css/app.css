@@ -1005,98 +1005,146 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
    ========================================================================== */
 
 /* ---------- a section ----------
-   The unit of hierarchy on this page. A named header bar joined to its body by
-   a shared border, so "which control drives which numbers" and "where does this
-   group end" are answered by structure rather than by proximity.
 
-   The name is a cyan pill on ink — Figma's own treatment for a section label
-   (`Golden Boot` 83:324, `Transfer` 236:99 are both #8bffec with #202123 text).
-   It replaces the accent-coloured caps this had, which floated free and gave
-   every section the same voice. */
-.sec {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin: var(--s-lg) 0 0;
-}
-.sec:first-child { margin-top: 0; }
+   Figma 241:412 gives two pill variants and nothing else:
+
+     label      transparent, 2px #c8f5ce border, radius 15px, text #c8f5ce
+     control    #c8f5ce fill, radius 15px, text #202123, 42px arrow
+     both       Inter Black, 57.6px at 1280 = 4.5vw, px 12 py 18, w 552
+
+   They sit centred and side by side with a 51px gap. Content hangs beneath
+   with no wrapping card — the frame draws one only for the transfer table. */
+
+.sec { margin: clamp(1.2rem, 4vw, 3.5rem) 0 0; }
+.sec:first-child { margin-top: clamp(0.8rem, 2.5vw, 2rem); }
 
 .sechead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--s-sm);
+  justify-content: center;
+  gap: clamp(0.5rem, 4vw, 51px);
   flex-wrap: wrap;
-  padding: 0.42rem 0.55rem;
-  background: var(--surface-2);
-  border-bottom: 1px solid var(--border);
+}
+
+.seclabel, .secctl > * {
+  font-family: var(--font-body);
+  font-weight: 900;
+  font-size: clamp(0.85rem, 4.5vw, 57.6px);
+  line-height: 1;
+  border-radius: clamp(6px, 1.17vw, 15px);
+  padding: clamp(0.35rem, 1.4vw, 18px) clamp(0.5rem, 0.94vw, 12px);
+  white-space: nowrap;
+  text-align: center;
 }
 .seclabel {
-  background: var(--cyan);
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  line-height: 1;
-  padding: 0.26rem 0.5rem;
-  border-radius: 5px;
-  white-space: nowrap;
+  background: transparent;
+  border: clamp(1px, 0.156vw, 2px) solid var(--mint-2);
+  color: var(--mint-2);
+  text-transform: none;
+  letter-spacing: 0;
+  flex: 0 1 auto;
+  min-width: min(100%, 12rem);
 }
-/* Controls live in the header of the section they drive. */
-.secctl { display: flex; align-items: center; gap: var(--s-sm); flex-wrap: wrap; }
-.secbody { padding: 0.6rem; }
-.secbody.flush { padding: 0; }
-.secbody.flush > .rowlist,
-.secbody.flush > .matches,
-.secbody.flush > .summary { border: none; border-radius: 0; }
-.secbody.flush > .pitchwrap .pitch { border: none; border-radius: 0; }
-.secbody.flush > p { padding: 0.6rem; margin: 0; }
+.secctl { display: flex; align-items: center; gap: clamp(0.4rem, 1.4vw, 18px); flex-wrap: wrap; justify-content: center; }
+.secbody { padding: clamp(0.6rem, 2.3vw, 30px) 0 0; }
+.secbody.flush { padding-top: clamp(0.6rem, 2.3vw, 30px); }
 .secbody > :first-child { margin-top: 0; }
 .secbody > :last-child { margin-bottom: 0; }
 
-.row.tight { gap: var(--s-sm); align-items: center; }
-.empty.tight { margin: 0; font-size: 0.82rem; }
+/* Selectors wear the filled pill. */
+.secctl select.hz-picker,
+.secctl .verdict,
+.secctl .gwstep {
+  background: var(--mint-2);
+  color: var(--ink);
+  border: none;
+  font-family: var(--font-body);
+  font-weight: 900;
+  font-size: clamp(0.75rem, 3vw, 38px);
+  border-radius: clamp(6px, 1.17vw, 15px);
+  padding: clamp(0.3rem, 1.1vw, 14px) clamp(0.5rem, 0.94vw, 12px);
+}
+.secctl select.hz-picker { appearance: none; padding-right: clamp(1.2rem, 2.6vw, 34px); }
+.secctl .inline-metric { align-items: baseline; gap: 0.3rem; }
+.secctl .inline-metric b {
+  color: var(--mint-2);
+  font-family: var(--font-body); font-weight: 900;
+  font-size: clamp(0.75rem, 2.2vw, 28px); line-height: 1;
+}
+.secctl .inline-metric i {
+  color: var(--mint-2); opacity: 0.7;
+  font-size: clamp(0.55rem, 1.1vw, 14px);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
 
-/* Compact metric strip. Figma 82:138 runs these at 72x39 with an 8px caption.
-   The colours are its own: the standout is a gold-to-sage gradient (83:357),
-   the rest flat cyan (83:227). */
-/* Five across, always. Figma runs them at 72x39 in a 440 frame — about 16% of
-   the width and a third the height these had, which is why a strip of five
-   small pills reads as context while five big boxes competed with the pitch
-   for first look. */
+/* The stepper: arrow, label, arrow — the frame's own SVGs, not drawn here. */
+.gwstep { display: flex; align-items: center; gap: clamp(0.5rem, 9.6vw, 123px); }
+.gwstep button {
+  background: none; border: none; padding: 0; cursor: pointer;
+  width: clamp(14px, 3.3vw, 42px); height: clamp(14px, 3.3vw, 42px);
+  background-repeat: no-repeat; background-size: contain; background-position: center;
+  text-indent: -9999px; overflow: hidden;
+}
+/* The frame uses ONE arrow asset and rotates it 180deg for the back step
+   (244:1556). Same here, rather than shipping a second file that is the first
+   one mirrored. */
+.gwstep button.prev { background-image: url('../img/ui/arrow-right.svg'); transform: rotate(180deg); }
+.gwstep button.next { background-image: url('../img/ui/arrow-right.svg'); }
+.gwstep button:disabled { opacity: 0.3; cursor: default; }
+.gwstep-label {
+  font-family: var(--font-body); font-weight: 900;
+  font-size: clamp(0.85rem, 4.5vw, 57.6px); line-height: 1; color: var(--ink);
+}
+
+/* The metrics row. Figma 244:1566: no boxes at all — mint text on coal, value
+   above label, gap 180px at 1280. The pills this used to draw were mine. */
+/* Spread rather than gapped. The frame positions four columns across 1122px of
+   a 1280 canvas; a fixed 180px gap reproduces that only while the strings are
+   the frame's own — "£100.0m" is wider than "100m", and four real values
+   overflowed by 9px and wrapped one onto its own line. space-between holds the
+   layout at any string width and still lands on the frame's spacing when they
+   happen to match. */
 .metrics {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.2rem;
-  margin: var(--s-sm) 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(0.5rem, 2vw, 2rem);
+  margin: clamp(0.8rem, 8.7vw, 111px) auto 0;
+  max-width: 1122px;
+  flex-wrap: nowrap;
 }
 .metric {
-  background: var(--cyan);
-  border-radius: 8px;
-  padding: 0.24rem 0.3rem;
-  display: grid;
-  gap: 0;
-  min-width: 0;
-  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.15rem, 1.9vw, 24px);
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--mint-2);
   text-align: center;
+  min-width: 0;
 }
-.metric.accent { background: linear-gradient(to bottom, var(--gold-2), var(--sage)); }
 .metric .mv {
-  font-family: var(--font-display);
-  font-size: 0.82rem;
-  line-height: 1.1;
-  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 900;
+  font-size: clamp(0.72rem, 2.81vw, 36px);
+  line-height: 1;
+  color: var(--mint-2);
   font-variant-numeric: tabular-nums;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  white-space: nowrap;
 }
 .metric .mc {
-  font-size: 0.46rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(32, 33, 35, 0.72);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: clamp(0.72rem, 2.81vw, 36px);
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--mint-2);
+  white-space: nowrap;
 }
+.metric.accent { background: none; }
 
 /* Summary strip — Figma 236:198 exactly: one #393939 surface on a #808080
    hairline at 12px radius, labels above a rule, values below. */
@@ -1217,49 +1265,50 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
 .shirt .pt.half.under { background: #5a2320; color: #ff9d94; }
 .shirt .pt.half.met   { background: var(--surface-2); color: var(--text); }
 
-/* Gameweek stepper — ‹ GW1 › */
-.gwstep { display: flex; align-items: center; gap: 0.15rem; }
-.gwstep button {
-  padding: 0.1rem 0.42rem; font-size: 0.95rem; line-height: 1.1;
-  border-radius: 5px; min-width: 1.6rem;
-}
-.gwstep button:disabled { opacity: 0.3; cursor: default; }
-.gwstep-label {
-  font-family: var(--font-display); font-size: 0.78rem;
-  letter-spacing: 0.04em; min-width: 3rem; text-align: center;
-}
-
 /* ---------- notes ----------
-   Each line says where it came from. A sentence FPL published and a sentence
-   the model inferred are different kinds of claim and must not look alike —
-   that badge is the whole point of the component. */
-.notelist { display: grid; }
+   Figma 246:1811: a 50x42 arrow, 35px gap, Inter Regular 30px in white. No
+   rows, no borders, no surface — just the arrow and the sentence. The source
+   badge is mine and stays, because a sentence FPL published and one the model
+   inferred must not read alike. */
+.notelist { display: grid; gap: clamp(0.6rem, 2vw, 26px); }
 .noterow {
   display: grid;
-  grid-template-columns: 6.5rem 1fr;
-  gap: var(--s-sm);
+  grid-template-columns: clamp(18px, 3.9vw, 50px) 1fr;
+  gap: clamp(0.5rem, 2.7vw, 35px);
   align-items: start;
-  padding: 0.45rem 0.6rem;
-  background: var(--surface-2);
-  border-bottom: 1px solid var(--border);
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
 }
-.noterow:last-child { border-bottom: none; }
-.noterow:hover { background: #3d3e40; }
-.noterow .nn { font-weight: 800; font-size: 0.76rem; overflow: hidden; text-overflow: ellipsis; }
-.noterow .nb { display: grid; gap: 0.2rem; min-width: 0; }
-.note-line { font-size: 0.72rem; color: var(--text); line-height: 1.35; }
+.noterow::before {
+  content: '';
+  display: block;
+  width: clamp(18px, 3.9vw, 50px);
+  height: clamp(15px, 3.3vw, 42px);
+  background: url('../img/ui/arrow-note.svg') no-repeat center / contain;
+}
+.noterow:hover { background: none; }
+.noterow .nn { display: none; }
+.noterow .nb { display: grid; gap: 0.25rem; min-width: 0; }
+.note-line {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: clamp(0.78rem, 2.34vw, 30px);
+  line-height: 1.3;
+  color: #fff;
+}
 .note-line.bad  { color: #ff9d94; }
 .note-line.warn { color: var(--yellow); }
-.note-line.good { color: var(--mint); }
+.note-line.good { color: var(--mint-2); }
 .note-src {
   display: inline-block;
-  font-size: 0.5rem; font-weight: 900; letter-spacing: 0.08em;
-  padding: 0.05rem 0.28rem; margin-right: 0.35rem;
-  border-radius: 3px; vertical-align: 0.08em;
+  font-size: 0.55em; font-weight: 900; letter-spacing: 0.08em;
+  padding: 0.05em 0.3em; margin-right: 0.4em;
+  border-radius: 3px; vertical-align: 0.12em;
   background: var(--border); color: var(--text);
 }
-.note-src.fpl    { background: var(--cyan);  color: var(--ink); }
+.note-src.fpl    { background: var(--mint-2); color: var(--ink); }
 .note-src.manual { background: var(--yellow); color: var(--ink); }
 
 /* A transfer row that carries its reasoning. The sentence spans the full width
@@ -1308,7 +1357,15 @@ select.hz-picker option { background: var(--card-2, #2b2c2e); color: var(--text)
 /* ---------- transfer table ----------
    Out, in, and why — the why spanning the full width beneath on a phone and
    taking its own column once there is room. */
-.ttable { display: grid; }
+/* Figma 244:1606/1608: #393939 on a 3.2px #808080 hairline, radius 38.4px,
+   with a header row sharing the top corners. */
+.ttable {
+  display: grid;
+  background: var(--surface-2);
+  border: clamp(1px, 0.25vw, 3.2px) solid var(--border);
+  border-radius: clamp(12px, 3vw, 38.4px);
+  overflow: hidden;
+}
 .trow {
   display: grid;
   grid-template-columns: 1.4rem 1fr 1.1rem 1fr;

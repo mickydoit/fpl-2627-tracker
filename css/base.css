@@ -69,6 +69,11 @@
   --gold: #b4790a;
   --gold-2: #caab3e;
   --sage: #b1e8aa;
+  /* The redesign's single accent (Figma 241:412). The earlier screens used
+     four — lime, cyan, yellow, sage — one per page; this one uses one, on
+     coal, everywhere. Kept alongside the others because the WC Draft frames
+     that the rest of the system came from still use them. */
+  --mint-2: #c8f5ce;
   --red: #ff6b5e;
 
   /* Each screen owns an accent — the ladder bar is cyan, stats is lime.
@@ -176,120 +181,105 @@ p:last-child { margin-bottom: 0; }
 .dim { color: var(--muted); }
 .error { color: var(--red); }
 
-/* ---------- app shell: product bar + page bar ----------
+/* ---------- app shell ----------
 
-   Two levels of navigation, because there are two products. Geometry and
-   colour come from the Figma "WC Draft" file, frame 236:2:
+   Figma 241:412 ("Home"), measured rather than eyeballed. Desktop frame is
+   1280 wide and mobile 375, and every value in the mobile frame is the desktop
+   value times 375/1280 — the design scales with the viewport rather than
+   switching layouts. So the type is sized in vw and capped, which reproduces
+   both frames from one rule instead of two sets of magic numbers.
 
-     bar fill          #f4ff7b            = --yellow
-     product pill      radius 8px, padding 1.6px 4.8px
-       active          bg #202123, text #f4ff7b
-       inactive        border 0.8px solid black, text #202123
-     page bar          linear-gradient(123.28deg, #f4ff7b 4.2%, #b1e8aa 107.73%)
-                                          = --yellow -> --sage
-     page item         text #202123
-       active          bg #202123, radius 4.2px, text #f4ff7b
+     bar              #c8f5ce ground, 37px vertical padding, items gap 220px
+     product pill     radius 20.16px, border 2.016px, px 15.12px, h 73.08px
+       active         bg #202123, text #c8f5ce
+       inactive       transparent, border #202123
+     type             48.384px at 1280 = 3.78vw
 
-   The frame is 440px wide and its type sizes (19.2px / 13.44px) are for that
-   width. They are expressed in rem here and stepped up slightly on wide
-   viewports, because the design has no desktop frame — see the note in
-   scripts/build-pages.mjs. Everything else is the file's own values.
-
-   The bar deliberately does NOT take --accent: the accent changes per page,
-   and a product switcher that changes colour as you move between pages of the
-   same product would say the opposite of what it means. */
+   The design draws no page navigation. Removing it outright would strand
+   Transfers, Players, League and Draft Night with no route to them, so it is
+   preserved as a compact strip beneath the bar in the same pill language —
+   the one place this deviates, and it is a deviation of addition. */
 
 .appbar {
   position: relative;
-  background: var(--yellow);
+  background: var(--mint-2);
   color: var(--ink);
-  display: flex;
-  align-items: center;
-  gap: var(--s-md);
-  padding: 0.7rem max(1rem, env(safe-area-inset-left)) 0.7rem max(1rem, env(safe-area-inset-right));
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  min-height: 60px;
-}
-
-/* Draft left, Classic right, logo centred between them — Figma 236:2 puts the
-   two products either side of the mark rather than adjacent. Kept as ONE nav
-   element so the landmark and its two links stay a single navigation for a
-   screen reader; the logo is centred over the bar rather than inserted into
-   the list, which would make the mark sound like a third product. */
-.productnav { display: flex; align-items: center; justify-content: space-between; flex: 1; gap: var(--s-sm); }
-.productnav a {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  color: var(--ink);
-  padding: 0.34rem 0.7rem;
-  border: 0.8px solid #000;
-  border-radius: 8px;
-  white-space: nowrap;
-}
-.productnav a:hover { text-decoration: none; background: rgba(32, 33, 35, 0.09); }
-.productnav a.active {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--yellow);
-}
-.productnav a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-
-/* The logo sits to the right of the switcher, as in the Figma, and links to
-   the current product's home rather than always to Classic — clicking the mark
-   inside Draft should not throw you into the other product. */
-.appbar .brand {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  flex-direction: column;
-  gap: 0.1rem;
-  text-align: center;
-  pointer-events: auto;
-}
-.brand { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); flex: none; }
-.brand:hover { text-decoration: none; }
-.brand-logo { display: block; height: 26px; width: auto; }
-.brand-text {
-  font-family: var(--font-display);
-  font-size: 0.66rem;
-  line-height: 1.05;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  max-width: 5.2rem;
-  font-size: 0.55rem;
-}
-
-.pagenav {
-  background: linear-gradient(123.28deg, var(--yellow) 4.2%, var(--sage) 107.73%);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.75rem, 3.4vw, 2.6rem);
-  padding: 0.42rem max(0.75rem, env(safe-area-inset-left));
+  gap: clamp(1rem, 17vw, 220px);
+  padding: clamp(0.5rem, 2.9vw, 37px) max(0.75rem, env(safe-area-inset-left));
   position: sticky;
-  top: 60px;
-  z-index: 29;
+  top: 0;
+  z-index: 30;
+}
+
+/* `display: contents` flattens the two links into the bar so the logo can sit
+   physically between them while staying ONE nav element — the landmark and its
+   two links remain a single navigation for assistive tech, which putting the
+   mark inside the list would break. Order places them either side. */
+.productnav { display: contents; }
+.productnav a:first-child { order: 1; }
+.productnav a:last-child { order: 3; }
+.productnav a {
+  font-family: var(--font-display);
+  font-size: clamp(0.95rem, 3.78vw, 48.384px);
+  line-height: 1;
+  color: var(--ink);
+  padding: clamp(0.2rem, 1.4vw, 18px) clamp(0.45rem, 1.18vw, 15.12px);
+  border: clamp(1px, 0.157vw, 2.016px) solid var(--ink);
+  border-radius: clamp(6px, 1.575vw, 20.16px);
+  white-space: nowrap;
+  display: flex; align-items: center;
+}
+.productnav a:hover { text-decoration: none; }
+.productnav a.active { background: var(--ink); color: var(--mint-2); }
+.productnav a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* The mark, centred between the two products. */
+.brand {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.1rem; color: var(--ink); flex: none; order: 2;
+}
+.brand:hover { text-decoration: none; }
+.brand-logo { display: block; height: clamp(24px, 5.6vw, 72px); width: auto; }
+.brand-text {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(0.5rem, 1.53vw, 19.561px);
+  line-height: 1.036;
+  letter-spacing: -0.05em;
+  text-transform: none;
+}
+.brand-text i { font-style: italic; font-weight: 800; }
+
+/* Not in the Figma frame — see the note above. Kept small on purpose so it
+   reads as a route rather than as part of the design's own hierarchy. */
+.pagenav {
+  background: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.6rem, 2.6vw, 2.4rem);
+  padding: 0.4rem max(0.75rem, env(safe-area-inset-left));
   overflow-x: auto;
   scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
 }
 .pagenav::-webkit-scrollbar { display: none; }
 .pagenav a {
   font-family: var(--font-display);
-  font-size: 0.82rem;
+  font-size: clamp(0.66rem, 1.15vw, 0.95rem);
   letter-spacing: 0.04em;
-  color: var(--ink);
-  padding: 0.2rem 0.42rem;
-  border-radius: 4.2px;
+  color: var(--mint-2);
+  padding: 0.16rem 0.4rem;
+  border-radius: 6px;
   white-space: nowrap;
-  opacity: 0.82;
+  opacity: 0.62;
 }
 .pagenav a:hover { opacity: 1; text-decoration: none; }
-.pagenav a.active { opacity: 1; background: var(--ink); color: var(--yellow); }
-.pagenav a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.pagenav a.active { opacity: 1; background: var(--mint-2); color: var(--ink); }
+.pagenav a:focus-visible { outline: 2px solid var(--mint-2); outline-offset: 2px; }
 
 /* ---------- layout ---------- */
 .container {
@@ -415,7 +405,7 @@ hr { border: none; border-top: 1px solid var(--border-soft); margin: 1rem 0; }
 /* The exported nav icons are a fixed #F4FF7B, so inactive state is done
    optically rather than by recolouring the SVG. */
 .bottomnav a img { height: 21px; width: auto; filter: grayscale(1) brightness(1.4); opacity: 0.6; }
-.bottomnav a.active { opacity: 1; color: var(--yellow); }
+.bottomnav a.active { opacity: 1; color: var(--mint-2); }
 .bottomnav a.active img { filter: none; opacity: 1; }
 .bottomnav a:hover { opacity: 1; text-decoration: none; }
 .bottomnav a:hover img { filter: none; opacity: 0.9; }
@@ -423,17 +413,8 @@ hr { border: none; border-top: 1px solid var(--border-soft); margin: 1rem 0; }
 @media (min-width: 760px) {
   .bottomnav { display: none; }
   .container { padding-bottom: 3rem; }
-  .appbar { min-height: 72px; padding-left: 1.5rem; padding-right: 1.5rem; }
-  .brand-logo { height: 30px; }
-  .productnav a { font-size: 1.2rem; padding: 0.4rem 0.9rem; }
-  .pagenav { top: 72px; padding: 0.5rem 1.5rem; }
-  .pagenav a { font-size: 0.9rem; padding: 0.26rem 0.6rem; }
 }
 
-/* On a phone the page bar stays — it is the only way to reach the other pages
-   of this product without the bottom nav, and it is what the Figma frame
-   shows. It scrolls horizontally rather than wrapping or shrinking to
-   unreadable, so the product switcher above it never moves. */
 @media (max-width: 759px) {
   .pagenav { justify-content: flex-start; }
 }

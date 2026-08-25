@@ -83,18 +83,14 @@ const openPlayer = (p) => playerCard(p, {
  * ------------------------------------------------------------------ */
 const entry = d.entry?.entry;
 const gwStrip = el('div', { class: 'metrics' });
-const cdCell = metric('—', `GW${ctx.nextEvent}`, { tone: 'accent', hint: 'Deadline' });
+/* Four metrics, matching Figma 244:1566 — deadline, points, value, transfers.
+   Overall rank was mine and made five, which wrapped. */
+const cdCell = metric('—', `GW${ctx.nextEvent}`, { hint: 'Time to the deadline' });
 addKids(gwStrip, cdCell);
 countdown(cdCell.querySelector('.mv'), nextEvent?.deadline_time);
 if (entry) {
   addKids(gwStrip,
     metric(String(entry.summary_overall_points ?? '—'), 'Points'),
-    /* Abbreviated: a seven-digit rank cannot fit a pill this size, and "4.3M"
-       is the figure anyone actually reads. The exact number is the tooltip. */
-    metric(entry.summary_overall_rank ? compact(entry.summary_overall_rank) : '—', 'Rank',
-      { hint: entry.summary_overall_rank
-        ? `${entry.summary_overall_rank.toLocaleString('en-GB')}${d.meta?.total_players ? ` of ${d.meta.total_players.toLocaleString('en-GB')}` : ''}`
-        : '' }),
     metric(entry.last_deadline_value ? fmt.price(entry.last_deadline_value) : '—', 'Value',
       { hint: `${fmt.price(bank)} in the bank` }),
     metric(String(freeTransfers), 'Transfers'),
@@ -237,14 +233,14 @@ if (squadIds.length !== SQUAD_RULES.size) {
           : 'Projection as it stood before the deadline, against what was actually scored',
         control: el('div', { class: 'gwstep' },
           el('button', {
-            class: 'ghost', disabled: played.indexOf(reviewGw) >= played.length - 1,
+            class: 'prev', disabled: played.indexOf(reviewGw) >= played.length - 1,
             title: 'Earlier gameweek', onClick: () => step(1),
-          }, '‹'),
+          }, 'Earlier'),
           el('span', { class: 'gwstep-label' }, `GW${reviewGw}`),
           el('button', {
-            class: 'ghost', disabled: played.indexOf(reviewGw) <= 0,
+            class: 'next', disabled: played.indexOf(reviewGw) <= 0,
             title: 'Later gameweek', onClick: () => step(-1),
-          }, '›')),
+          }, 'Later')),
         flush: true,
       });
 
