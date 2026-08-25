@@ -9,7 +9,7 @@ import {
   projectAll, poissonAtLeast, availability, inferGamesPlayed,
   teamDefence, upcomingByTeam, SQUAD_RULES, projectFixture, buildContext,
   actionableEvent, DEFCON_THRESHOLD, DEFCON_PTS, livePointsFor,
-  DEFAULTS as MODEL_DEFAULTS,
+  DEFAULTS as MODEL_DEFAULTS, availabilityForFixture, availabilitySource,
 } from '../js/model.js';
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
 import { notesFor, justifyMove, fixturePhrase, SOURCE } from '../js/explain.js';
@@ -28,6 +28,7 @@ import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scor
   RATING_WEIGHTS, RATING_HORIZONS, RATING_FLOOR } from '../js/rating.js';
 import { topMoves, bestMove } from '../js/transfer-advice.js';
 import { groupByDay, MATCH_VIEWS } from '../js/matches.js';
+import { parseReturnBoundary } from '../js/availability-news.js';
 import { carryForward, schemaFor, ARCHIVE_SCHEMA, AVAILABILITY_FIELDS, DIAGNOSTIC_FIELDS } from './lib/archive-schema.mjs';
 
 let failures = 0;
@@ -80,7 +81,35 @@ const { rows, ctx } = projectAll(boot, fixtures, { horizon: 5 });
 ok('all players projected', rows.length === boot.elements.length);
 ok('no negative projections', rows.every((p) => p.proj >= 0));
 ok('no NaN projections', rows.every((p) => Number.isFinite(p.proj)));
-ok('injured players project 0', rows.filter((p) => p.status === 'i').every((p) => p.proj === 0));
+/* An injured player used to project zero for every remaining gameweek, so a
+   calf strain with a published comeback date erased eight months of football.
+   Availability is now judged per fixture, so the assertion splits: without a
+   parsable return he is still zero throughout, and with one he is zero only
+   until his own team's kickoff passes the boundary. */
+{
+  const flagged = rows.filter((p) => p.status === 'i');
+  const noReturn = flagged.filter((p) => !parseReturnBoundary(p));
+  ok('injured players with no published return still project 0',
+    noReturn.every((p) => p.proj === 0), `${noReturn.filter((p) => p.proj > 0).length} exceptions`);
+  ok('and that is most of them', noReturn.length > flagged.length / 2,
+    `${noReturn.length} of ${flagged.length}`);
+  const withReturn = flagged.filter((p) => parseReturnBoundary(p));
+  ok('a published return date is only honoured from that fixture onward',
+    withReturn.every((p) => {
+      const b = parseReturnBoundary(p).boundary;
+      const fxs = ctx.upcoming[p.team] || [];
+      const anyAfter = fxs.some((f) => Date.parse(f.kickoff) >= b);
+      return anyAfter ? p.proj >= 0 : p.proj === 0;
+    }));
+  /* The case that proves it is per-fixture rather than per-player: a return
+     beyond the horizon must still project nothing inside it. */
+  const beyond = withReturn.filter((p) => {
+    const b = parseReturnBoundary(p).boundary;
+    return (ctx.upcoming[p.team] || []).every((f) => Date.parse(f.kickoff) < b);
+  });
+  ok('a return beyond the horizon still projects 0 within it',
+    beyond.every((p) => p.proj === 0), `${beyond.length} such players`);
+}
 ok('value is projection over price', rows.filter((p) => p.price > 0).every((p) => near(p.value, p.proj / p.price, 1e-9)));
 const top = [...rows].sort((a, b) => b.proj - a.proj)[0];
 ok('best player projects sensibly over 5 GWs', top.proj > 10 && top.proj < 90, `got ${top.proj.toFixed(1)}`);
@@ -385,6 +414,106 @@ console.log('\nExpectation vs preference');
 }
 
 /* ------------------------------------------------------------------ *
+ * the news parser
+ * ------------------------------------------------------------------ *
+ * Parses exactly two clauses and refuses everything else. The refusals matter
+ * more than the matches: a parser that starts interpreting injury prose is
+ * guessing at fitness from a sentence a journalist wrote, and a wrong guess
+ * rewrites a projection silently.
+ */
+console.log('\nNews parser');
+{
+  const P = (news, added) => parseReturnBoundary({ news, news_added: added });
+  const ADDED = '2026-08-18T10:00:00Z';
+  const iso = (r) => (r ? new Date(r.boundary).toISOString().slice(0, 10) : null);
+
+  /* the eight live cases, by shape */
+  ok('parses an expected return', iso(P('Calf injury - Expected back 5 Sep', ADDED)) === '2026-09-05');
+  ok('parses a suspension', iso(P('Suspended until 19 Sep', '2026-08-23T10:00:00Z')) === '2026-09-19');
+  ok('a suspension is labelled deterministic',
+    P('Suspended until 19 Sep', ADDED).kind === 'suspension');
+  ok('an expected return is labelled an estimate',
+    P('Calf injury - Expected back 5 Sep', ADDED).kind === 'expected-return');
+  ok('parses a two-digit day', iso(P('Leg injury - Expected back 28 Nov', '2026-08-14T10:00:00Z')) === '2026-11-28');
+  ok('parses a month far ahead', iso(P('Knee injury - Expected back 10 Oct', ADDED)) === '2026-10-10');
+
+  /* year rollover: published in December, returning in January */
+  ok('December news naming January rolls into the next year',
+    iso(P('Knee injury - Expected back 10 Jan', '2026-12-20T10:00:00Z')) === '2027-01-10');
+  ok('and a date later the same month does not roll',
+    iso(P('Knee injury - Expected back 28 Dec', '2026-12-20T10:00:00Z')) === '2026-12-28');
+
+  /* refusals — every one of these must be null, never a guess */
+  ok('unknown return date is refused', P('Groin injury - Unknown return date', ADDED) === null);
+  ok('a percentage clause is refused', P('Thigh injury - 75% chance of playing', ADDED) === null);
+  ok('a transfer note is refused', P('Has joined Getafe permanently', ADDED) === null);
+  ok('injury prose is refused', P('Back in full training, assessed late', ADDED) === null);
+  ok('a malformed month is refused', P('Expected back 5 Sxp', ADDED) === null);
+  ok('an impossible day is refused', P('Expected back 31 Sep', ADDED) === null);
+  ok('day zero is refused', P('Expected back 0 Sep', ADDED) === null);
+  ok('missing news_added is refused', P('Expected back 5 Sep', null) === null);
+  ok('an unparsable news_added is refused', P('Expected back 5 Sep', 'not-a-date') === null);
+  ok('empty news is refused', P('', ADDED) === null);
+  ok('absent news is refused', parseReturnBoundary({}) === null);
+
+  /* stale news still resolves against its own anchor, not against today */
+  ok('old news anchors to when it was written, not to now',
+    iso(P('Expected back 5 Sep', '2025-08-01T10:00:00Z')) === '2025-09-05');
+
+  /* every live player: only the eight parse, and every parse is sane */
+  const live = boot.elements.filter((e) => parseReturnBoundary(e));
+  ok('exactly the structured clauses parse on live data',
+    live.every((e) => /Expected back|Suspended until/i.test(e.news)), `${live.length} matched`);
+  ok('every live parse yields a real timestamp',
+    live.every((e) => Number.isFinite(parseReturnBoundary(e).boundary)));
+  const unparsed = boot.elements.filter((e) => e.news && !parseReturnBoundary(e));
+  ok('all other news is refused rather than guessed at', unparsed.length > 100,
+    `${unparsed.length} refused`);
+}
+
+/* ------------------------------------------------------------------ *
+ * fixture-specific availability
+ * ------------------------------------------------------------------ */
+console.log('\nFixture-specific availability');
+{
+  const ko = (d) => ({ kickoff: d, difficulty: 3, home: true, event: 2 });
+  const out = { status: 'i', chance_of_playing_next_round: 0,
+    news: 'Calf injury - Expected back 5 Sep', news_added: '2026-08-18T10:00:00Z' };
+
+  ok('a fixture before the boundary is unavailable',
+    availabilityForFixture(out, ko('2026-08-30T14:00:00Z')).value === 0);
+  ok('a fixture after the boundary returns to baseline',
+    availabilityForFixture(out, ko('2026-09-12T14:00:00Z')).value === 1);
+  /* The point of doing this per fixture: two fixtures in the same gameweek can
+     straddle the boundary, and judging on the gameweek's earliest kickoff would
+     give both the same wrong answer. */
+  ok('two fixtures either side of the boundary get different answers',
+    availabilityForFixture(out, ko('2026-09-04T19:00:00Z')).value === 0
+    && availabilityForFixture(out, ko('2026-09-06T14:00:00Z')).value === 1);
+  ok('a fixture with no kickoff falls back rather than inventing a verdict',
+    availabilityForFixture(out, { difficulty: 3 }).value === 0);
+
+  /* players with nothing parsable keep exactly the behaviour they had */
+  const unknown = { status: 'i', news: 'Groin injury - Unknown return date', news_added: '2026-07-23T10:00:00Z' };
+  const doubtful = { status: 'd', chance_of_playing_next_round: 75 };
+  const healthy = { status: 'a' };
+  ok('an unknown-return player is unchanged', availabilityForFixture(unknown, ko('2026-12-01T14:00:00Z')).value === 0);
+  ok('a doubtful player is unchanged', availabilityForFixture(doubtful, ko('2026-08-30T14:00:00Z')).value === 0.75);
+  ok('a healthy player is unchanged', availabilityForFixture(healthy, ko('2026-08-30T14:00:00Z')).value === 1);
+
+  /* source classification, which the archive stores */
+  const src = (p) => availabilitySource(p);
+  ok('a suspension is classified as one',
+    src({ status: 's', news: 'Suspended until 19 Sep', news_added: '2026-08-23T10:00:00Z' }) === 'suspension');
+  ok('an expected return is classified as an estimate', src(out) === 'expected-return');
+  ok('an unknown return is classified as such', src(unknown) === 'unknown-return');
+  ok('a departed player is classified permanent',
+    src({ status: 'u', news: 'Has joined Getafe permanently' }) === 'permanent-unavailable');
+  ok('a doubtful player is classified by the chance field', src(doubtful) === 'chance-field');
+  ok('a healthy player is classified healthy', src(healthy) === 'healthy');
+}
+
+/* ------------------------------------------------------------------ *
  * the availability archive
  * ------------------------------------------------------------------ *
  * Historical FPL data cannot tell "injured" from "benched" from "not in the
@@ -412,7 +541,7 @@ console.log('\nAvailability archive');
      what `schemaFor(_, undefined)` returns. Asserting the key is always present
      would fail on the very files this requirement exists to protect. */
   ok('every archived gameweek resolves to a known schema',
-    archives.every((a) => [1, 2].includes(a.schema ?? 1)),
+    archives.every((a) => [1, 2, 3].includes(a.schema ?? 1)),
     archives.map((a) => a.schema ?? 'absent').join(','));
   ok('a missing schema key reads as schema 1', schemaFor(null, undefined) === 1);
   ok('schema 1 gameweeks are still readable without the new keys',
@@ -477,6 +606,28 @@ console.log('\nAvailability archive');
         || (r[pStartIdx] >= 0 && r[pStartIdx] <= 1)));
     ok('availability and diagnostics describe the same players',
       Object.keys(a.diagnostics).length === Object.keys(a.availability).length);
+
+    /* Schema 3: the archive must be able to say WHY a projection was what it
+       was — whether availability came from a published percentage, a parsed
+       return date, or an admission that nobody knows. Without this a later
+       backtest can see a projection was wrong but not which layer was wrong. */
+    const srcIdx = DIAGNOSTIC_FIELDS.indexOf('availabilitySource');
+    const boundIdx = DIAGNOSTIC_FIELDS.indexOf('returnBoundary');
+    const KNOWN = ['healthy', 'chance-field', 'expected-return', 'suspension',
+      'unknown-return', 'permanent-unavailable'];
+    ok('every diagnostic row classifies its availability',
+      Object.values(a.diagnostics).every((r) => KNOWN.includes(r[srcIdx])),
+      [...new Set(Object.values(a.diagnostics).map((r) => r[srcIdx]))].join(','));
+    ok('a parsed return boundary is archived where one exists',
+      Object.values(a.diagnostics).some((r) => r[boundIdx] !== null));
+    ok('and is null where nothing was parsable',
+      Object.values(a.diagnostics).some((r) => r[boundIdx] === null));
+    ok('only date-shaped boundaries are stored',
+      Object.values(a.diagnostics).every((r) => r[boundIdx] === null
+        || /^\d{4}-\d{2}-\d{2}$/.test(r[boundIdx])));
+    ok('a boundary is only stored for the two parsable classes',
+      Object.values(a.diagnostics).every((r) => r[boundIdx] === null
+        || ['expected-return', 'suspension'].includes(r[srcIdx])));
   }
 
   /* D — GW1's deadline is long past, so it can never gain pre-deadline

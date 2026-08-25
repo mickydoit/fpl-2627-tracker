@@ -23,8 +23,13 @@
  * would look excellent and mean nothing.
  */
 
-/** Schema 1: projected + actual. Schema 2 adds the pre-deadline evidence. */
-export const ARCHIVE_SCHEMA = 2;
+/**
+ * Schema 1: projected + actual.
+ * Schema 2: adds pre-deadline availability, model diagnostics and capturedAt.
+ * Schema 3: diagnostics also carry the applied availability, how it was
+ *           classified, and any parsed return boundary.
+ */
+export const ARCHIVE_SCHEMA = 3;
 
 /** `availability[code]` field order. */
 export const AVAILABILITY_FIELDS = [
@@ -35,6 +40,12 @@ export const AVAILABILITY_FIELDS = [
 /** `diagnostics[code]` field order. */
 export const DIAGNOSTIC_FIELDS = [
   'expMins', 'pStart', 'pPlay', 'p60', 'productionConfidence', 'minutesConfidence',
+  /* Availability as the model actually applied it, plus how it decided. The
+     whole point of keeping these: when a projection turns out wrong, the
+     archive should say whether production was wrong, minutes were wrong, or
+     availability was wrong — and within availability, whether it came from a
+     published percentage, a parsed return date, or a shrug. */
+  'availability', 'availabilitySource', 'returnBoundary',
 ];
 
 /**

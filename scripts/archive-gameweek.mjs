@@ -45,9 +45,10 @@
  */
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { projectAll } from '../js/model.js';
+import { projectAll, availabilitySource } from '../js/model.js';
 import { hydrate } from '../js/prior.js';
 import { carryForward, schemaFor } from './lib/archive-schema.mjs';
+import { parseReturnBoundary } from '../js/availability-news.js';
 
 const FPL = 'https://fantasy.premierleague.com/api';
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36';
@@ -151,6 +152,7 @@ for (const ev of boot.events) {
     availability = {};
     diagnostics = {};
     news = {};
+    const byId = new Map(boot.elements.map((e) => [e.id, e]));
     for (const e of boot.elements) {
       const code = e.code ?? codeOf.get(e.id);
       if (!code) continue;
@@ -169,9 +171,13 @@ for (const ev of boot.events) {
       const code = r.code ?? codeOf.get(r.id);
       const q = r.parts;
       if (!code || !q) continue;
+      const el = byId.get(r.id);
+      const parsed = el ? parseReturnBoundary(el) : null;
       diagnostics[code] = [
         r2(q.expMins), r2(q.pStart), r2(q.pPlay), r2(q.p60),
         r2(q.productionConfidence ?? q.evidence), r2(q.minutesConfidence),
+        r2(q.availability), q.availSource ?? (el ? availabilitySource(el) : null),
+        parsed ? new Date(parsed.boundary).toISOString().slice(0, 10) : null,
       ];
     }
   }

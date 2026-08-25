@@ -1,4 +1,5 @@
-/**
+
+import { parseReturnBoundary } from './availability-news.js';/**
  * Projection engine — shared by the browser and the Actions build step.
  *
  * Everything here is a transparent, hand-tuned model rather than a fitted one.
@@ -92,6 +93,78 @@ export function poissonAtLeast(lambda, k) {
  * Availability from FPL's status codes.
  * a = available, d = doubtful, i = injured, s = suspended, u/n = unavailable.
  */
+/**
+ * How a player's availability was decided. Recorded so the gameweek archive can
+ * later answer "was this projection wrong because production was wrong, minutes
+ * were wrong, or availability was wrong" — and, within availability, which kind
+ * of evidence produced it.
+ */
+export const AVAILABILITY_SOURCE = {
+  HEALTHY: 'healthy',                       // nothing flagged
+  CHANCE_FIELD: 'chance-field',             // FPL gave an explicit percentage
+  EXPECTED_RETURN: 'expected-return',       // parsed "Expected back <date>" — an ESTIMATE
+  SUSPENSION: 'suspension',                 // parsed "Suspended until <date>" — deterministic
+  UNKNOWN_RETURN: 'unknown-return',         // out, and FPL says it does not know when back
+  PERMANENT: 'permanent-unavailable',       // left the league; correctly zero forever
+};
+
+/** Which bucket a player falls in, before any fixture is considered. */
+export function availabilitySource(p) {
+  const news = typeof p?.news === 'string' ? p.news : '';
+  const parsed = parseReturnBoundary(p);
+  if (parsed) {
+    return parsed.kind === 'suspension'
+      ? AVAILABILITY_SOURCE.SUSPENSION : AVAILABILITY_SOURCE.EXPECTED_RETURN;
+  }
+  if (p?.status === 'u' || p?.status === 'n') return AVAILABILITY_SOURCE.PERMANENT;
+  if (p?.status === 'i' || p?.status === 's') return AVAILABILITY_SOURCE.UNKNOWN_RETURN;
+  if (availability(p) < 1) return AVAILABILITY_SOURCE.CHANCE_FIELD;
+  return AVAILABILITY_SOURCE.HEALTHY;
+}
+
+/**
+ * Availability for ONE fixture, rather than one number stretched across the
+ * whole horizon.
+ *
+ * The defect this addresses: a player flagged today projected zero for every
+ * remaining gameweek, so a calf strain with a published comeback date erased
+ * eight months of football. Availability is a property of a player AND a
+ * fixture, and the boundary is compared against that fixture's own kickoff —
+ * not the earliest kickoff in the gameweek, which would misjudge a player
+ * whose team plays Monday in a week that starts on Friday, and would collapse
+ * a double gameweek's two fixtures into one verdict.
+ *
+ * Only two clauses move anything. Everything else — including the 47 players
+ * FPL says it has no return date for — keeps exactly the behaviour it had.
+ *
+ * @returns {{value: number, source: string}}
+ */
+export function availabilityForFixture(p, fixture) {
+  const base = availability(p);
+  const parsed = parseReturnBoundary(p);
+  const source = availabilitySource(p);
+  if (!parsed) return { value: base, source };
+
+  const ko = fixture?.kickoff ? Date.parse(fixture.kickoff) : NaN;
+  /* No kickoff to judge against — a fixture list without times, or a blank.
+     Fall back to the flat answer rather than inventing a verdict. */
+  if (!Number.isFinite(ko)) return { value: base, source };
+
+  if (ko < parsed.boundary) {
+    /* Still inside the ban or the expected absence. `base` rather than a hard
+       zero so a non-zero chance FPL publishes is never silently overridden —
+       today every parsable case is status i/s with a chance of 0, so this is
+       0 in practice, but it fails safe if that ever stops being true. */
+    return { value: Math.min(base, 0), source };
+  }
+  /* Past the boundary. For a suspension that is simply the end of the ban. For
+     an expected return it is an APPROXIMATION of FPL's estimate, not a promise
+     of fitness — hence the source label, which the archive keeps so the two can
+     be told apart when there is enough history to evaluate them. Whether he
+     then STARTS is the opportunity model's question, not this one's. */
+  return { value: 1, source };
+}
+
 export function availability(p) {
   if (p.status === 'u' || p.status === 'n') return 0;
   if (p.status === 'i' || p.status === 's') return 0;
@@ -307,8 +380,8 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
   const games = ctx.games || 1;
   const mins = modelMinutes(p);
 
-  const avail = availability(p);
-  if (avail <= 0) return { total: 0, util: 0, parts: { unavailable: true } };
+  const { value: avail, source: availSource } = availabilityForFixture(p, fixture);
+  if (avail <= 0) return { total: 0, util: 0, parts: { unavailable: true, availSource } };
 
   /* ---- opportunity ----
    *
@@ -491,7 +564,7 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
     contrib,
     parts: {
       appearance, attack, cleanSheet, conceded, saves, defcon, bonus, cards,
-      expMins, pStart, pSubApp, pPlay, p60, pCS, xgcMatch, attMult, availability: avail,
+      expMins, pStart, pSubApp, pPlay, p60, pCS, xgcMatch, attMult, availability: avail, availSource,
       /* The minutes a game he has ACTUALLY played, before any shrinkage
          toward the positional prior. `expMins` is deliberately pulled toward
          that prior until 450 minutes of evidence exist, which is right for a

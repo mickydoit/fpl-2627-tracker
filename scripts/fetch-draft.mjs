@@ -104,6 +104,10 @@ const players = classicBoot.elements.map((p) => {
     status: p.status,
     chance_of_playing_next_round: p.chance_of_playing_next_round,
     news: p.news || '',
+    /* The anchor the return-date parser needs. Without it js/availability-news
+       refuses to resolve "Expected back 5 Sep" to a year, so the Draft board
+       silently lost fixture-specific availability that Classic had. */
+    news_added: p.news_added || null,
     now_cost: num(p.now_cost), // informational only — never used in ranking
     draft_rank: d ? num(d.draft_rank) : (prior.players[p.code]?.draft_rank ?? null),
     penalties_order: p.penalties_order ?? null,
