@@ -263,14 +263,23 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   box-shadow: 0 0 0 100vmax transparent;
 }
 /* Never wraps. A line of five that folds onto two rows stops being a formation
-   — the shape is the information, so the shirts compress instead. */
+   — the shape is the information, so the shirts compress instead.
+   
+   Spread across the width rather than clustered mid-pitch: a back three sitting
+   shoulder to shoulder in the centre circle does not read as a back three.
+   `space-around` gives the outer players a half-gap, so a line reaches about
+   85% of the width instead of 64% — wide, without anyone standing on the
+   touchline, which `space-between` would do. A lone goalkeeper still centres
+   because there is nothing to spread. */
 .pitch-row {
   position: relative;
   z-index: 1;
   display: flex;
-  justify-content: center;
+  justify-content: space-around;
+  align-items: flex-start;
   gap: 0.25rem;
   flex-wrap: nowrap;
+  padding-inline: clamp(0.15rem, 0.6vw, 0.6rem);
 }
 .pitch-row .shirt { flex: 0 1 auto; min-width: 0; }
 
@@ -282,7 +291,10 @@ table.players .proj { color: var(--accent); font-weight: 900; }
    to stay legible at every size, which is the whole reason for drawing a
    formation instead of a list. */
 .shirt {
-  width: clamp(3.6rem, 6.4vw, 7.6rem);
+  /* Sized against the widest line a legal formation can have — five. At the
+     full-width pitch that leaves room for shirts roughly twice the old size,
+     which is what stops a back three looking like three stickers on a lawn. */
+  width: clamp(3.6rem, 9vw, 11rem);
   max-width: 100%;
   display: grid;
   justify-items: center;
@@ -291,10 +303,10 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   user-select: none;
 }
 .shirt .kit { position: relative; display: block; line-height: 0; }
-.shirt .kit img { width: clamp(2.2rem, 4vw, 4.6rem); height: clamp(2.2rem, 4vw, 4.6rem); object-fit: contain; display: block; }
+.shirt .kit img { width: clamp(2.2rem, 5.6vw, 7rem); height: clamp(2.2rem, 5.6vw, 7rem); object-fit: contain; display: block; }
 .shirt .kit-fallback {
   display: grid; place-items: center;
-  width: clamp(2.2rem, 4vw, 4.6rem); height: clamp(2.2rem, 4vw, 4.6rem);
+  width: clamp(2.2rem, 5.6vw, 7rem); height: clamp(2.2rem, 5.6vw, 7rem);
   background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
   font-family: var(--font-display); font-size: 0.7rem; color: var(--text);
 }
@@ -302,7 +314,7 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   width: 100%;
   background: var(--bg);
   color: #fff;
-  font-size: clamp(0.6rem, 1.05vw, 1.05rem);
+  font-size: clamp(0.6rem, 1.45vw, 1.5rem);
   font-weight: 800;
   line-height: 1.5;
   text-align: center;
@@ -314,7 +326,7 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   width: 100%;
   background: var(--surface-2);
   color: var(--text);
-  font-size: clamp(0.6rem, 1.05vw, 1.05rem);
+  font-size: clamp(0.6rem, 1.45vw, 1.5rem);
   font-weight: 700;
   line-height: 1.5;
   text-align: center;
