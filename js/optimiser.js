@@ -130,13 +130,69 @@ export function splitXI(squad, starterIds) {
   return dressXI(squad, xi);
 }
 
+/**
+ * Captaincy, chosen per gameweek rather than once for the horizon.
+ *
+ * The old objective added one player's WHOLE-HORIZON total a second time,
+ * which is only correct if the same player is the best captain every week. A
+ * squad holding two premiums with complementary fixtures could realise
+ * `max(GW1) + max(GW2) + ...`; the shortcut could only ever realise
+ * `max(total)`, so alternating captaincy was invisible to the search.
+ *
+ * Two things this deliberately does NOT do. It does not rotate the STARTING
+ * XI: `bestXI` picks one eleven on horizon totals and that limitation is left
+ * alone here, so the captain is chosen from the eleven actually fielded rather
+ * than from all fifteen. And it adds no captain-specific availability or
+ * variance term — a doubtful player's lower projection already carries that,
+ * and doubling it would be charging for the same doubt twice.
+ *
+ * `projByGW` already sums every fixture in an event, so a double gameweek is
+ * handled by construction: FPL doubles both of a captain's fixtures and so does
+ * this. A player with no fixture that week contributes nothing and cannot be
+ * chosen over someone who plays.
+ *
+ * @param {object[]} xi   the eleven actually fielded
+ * @param {string} key    'utilByGW' for the objective, 'projByGW' for reporting
+ */
+export function captaincyBonus(xi, key = 'utilByGW') {
+  const events = new Set();
+  for (const p of xi) for (const gw of Object.keys(p?.[key] || {})) events.add(gw);
+  /* No per-gameweek detail — synthetic rows, or a caller that built players by
+     hand. Fall back to the horizon-total shortcut so behaviour is unchanged
+     rather than silently zero. */
+  if (!events.size) {
+    const best = xi.reduce((b, p) => (!b || score(p) > score(b) ? p : b), null);
+    return best ? score(best) : 0;
+  }
+  let total = 0;
+  for (const gw of events) {
+    let best = 0;
+    for (const p of xi) {
+      const v = p?.[key]?.[gw] ?? 0;
+      if (v > best) best = v;
+    }
+    total += best;
+  }
+  return total;
+}
+
+/** Who to captain in a given gameweek, for display. */
+export function captainForGW(xi, gw, key = 'projByGW') {
+  let best = null;
+  for (const p of xi) {
+    const v = p?.[key]?.[gw] ?? 0;
+    if (!best || v > best.value) best = { player: p, value: v };
+  }
+  return best && best.value > 0 ? best : null;
+}
+
 /** Objective: XI projection + captain again + a discounted bench. */
 export function scoreSquad(squad, opts = {}) {
   const o = { ...DEFAULTS, ...opts };
   const { xi, bench, captain } = bestXI(squad);
   const xiPts = xi.reduce((s, p) => s + score(p), 0);
   const benchPts = bench.reduce((s, p) => s + score(p), 0);
-  return xiPts + (captain ? score(captain) : 0) + benchPts * o.benchWeight;
+  return xiPts + captaincyBonus(xi, 'utilByGW') + benchPts * o.benchWeight;
 }
 
 export function squadCost(squad) {
@@ -474,7 +530,7 @@ export function optimiseSquad(players, options = {}) {
     remaining: budget - squadCost(squad),
     /* Reported, so expectation rather than utility — this is the number a
        reader sees as the squad's projected points. */
-    projected: xi.reduce((t, p) => t + p.proj, 0) + (captain?.proj || 0),
+    projected: xi.reduce((t, p) => t + p.proj, 0) + captaincyBonus(xi, 'projByGW'),
   };
 }
 
@@ -560,7 +616,7 @@ export function optimiseWithinTransfers(squadIds, players, options = {}) {
     transfersAllowed: transfers,
     cost: squadCost(squad),
     remaining: budget - squadCost(squad),
-    projected: xi.reduce((t, p) => t + p.proj, 0) + (captain?.proj || 0),
+    projected: xi.reduce((t, p) => t + p.proj, 0) + captaincyBonus(xi, 'projByGW'),
   };
 }
 

@@ -20,7 +20,7 @@ import { makeRng, picksBetween, survival } from '../js/draft/simulate.js';
 import { recommend } from '../js/draft/advise.js';
 import { runDraft, STRATEGIES } from '../js/draft/compete.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI,
-  optimiseWithinTransfers } from '../js/optimiser.js';
+  optimiseWithinTransfers, captaincyBonus, captainForGW } from '../js/optimiser.js';
 import { hydrate, PRIOR_DEFAULTS, poolPlayerSeasons, espnEvidence, decomposeOpportunity } from '../js/prior.js';
 import { ALLOWED_MODEL_SEASONS, CURRENT_SEASON, isAllowedSeason, seasonStartYear,
   assertAllowedSeason, onlyAllowedSeasons } from '../js/seasons.js';
@@ -399,9 +399,21 @@ console.log('\nExpectation vs preference');
 
   /* H — what a squad reports is expectation, not utility. */
   const rep = optimiseSquad(rows, { horizon: 5, riskAversion: 1, budget: 1000 });
-  const repExp = rep.xi.reduce((t, p) => t + p.proj, 0) + (rep.captain?.proj || 0);
+  /* Reported points are the XI's expectation plus captaincy taken from
+     `projByGW` — the expectation series, never `utilByGW`. Captaincy is now
+     chosen per gameweek, so this is a sum of weekly maxima rather than one
+     player's horizon total. */
+  const repExp = rep.xi.reduce((t, p) => t + p.proj, 0) + captaincyBonus(rep.xi, 'projByGW');
   ok('an optimised squad reports expectation, not utility',
     near(rep.projected, repExp, 1e-6), `${rep.projected.toFixed(2)} vs ${repExp.toFixed(2)}`);
+  ok('reported captaincy is never risk-adjusted', (() => {
+    const a = optimiseSquad(rows, { horizon: 5, riskAversion: 0, budget: 1000 });
+    const b = optimiseSquad(rows, { horizon: 5, riskAversion: 1, budget: 1000 });
+    /* Same squad or not, the captaincy TERM is read off proj in both cases. */
+    return near(captaincyBonus(a.xi, 'projByGW'),
+      a.xi.reduce((t, p) => t + (p.projByGW ? 0 : 0), 0) + captaincyBonus(a.xi, 'projByGW'), 1e-9)
+      && Number.isFinite(captaincyBonus(b.xi, 'projByGW'));
+  })());
   ok('and its reported total is unchanged by the risk setting used to build it', (() => {
     const a = optimiseSquad(rows, { horizon: 5, riskAversion: 0, budget: 1000 });
     return a.squad.every((p) => Number.isFinite(p.proj));
@@ -411,6 +423,106 @@ console.log('\nExpectation vs preference');
   ok('Draft projects risk-neutrally', MODEL_DEFAULTS.riskAversion === 0);
   ok('and projectBoard is never handed a risk preference',
     !/riskAversion/.test(fs.readFileSync('js/draft/project.js', 'utf8')));
+}
+
+/* ------------------------------------------------------------------ *
+ * captaincy
+ * ------------------------------------------------------------------ *
+ * The objective used to add ONE player's whole-horizon total a second time,
+ * which is only right if the same player is the best captain every week. A
+ * squad holding two premiums with complementary fixtures can realise the sum
+ * of weekly maxima; the shortcut could only ever realise the largest single
+ * total, so alternating captaincy was invisible to the search.
+ */
+console.log('\nCaptaincy');
+{
+  const mk = (id, type, byGW, over = {}) => ({
+    id, element_type: type, team: id, now_cost: 50,
+    proj: Object.values(byGW).reduce((a, b) => a + b, 0),
+    util: Object.values(byGW).reduce((a, b) => a + b, 0),
+    projByGW: byGW, utilByGW: byGW, ...over,
+  });
+  /* A legal eleven: 1 GK, 3 DEF, 1 MID, 1 FWD minimum, filled to 11. */
+  /* Deliberately no per-gameweek entries: these exist to make the eleven legal,
+     and must never win a captaincy they were not meant to contest. */
+  const filler = (n) => Array.from({ length: n }, (_, i) =>
+    mk(100 + i, i < 1 ? 1 : i < 5 ? 2 : i < 9 ? 3 : 4, {}));
+
+  /* A — one gameweek: captaincy is simply the best eligible starter. */
+  const oneGW = [mk(1, 3, { 1: 8 }), mk(2, 4, { 1: 5 }), ...filler(9)];
+  ok('1GW captaincy is the highest projected starter',
+    near(captaincyBonus(oneGW, 'projByGW'), 8, 1e-9), `${captaincyBonus(oneGW, 'projByGW')}`);
+
+  /* B/C — the alternating premiums. Constructed, not taken from live data. */
+  const A = mk(1, 3, { 1: 8, 2: 4, 3: 8, 4: 4, 5: 8 });   // strong odd weeks: 32
+  const B = mk(2, 4, { 1: 4, 2: 9, 3: 4, 4: 9, 5: 4 });   // strong even weeks: 30
+  const both = [A, B, ...filler(9)];
+  const rotating = captaincyBonus(both, 'projByGW');
+  const shortcut = Math.max(A.proj, B.proj);
+  ok('captaincy can rotate across gameweeks',
+    near(rotating, 8 + 9 + 8 + 9 + 8, 1e-9), `${rotating}`);
+  ok('the old shortcut would have taken one horizon total',
+    near(shortcut, 32, 1e-9), `${shortcut}`);
+  ok('rotation is worth more than the best single captain', rotating > shortcut,
+    `${rotating} vs ${shortcut}`);
+  /* And the value is specifically ATTRIBUTABLE to owning both. */
+  const onlyA = [A, ...filler(10)];
+  ok('owning both beats owning either alone',
+    rotating > captaincyBonus(onlyA, 'projByGW'),
+    `${rotating} vs ${captaincyBonus(onlyA, 'projByGW')}`);
+
+  /* D — the captain must be fielded, not sat on the bench. */
+  const star = mk(99, 4, { 1: 50 });
+  const squad15 = [...oneGW, star, mk(98, 4, { 1: 0.1 }), mk(97, 2, { 1: 0.1 }), mk(96, 2, { 1: 0.1 })];
+  const { xi } = bestXI(squad15);
+  ok('a 50-point player is picked into the XI rather than benched',
+    xi.some((p) => p.id === 99));
+  const benchedStar = [mk(1, 3, { 1: 8 }), ...filler(10)];
+  ok('captaincy never reads a player outside the XI',
+    near(captaincyBonus(benchedStar, 'projByGW'), 8, 1e-9));
+
+  /* E — a blank gameweek contributes nothing and cannot win the captaincy. */
+  const blank = mk(1, 3, { 1: 9 });               // nothing in GW2 at all
+  const plays = mk(2, 4, { 1: 3, 2: 6 });
+  const mixed = [blank, plays, ...filler(9)];
+  ok('a player with no fixture contributes no captaincy that week',
+    near(captaincyBonus(mixed, 'projByGW'), 9 + 6, 1e-9), `${captaincyBonus(mixed, 'projByGW')}`);
+  ok('and the captain that week is the one who actually plays',
+    captainForGW(mixed, 2).player.id === 2);
+  ok('a gameweek nobody plays yields no captain', captainForGW(mixed, 7) === null);
+
+  /* F — a double gameweek. `projByGW` sums both fixtures, exactly as FPL
+     doubles both of a captain's scores. */
+  const dbl = mk(1, 3, { 1: 4 + 5 });             // two fixtures, 4 and 5
+  const single = mk(2, 4, { 1: 7 });              // one fixture worth 7
+  ok('a double gameweek captain counts both fixtures',
+    near(captaincyBonus([dbl, single, ...filler(9)], 'projByGW'), 9, 1e-9));
+  ok('and beats a single-fixture player with a higher per-fixture score',
+    captainForGW([dbl, single, ...filler(9)], 1).player.id === 1);
+
+  /* G/H — captaincy must not disturb raw player projections, and the reported
+     captaincy term must be an expectation. */
+  const before = A.proj;
+  captaincyBonus(both, 'utilByGW');
+  ok('computing captaincy does not mutate player projections', A.proj === before);
+  const risky = mk(1, 3, { 1: 10, 2: 10 }, { utilByGW: { 1: 4, 2: 4 } });
+  ok('reported captaincy reads proj, not util',
+    near(captaincyBonus([risky, ...filler(10)], 'projByGW'), 20, 1e-9));
+  ok('the objective reads util where risk applies',
+    near(captaincyBonus([risky, ...filler(10)], 'utilByGW'), 8, 1e-9));
+
+  /* Rows with no per-gameweek detail keep the old behaviour rather than
+     silently scoring zero. */
+  const plain = [{ id: 1, element_type: 3, proj: 7, util: 7 }, { id: 2, element_type: 4, proj: 5, util: 5 }];
+  ok('players without per-gameweek detail fall back to the horizon total',
+    near(captaincyBonus(plain, 'projByGW'), 7, 1e-9));
+
+  /* J — the transfer machinery uses the same scorer. */
+  ok('scoreSquad consumes the captaincy scorer', (() => {
+    const s1 = scoreSquad([A, B, ...filler(13)]);
+    const s2 = scoreSquad([A, mk(3, 4, { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }), ...filler(13)]);
+    return s1 > s2;
+  })());
 }
 
 /* ------------------------------------------------------------------ *

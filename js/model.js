@@ -593,11 +593,12 @@ export function projectHorizon(p, ctx, opts = {}) {
   const o = { ...DEFAULTS, ...opts };
   const fixtures = ctx.upcoming?.[p.team] || [];
   if (!fixtures.length) {
-    return { total: 0, util: 0, perGW: {}, count: 0, parts: { noFixtures: true } };
+    return { total: 0, util: 0, perGW: {}, utilGW: {}, count: 0, parts: { noFixtures: true } };
   }
   let total = 0;
   let util = 0;
   const perGW = {};
+  const utilGW = {};
   const sum = { appearance: 0, attack: 0, cleanSheet: 0, conceded: 0, saves: 0, defcon: 0, bonus: 0, cards: 0, prior: 0 };
   const acc = { expMins: 0, observedMpg: 0, pStart: 0, pSubApp: 0, pPlay: 0, p60: 0, pCS: 0, attMult: 0, availability: 0, evidence: 0, productionConfidence: 0, minutesConfidence: 0, minutesEvidence: 0 };
   let last = null;
@@ -606,6 +607,11 @@ export function projectHorizon(p, ctx, opts = {}) {
     total += r.total;
     util += r.util ?? r.total;
     perGW[f.event] = (perGW[f.event] || 0) + r.total;
+    /* The same split by gameweek, on the decision side. Captaincy has to be
+       chosen per gameweek, and it must be able to choose on the same basis the
+       rest of the objective uses — otherwise a doubtful captain escapes the
+       risk preference that every other player in the XI is subject to. */
+    utilGW[f.event] = (utilGW[f.event] || 0) + (r.util ?? r.total);
     if (r.contrib) for (const k of Object.keys(sum)) sum[k] += r.contrib[k] || 0;
     if (r.parts) {
       for (const k of Object.keys(acc)) acc[k] += r.parts[k] ?? 0;
@@ -620,6 +626,7 @@ export function projectHorizon(p, ctx, opts = {}) {
     total,
     util,
     perGW,
+    utilGW,
     count: fixtures.length,
     parts: {
       ...sum,
@@ -725,6 +732,7 @@ export function projectAll(boot, fixtures, opts = {}) {
       proj: proj.total,
       /* Ranking score, never displayed. Equals `proj` at riskAversion 0. */
       util: proj.util,
+      utilByGW: proj.utilGW,
       projPerGW: proj.count ? proj.total / proj.count : 0,
       projByGW: proj.perGW,
       fixtureCount: proj.count,
