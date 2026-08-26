@@ -28,6 +28,8 @@
  * Schema 2: adds pre-deadline availability, model diagnostics and capturedAt.
  * Schema 3: diagnostics also carry the applied availability, how it was
  *           classified, and any parsed return boundary.
+ * Schema 5: `actual` carries the scoring routes, not just the total, and the
+ *           archive records which model commit produced the projection.
  * Schema 4: the fixture context each projection was made under — the opponent's
  *           defensive strength as measured AT THE DEADLINE, and whether that
  *           figure was measured or fell back to an editorial rating.
@@ -39,7 +41,7 @@
  *           comparison that Phase 6 is waiting on could never be run on
  *           historical gameweeks.
  */
-export const ARCHIVE_SCHEMA = 4;
+export const ARCHIVE_SCHEMA = 5;
 
 /** `availability[code]` field order. */
 export const AVAILABILITY_FIELDS = [
@@ -58,6 +60,20 @@ export const AVAILABILITY_FIELDS = [
  */
 export const TEAM_CONTEXT_FIELDS = ['defence', 'provenance'];
 
+/**
+ * `actual[code]` field order. Schema 4 and earlier stored only the first four.
+ *
+ * `defensiveContribution` is the raw action count as FPL publishes it, not
+ * points: DEF counts CBI+tackles, MID/FWD also recoveries, and 2 points are
+ * awarded only at 10 or 12. Keeping the count is what makes threshold
+ * calibration checkable rather than merely the points total.
+ */
+export const ACTUAL_FIELDS = [
+  'totalPoints', 'minutes', 'bonus', 'bps',
+  'goals', 'assists', 'cleanSheets', 'goalsConceded', 'saves',
+  'defensiveContribution', 'starts',
+];
+
 /** `diagnostics[code]` field order. */
 export const DIAGNOSTIC_FIELDS = [
   'expMins', 'pStart', 'pPlay', 'p60', 'productionConfidence', 'minutesConfidence',
@@ -67,6 +83,11 @@ export const DIAGNOSTIC_FIELDS = [
      availability was wrong — and within availability, whether it came from a
      published percentage, a parsed return date, or a shrug. */
   'availability', 'availabilitySource', 'returnBoundary',
+  /* Expected EVENT counts, so a later evaluation can ask whether goals,
+     assists or defensive thresholds were the miss rather than inferring it
+     from a points total. `defconProb` is the Poisson threshold probability;
+     summed across players it is the expected number of threshold hits. */
+  'expGoals', 'expAssists', 'defconProb',
 ];
 
 /**

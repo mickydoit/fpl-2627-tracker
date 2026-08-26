@@ -436,6 +436,13 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
   // A player newly on penalties won't have that priced into last season's xG.
   if (p.penalties_order === 1) xg90 += o.penaltyBonus;
   const attack = (xg90 * GOAL_PTS[pos] + xa90 * 3) * minsFactor * attMult;
+  /* The same expectation as event COUNTS rather than points. Diagnostic only —
+     nothing downstream reads these, and `attack` above is unchanged. They exist
+     so the gameweek archive can freeze what the model expected and a later
+     evaluation can ask whether goals or assists were the miss, rather than
+     inferring it from a points total. */
+  const expGoals = xg90 * minsFactor * attMult;
+  const expAssists = xa90 * minsFactor * attMult;
 
   /* clean sheet and goals conceded */
   const teamXGC = ctx.defence?.[p.team] ?? 1.42;
@@ -470,6 +477,7 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
    * chance of reaching ten is far below two thirds of a full game's chance —
    * scaling the probability afterwards would model a different, easier game.
    */
+  let defconProb = 0;
   let defcon = 0;
   if (pos >= 2) {
     const per90 = num(p.defensive_contribution_per_90) || (mins > 0
@@ -479,7 +487,8 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
       : 0);
     if (per90 > 0) {
       const expectedActions = per90 * minsFactor;
-      defcon = poissonAtLeast(expectedActions, DEFCON_THRESHOLD[pos]) * DEFCON_PTS;
+      defconProb = poissonAtLeast(expectedActions, DEFCON_THRESHOLD[pos]);
+      defcon = defconProb * DEFCON_PTS;
     }
   }
 
@@ -565,6 +574,7 @@ export function projectFixture(p, fixture, ctx, opts = {}) {
     parts: {
       appearance, attack, cleanSheet, conceded, saves, defcon, bonus, cards,
       expMins, pStart, pSubApp, pPlay, p60, pCS, xgcMatch, attMult, availability: avail, availSource,
+      expGoals, expAssists, defconProb,
       /* The minutes a game he has ACTUALLY played, before any shrinkage
          toward the positional prior. `expMins` is deliberately pulled toward
          that prior until 450 minutes of evidence exist, which is right for a
@@ -600,7 +610,7 @@ export function projectHorizon(p, ctx, opts = {}) {
   const perGW = {};
   const utilGW = {};
   const sum = { appearance: 0, attack: 0, cleanSheet: 0, conceded: 0, saves: 0, defcon: 0, bonus: 0, cards: 0, prior: 0 };
-  const acc = { expMins: 0, observedMpg: 0, pStart: 0, pSubApp: 0, pPlay: 0, p60: 0, pCS: 0, attMult: 0, availability: 0, evidence: 0, productionConfidence: 0, minutesConfidence: 0, minutesEvidence: 0 };
+  const acc = { expMins: 0, observedMpg: 0, pStart: 0, pSubApp: 0, pPlay: 0, p60: 0, pCS: 0, expGoals: 0, expAssists: 0, defconProb: 0, attMult: 0, availability: 0, evidence: 0, productionConfidence: 0, minutesConfidence: 0, minutesEvidence: 0 };
   let last = null;
   for (const f of fixtures) {
     const r = projectFixture(p, f, ctx, o);
@@ -632,6 +642,10 @@ export function projectHorizon(p, ctx, opts = {}) {
       ...sum,
       expMins: acc.expMins / n,
       observedMpg: acc.observedMpg / n,
+      /* Summed, not averaged: these are event counts over the horizon. */
+      expGoals: acc.expGoals,
+      expAssists: acc.expAssists,
+      defconProb: acc.defconProb,
       pStart: acc.pStart / n,
       pSubApp: acc.pSubApp / n,
       pPlay: acc.pPlay / n,

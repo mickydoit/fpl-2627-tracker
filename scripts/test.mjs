@@ -30,7 +30,7 @@ import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scor
 import { topMoves, bestMove } from '../js/transfer-advice.js';
 import { groupByDay, MATCH_VIEWS } from '../js/matches.js';
 import { parseReturnBoundary } from '../js/availability-news.js';
-import { carryForward, schemaFor, ARCHIVE_SCHEMA, AVAILABILITY_FIELDS, DIAGNOSTIC_FIELDS, TEAM_CONTEXT_FIELDS } from './lib/archive-schema.mjs';
+import { carryForward, schemaFor, ARCHIVE_SCHEMA, AVAILABILITY_FIELDS, DIAGNOSTIC_FIELDS, TEAM_CONTEXT_FIELDS, ACTUAL_FIELDS } from './lib/archive-schema.mjs';
 
 let failures = 0;
 let checks = 0;
@@ -861,7 +861,7 @@ console.log('\nAvailability archive');
      what `schemaFor(_, undefined)` returns. Asserting the key is always present
      would fail on the very files this requirement exists to protect. */
   ok('every archived gameweek resolves to a known schema',
-    archives.every((a) => [1, 2, 3, 4].includes(a.schema ?? 1)),
+    archives.every((a) => [1, 2, 3, 4, ARCHIVE_SCHEMA].includes(a.schema ?? 1)),
     archives.map((a) => a.schema ?? 'absent').join(','));
   ok('a missing schema key reads as schema 1', schemaFor(null, undefined) === 1);
   ok('schema 1 gameweeks are still readable without the new keys',
@@ -948,6 +948,43 @@ console.log('\nAvailability archive');
     ok('a boundary is only stored for the two parsable classes',
       Object.values(a.diagnostics).every((r) => r[boundIdx] === null
         || ['expected-return', 'suspension'].includes(r[srcIdx])));
+
+    /* Schema 4: the fixture context each projection was made under. teamDefence()
+       is recomputed from live minutes and xGC, both rewritten every refresh, so
+       a past deadline's value is unrecoverable unless frozen here. */
+    if (a.schema >= 4 && a.teamContext) {
+      const tc = Object.values(a.teamContext);
+      ok('fixture context is frozen for every club', tc.length === 20, `${tc.length}`);
+      ok('each club records a defensive figure and where it came from',
+        tc.every((r) => r.length === TEAM_CONTEXT_FIELDS.length
+          && Number.isFinite(r[0]) && ['measured', 'fallback'].includes(r[1])));
+      /* The distinction that keeps a future FDR-vs-opponent-defence comparison
+         honest: a fallback club's figure comes from the same editorial family as
+         FDR, so it is not an independent signal for that club. */
+      ok('fallback clubs are recorded rather than silently equated with measured ones',
+        tc.some((r) => r[1] === 'fallback') || tc.every((r) => r[1] === 'measured'));
+    }
+
+    /* Schema 5: provenance and route-level evidence, so a GW8 model can be told
+       from a GW9 model without guessing whether a difference came from the code
+       or the data. */
+    if (a.schema >= 5) {
+      ok('a gameweek records which model produced it', !!a.modelCommit, `${a.modelCommit}`);
+      ok('expected event counts are frozen alongside the projection',
+        Object.values(a.diagnostics).every((r) => r.length === DIAGNOSTIC_FIELDS.length),
+        `${Object.values(a.diagnostics)[0]?.length} of ${DIAGNOSTIC_FIELDS.length}`);
+      /* Expected goals must be a COUNT, not a points figure — freezing it only
+         helps if a later evaluation can compare like with like. */
+      const gi = DIAGNOSTIC_FIELDS.indexOf('expGoals');
+      const totalExpG = Object.values(a.diagnostics).reduce((t, r) => t + (r[gi] || 0), 0);
+      ok('league-wide expected goals is a plausible match-day count',
+        totalExpG > 10 && totalExpG < 60, `${totalExpG.toFixed(1)}`);
+      const actRows = Object.values(a.actual || {});
+      if (actRows.length) {
+        ok('actuals carry the scoring routes, not just the total',
+          actRows.every((r) => r.length === ACTUAL_FIELDS.length), `${actRows[0].length} fields`);
+      }
+    }
   }
 
   /* D — GW1's deadline is long past, so it can never gain pre-deadline

@@ -49,6 +49,7 @@ import { projectAll, availabilitySource, teamDefence } from '../js/model.js';
 import { hydrate } from '../js/prior.js';
 import { carryForward, schemaFor } from './lib/archive-schema.mjs';
 import { parseReturnBoundary } from '../js/availability-news.js';
+import { execSync } from 'node:child_process';
 
 const FPL = 'https://fantasy.premierleague.com/api';
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36';
@@ -82,11 +83,30 @@ const r2 = (v) => (Number.isFinite(v) ? Math.round(v * 100) / 100 : null);
 const codeOf = new Map(boot.elements.map((e) => [e.id, e.code]));
 
 /** Trim to what the squad view needs. Arrays, not objects — 9KB against 112KB. */
+/**
+ * What actually happened, per player, in the order ACTUAL_FIELDS documents.
+ *
+ * Carries the scoring routes as well as the total. Without them a later
+ * evaluation can see that a forecast was wrong but not WHICH route was wrong —
+ * whether the model missed goals, clean sheets or defensive contributions — and
+ * refetching `event/{gw}/live` months later is not equivalent, because FPL
+ * revises stats after the fact.
+ *
+ * `defensive_contribution` is stored as the raw ACTION COUNT, which is what FPL
+ * publishes: for a defender it is CBI+tackles, for a mid or forward it also
+ * includes recoveries. Points are 2 only once it crosses 10 or 12. Storing the
+ * count rather than the points is what lets threshold calibration be checked.
+ */
 const trimActual = (rows) => Object.fromEntries(rows
   .map((e) => {
     const st = e.stats || e;
     const code = codeOf.get(e.id);
-    return code ? [code, [st.total_points ?? 0, st.minutes ?? 0, st.bonus ?? 0, st.bps ?? 0]] : null;
+    return code ? [code, [
+      st.total_points ?? 0, st.minutes ?? 0, st.bonus ?? 0, st.bps ?? 0,
+      st.goals_scored ?? 0, st.assists ?? 0, st.clean_sheets ?? 0,
+      st.goals_conceded ?? 0, st.saves ?? 0, st.defensive_contribution ?? 0,
+      st.starts ?? 0,
+    ]] : null;
   })
   .filter(Boolean));
 
@@ -124,6 +144,7 @@ for (const ev of boot.events) {
   let diagnostics = null;
   let news = null;
   let capturedAt = null;
+  let modelCommit = null;
   let teamContext = null;
 
   if (beforeDeadline) {
@@ -150,6 +171,16 @@ for (const ev of boot.events) {
        and it comes from the run itself rather than being inferred from a git
        commit, which only says when something was committed. */
     capturedAt = new Date().toISOString();
+    /* Which code produced this projection. Without it a later comparison of, say,
+       the GW8 model against the GW9 model cannot tell whether a difference came
+       from the model changing or the data moving. GITHUB_SHA is set by the
+       Action; the git fallback covers a local run. */
+    modelCommit = process.env.GITHUB_SHA
+      ? process.env.GITHUB_SHA.slice(0, 7)
+      : (() => {
+        try { return execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim(); }
+        catch { return null; }
+      })();
     availability = {};
     diagnostics = {};
     news = {};
@@ -198,6 +229,7 @@ for (const ev of boot.events) {
         r2(q.productionConfidence ?? q.evidence), r2(q.minutesConfidence),
         r2(q.availability), q.availSource ?? (el ? availabilitySource(el) : null),
         parsed ? new Date(parsed.boundary).toISOString().slice(0, 10) : null,
+        r2(q.expGoals), r2(q.expAssists), r2(q.defconProb),
       ];
     }
   }
@@ -232,6 +264,8 @@ for (const ev of boot.events) {
     schema: schemaFor(availability ?? existing?.availability, existing?.schema),
     ...(carryForward(existing?.capturedAt, capturedAt)
       ? { capturedAt: carryForward(existing?.capturedAt, capturedAt) } : {}),
+    ...(carryForward(existing?.modelCommit, modelCommit)
+      ? { modelCommit: carryForward(existing?.modelCommit, modelCommit) } : {}),
     /* [ elementId, status, chanceThisRound, chanceNextRound, minutes, starts, newsAdded ] */
     /* [ defence, provenance ] per team id */
     ...(carryForward(existing?.teamContext, teamContext)

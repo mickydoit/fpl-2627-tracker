@@ -1,6 +1,31 @@
 /**
  * Score frozen forecasts against what actually happened.
  *
+ * TWO MODES, AND THEY MUST NEVER BE MIXED
+ * =======================================
+ *
+ *   ARCHIVED / OUT-OF-SAMPLE
+ *     The projection actually frozen before that deadline, by whatever model
+ *     was in production at the time. GW1: projected 773.41, actual 948.00.
+ *     This is the ONLY figure that counts as genuine model performance,
+ *     because nothing about it could have seen the result.
+ *
+ *   CURRENT MODEL REPLAY / RETROSPECTIVE
+ *     Today's production model re-run against the same frozen pre-deadline
+ *     inputs. GW1: 686.79 against the same 948.00. Useful for asking how a
+ *     later change would have behaved, and NOT out-of-sample: every model
+ *     change since was made with GW1's result already known.
+ *
+ * This file reports the archived mode only. Replay is a separate exercise and
+ * its numbers must never be quoted alongside these as if comparable — a replay
+ * that "beats" an archived forecast has simply been developed afterwards.
+ *
+ * ROUTE DECOMPOSITION is likewise mode-bound. The archive stores a total, not
+ * components, so an archived forecast's route split is UNAVAILABLE unless that
+ * gameweek's schema carried the pieces. It must not be approximated by running
+ * today's code over the old inputs and presenting the result as an explanation
+ * of the archived number — that is a different model's opinion.
+ *
  * Every phase from here is gated on out-of-sample evidence rather than on more
  * code, and this is the thing that supplies it. `scripts/archive-gameweek.mjs`
  * freezes a projection before each deadline and attaches the result afterwards;
@@ -30,7 +55,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { AVAILABILITY_FIELDS, DIAGNOSTIC_FIELDS } from './lib/archive-schema.mjs';
+import { AVAILABILITY_FIELDS, DIAGNOSTIC_FIELDS, ACTUAL_FIELDS } from './lib/archive-schema.mjs';
 
 const DIR = 'data/history/gw';
 const args = process.argv.slice(2);
@@ -101,6 +126,7 @@ function loadGameweek(file) {
   if (!g.projected || !g.actual) return null;
   const availIdx = Object.fromEntries(AVAILABILITY_FIELDS.map((f, i) => [f, i]));
   const diagIdx = Object.fromEntries(DIAGNOSTIC_FIELDS.map((f, i) => [f, i]));
+  const actIdx = Object.fromEntries(ACTUAL_FIELDS.map((f, i) => [f, i]));
   const rows = [];
   for (const [code, projected] of Object.entries(g.projected)) {
     const act = g.actual[code];
@@ -124,6 +150,14 @@ function loadGameweek(file) {
          on the hydrated payload and is rewritten every refresh, so today's
          value is not what the forecast was made with. */
       productionConfidence: dg ? dg[diagIdx.productionConfidence] : null,
+      expGoals: dg ? dg[diagIdx.expGoals] : null,
+      expAssists: dg ? dg[diagIdx.expAssists] : null,
+      defconProb: dg ? dg[diagIdx.defconProb] : null,
+      /* Schema 5+ carries the routes. Older gameweeks stored four fields, so
+         everything below tolerates undefined rather than assuming. */
+      goals: act.length > 4 ? Number(act[actIdx.goals]) : null,
+      assists: act.length > 4 ? Number(act[actIdx.assists]) : null,
+      defcon: act.length > 4 ? Number(act[actIdx.defensiveContribution]) : null,
       pStart: dg ? dg[diagIdx.pStart] : null,
       p60: dg ? dg[diagIdx.p60] : null,
     });
@@ -133,7 +167,8 @@ function loadGameweek(file) {
     if (m) r.position = m.element_type;
   }
   return { event: g.event, schema: g.schema ?? 1, final: !!g.final,
-    capturedAt: g.capturedAt ?? null, deadline: g.deadline, rows };
+    capturedAt: g.capturedAt ?? null, modelCommit: g.modelCommit ?? g.projectedFrom ?? null,
+    deadline: g.deadline, rows };
 }
 
 /* Positions and evidence come from the CURRENT bootstrap. That is safe: a
@@ -171,6 +206,9 @@ for (const w of weeks) {
   const started = w.rows.filter((r) => r.minutes >= 60);
   const entry = {
     event: w.event, schema: w.schema, final: w.final,
+    mode: 'ARCHIVED / OUT-OF-SAMPLE',
+    modelCommit: w.modelCommit ?? null,
+    capturedAt: w.capturedAt ?? null,
     leadMinutes: w.capturedAt
       ? Math.round((Date.parse(w.deadline) - Date.parse(w.capturedAt)) / 60000) : null,
     all: summarise(w.rows), played: summarise(played), started: summarise(started),
@@ -231,7 +269,8 @@ for (const w of weeks) {
         if (!b.length) continue;
         const p = b.reduce((s2, r) => s2 + r.projected, 0);
         const a = b.reduce((s2, r) => s2 + r.actual, 0);
-        entry.byEvidence[label] = { n: b.length, projected: p, actual: a, diff: a - p };
+        entry.byEvidence[label] = { n: b.length, projected: p, actual: a, diff: a - p,
+          ratio: p > 0 ? a / p : NaN, rho: spearman(b) };
       }
     }
     /* Minutes error, where the archive froze an expectation to compare against. */
@@ -244,6 +283,25 @@ for (const w of weeks) {
       };
     }
   }
+  /* Attack and DefCon, where both sides are frozen. Registered hypotheses H3
+     (DefCon under-prediction) and the attack half of H4 are monitored here. */
+  const withEv = w.rows.filter((r) => r.expGoals != null && r.goals != null);
+  if (withEv.length) {
+    const eG = withEv.reduce((s2, r) => s2 + r.expGoals, 0);
+    const eA = withEv.reduce((s2, r) => s2 + r.expAssists, 0);
+    entry.attack = { n: withEv.length,
+      expectedGoals: eG, actualGoals: withEv.reduce((s2, r) => s2 + r.goals, 0),
+      expectedAssists: eA, actualAssists: withEv.reduce((s2, r) => s2 + r.assists, 0) };
+  }
+  const withDC = w.rows.filter((r) => r.defconProb != null && r.defcon != null && r.position);
+  if (withDC.length) {
+    const th = (p) => (p === 2 ? 10 : 12);
+    const hits = withDC.filter((r) => r.defcon >= th(r.position)).length;
+    const expHits = withDC.reduce((s2, r) => s2 + r.defconProb, 0);
+    entry.defcon = { n: withDC.length, expectedHits: expHits, actualHits: hits,
+      expectedPoints: expHits * 2, actualPoints: hits * 2,
+      ratio: expHits > 0 ? hits / expHits : NaN };
+  }
   report.gameweeks.push(entry);
 }
 report.overall = { all: summarise(all), played: summarise(all.filter((r) => r.minutes > 0)),
@@ -252,9 +310,13 @@ report.overall = { all: summarise(all), played: summarise(all.filter((r) => r.mi
 if (asJSON) { console.log(JSON.stringify(report, null, 1)); process.exit(0); }
 
 const f = (v, d = 3) => (Number.isFinite(v) ? v.toFixed(d) : '—');
-console.log(`\nForecast evaluation — ${weeks.length} gameweek(s)\n`);
+console.log(`\nForecast evaluation — ARCHIVED / OUT-OF-SAMPLE — ${weeks.length} gameweek(s)`);
+console.log('Every figure below is the projection frozen before that deadline, scored against');
+console.log('the result. Current-model replay numbers are a different mode and are not shown\n'
+  + 'here; they must never be quoted alongside these.\n');
 for (const g of report.gameweeks) {
   console.log(`GW${g.event}  schema ${g.schema}${g.final ? ' (final)' : ''}`
+    + `  model ${g.modelCommit ?? 'unknown'}`
     + (g.leadMinutes != null ? `  frozen ${g.leadMinutes} min before deadline` : '  (no capture timestamp)'));
   for (const [k, s] of [['all', g.all], ['played', g.played], ['started 60+', g.started]]) {
     console.log(`   ${k.padEnd(12)} n=${String(s.n).padStart(4)}  MAE ${f(s.mae, 2)}  RMSE ${f(s.rmse, 2)}`
@@ -277,11 +339,23 @@ for (const g of report.gameweeks) {
     }
   }
   if (g.byEvidence) {
+    /* Two properties, tracked separately because Phase 7 suggests they diverge:
+       the price prior may RANK cold-start players well while sitting too low in
+       LEVEL. `rho` is discrimination, `ratio` is calibration. */
     console.log('   by production confidence frozen at the deadline:');
     for (const [k, v] of Object.entries(g.byEvidence)) {
-      console.log(`     ${k.padEnd(8)} n=${String(v.n).padStart(4)} projected ${f(v.projected, 1).padStart(7)}`
-        + ` actual ${f(v.actual, 1).padStart(7)} diff ${f(v.diff, 1).padStart(7)}`);
+      console.log(`     ${k.padEnd(10)} n=${String(v.n).padStart(4)}`
+        + ` level ${f(v.ratio, 3).padStart(6)}  rank rho ${f(v.rho, 3).padStart(6)}`
+        + `  projected ${f(v.projected, 1).padStart(7)} actual ${f(v.actual, 1).padStart(7)}`);
     }
+  }
+  if (g.attack) {
+    console.log(`   attack        goals ${f(g.attack.expectedGoals, 1)} expected vs ${g.attack.actualGoals} actual`
+      + `   assists ${f(g.attack.expectedAssists, 1)} vs ${g.attack.actualAssists}`);
+  }
+  if (g.defcon) {
+    console.log(`   defcon        hits ${f(g.defcon.expectedHits, 1)} expected vs ${g.defcon.actualHits} actual`
+      + `  (ratio ${f(g.defcon.ratio, 2)})   points ${f(g.defcon.expectedPoints, 1)} vs ${g.defcon.actualPoints}`);
   }
   if (g.bySource) {
     console.log('   by availability source:');
