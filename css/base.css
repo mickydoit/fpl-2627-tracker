@@ -208,7 +208,11 @@ p:last-child { margin-bottom: 0; }
   align-items: center;
   justify-content: center;
   gap: clamp(1rem, 17vw, 220px);
-  padding: clamp(0.5rem, 2.9vw, 37px) max(0.75rem, env(safe-area-inset-left));
+  /* The bar is sticky, so its height is charged against every screenful the
+     user ever sees, not just the first. At 37px of padding around an 85px mark
+     it stood at 162px — 18% of a laptop viewport, permanently, to repeat
+     something the user already knows. Trimmed to roughly a seventh. */
+  padding: clamp(0.4rem, 1.4vw, 20px) max(0.75rem, env(safe-area-inset-left));
   position: sticky;
   top: 0;
   z-index: 30;
@@ -242,7 +246,7 @@ p:last-child { margin-bottom: 0; }
   gap: 0.1rem; color: var(--ink); flex: none; order: 2;
 }
 .brand:hover { text-decoration: none; }
-.brand-logo { display: block; height: clamp(30px, 6.6vw, 85px); width: auto; }
+.brand-logo { display: block; height: clamp(28px, 5vw, 64px); width: auto; }
 
 
 /* Not in the Figma frame — see the note above. Kept small on purpose so it

@@ -228,7 +228,26 @@ table.players .proj { color: var(--accent); font-weight: 900; }
    Nothing here decides who plays. bestXI / legalXI / legalDraftXI still choose
    the eleven; this only draws it. */
 
-.pitchwrap { display: grid; gap: 0.5rem; }
+.pitchwrap {
+  display: grid;
+  gap: 0.4rem;
+  /* ---------- the squad scale ----------
+     One set of tokens sizes every shirt on every board — the review pitch, the
+     projections pitch and Draft's, which all render through squadPitch. The
+     brief is that a manager can see all fifteen, bench included, without
+     scrolling; a shirt big enough to admire individually made that impossible,
+     because eleven of them plus four on the bench is six stacked rows.
+     Tune here, not in the rules below. */
+  --kit-size:   clamp(1.9rem, 3.15vw, 3.3rem);
+  --kit-bench:  clamp(1.5rem, 2.35vw, 2.4rem);
+  /* Width is free: it buys no vertical space back, and the row holds five
+     shirts across a full-width pitch with room to spare. Set wide enough that
+     the longest surnames in the league — Calvert-Lewin, B.Fernandes — sit on
+     the plate without ellipsis. */
+  --shirt-w:    clamp(3.1rem, 7.4vw, 8.5rem);
+  --shirt-font: clamp(0.56rem, 0.95vw, 0.95rem);
+  --shirt-lh:   1.26;
+}
 
 .pitch {
   position: relative;
@@ -237,7 +256,7 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   display: grid;
   gap: 0.55rem;
   align-content: space-between;
-  min-height: 20rem;
+  min-height: 15rem;
   overflow: hidden;
   /* Turf, with the mown stripes the real thing has. Two layers: a vertical
      gradient for depth toward the goal, then repeating bands across it. */
@@ -303,7 +322,7 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   /* Sized against the widest line a legal formation can have — five. At the
      full-width pitch that leaves room for shirts roughly twice the old size,
      which is what stops a back three looking like three stickers on a lawn. */
-  width: clamp(3.6rem, 9vw, 11rem);
+  width: var(--shirt-w, clamp(3.1rem, 6.2vw, 7.5rem));
   max-width: 100%;
   display: grid;
   justify-items: center;
@@ -312,10 +331,15 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   user-select: none;
 }
 .shirt .kit { position: relative; display: block; line-height: 0; }
-.shirt .kit img { width: clamp(2.2rem, 5.6vw, 7rem); height: clamp(2.2rem, 5.6vw, 7rem); object-fit: contain; display: block; }
+.shirt .kit img {
+  width: var(--kit-size, clamp(1.9rem, 3.5vw, 3.6rem));
+  height: var(--kit-size, clamp(1.9rem, 3.5vw, 3.6rem));
+  object-fit: contain; display: block;
+}
 .shirt .kit-fallback {
   display: grid; place-items: center;
-  width: clamp(2.2rem, 5.6vw, 7rem); height: clamp(2.2rem, 5.6vw, 7rem);
+  width: var(--kit-size, clamp(1.9rem, 3.5vw, 3.6rem));
+  height: var(--kit-size, clamp(1.9rem, 3.5vw, 3.6rem));
   background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
   font-family: var(--font-display); font-size: 0.7rem; color: var(--text);
 }
@@ -323,9 +347,9 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   width: 100%;
   background: var(--bg);
   color: #fff;
-  font-size: clamp(0.6rem, 1.45vw, 1.5rem);
+  font-size: var(--shirt-font, clamp(0.56rem, 0.95vw, 0.95rem));
   font-weight: 800;
-  line-height: 1.5;
+  line-height: var(--shirt-lh, 1.35);
   text-align: center;
   border-radius: 3px 3px 0 0;
   padding: 0 0.15rem;
@@ -335,9 +359,9 @@ table.players .proj { color: var(--accent); font-weight: 900; }
   width: 100%;
   background: var(--surface-2);
   color: var(--text);
-  font-size: clamp(0.6rem, 1.45vw, 1.5rem);
+  font-size: var(--shirt-font, clamp(0.56rem, 0.95vw, 0.95rem));
   font-weight: 700;
-  line-height: 1.5;
+  line-height: var(--shirt-lh, 1.35);
   text-align: center;
   border-radius: 0 0 3px 3px;
   font-variant-numeric: tabular-nums;
@@ -388,7 +412,10 @@ table.players .proj { color: var(--accent); font-weight: 900; }
 .bench-row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0.25rem; }
 .bench-strip .shirt { opacity: 0.82; width: auto; max-width: 100%; }
 .bench-strip .shirt .kit img,
-.bench-strip .shirt .kit-fallback { width: 2.2rem; height: 2.2rem; }
+.bench-strip .shirt .kit-fallback {
+  width: var(--kit-bench, clamp(1.6rem, 2.6vw, 2.6rem));
+  height: var(--kit-bench, clamp(1.6rem, 2.6vw, 2.6rem));
+}
 .bench-strip .shirt:hover { opacity: 1; }
 
 /* The shirt being carried. Follows the pointer so the gesture reads as
@@ -403,7 +430,12 @@ table.players .proj { color: var(--accent); font-weight: 900; }
 .shirt.drop-hot .nm { outline: 2px solid var(--cyan); outline-offset: 1px; }
 
 @media (min-width: 760px) {
-  .pitch { min-height: clamp(26rem, 44vw, 52rem); padding: 1.6rem 1.2rem 2rem; gap: 1.1rem; }
+  /* A floor, not a target. This used to be 44vw, which on a 1440 canvas held
+     the board at 634px whatever it contained — the shirts had already been
+     compacted and the turf simply grew to swallow the saving. Low enough now
+     that the formation sets the height, and only a sparse row count falls back
+     on it. */
+  .pitch { min-height: clamp(17rem, 22vw, 26rem); }
 }
 .shirt .pr { font-size: 0.62rem; font-weight: 700; opacity: 0.78; font-variant-numeric: tabular-nums; }
 .shirt .pt {
@@ -917,9 +949,9 @@ table.players th.col-r, table.players td.col-r { text-align: right; font-variant
 .tiles:last-child { margin-bottom: 0; }
 
 /* the pitch and its rows */
-.pitch { padding: var(--s-lg) var(--s-md); gap: var(--s-md); }
-.pitch-row { gap: var(--s-sm); }
-.bench-strip { padding-top: var(--s-md); gap: var(--s-sm); margin-top: var(--s-xs); }
+.pitch { padding: var(--s-sm) var(--s-sm); gap: var(--s-xs); }
+.pitch-row { gap: var(--s-xs); }
+.bench-strip { padding: var(--s-xs) var(--s-sm) var(--s-sm); gap: var(--s-xs); margin-top: 0; }
 
 /* the draft headline: rings and numbers side by side rather than the rings
    marooned in a column of empty space, which is what happened when this had
@@ -1139,7 +1171,7 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
    uncontrolled label about half a gap left of centre. Visible the moment
    anything underneath is centred to the page, as the match list is. */
 .secctl:empty { display: none; }
-.secbody { padding: clamp(1rem, 3.4vw, 44px) 0 0; }
+.secbody { padding: clamp(0.8rem, 2.2vw, 28px) 0 0; }
 .secbody.flush { padding-top: clamp(1rem, 3.4vw, 44px); }
 .secbody > :first-child { margin-top: 0; }
 .secbody > :last-child { margin-bottom: 0; }
@@ -1206,7 +1238,7 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
   align-items: flex-start;
   justify-content: space-between;
   gap: clamp(0.5rem, 2vw, 2rem);
-  margin: clamp(0.8rem, 8.7vw, 111px) auto 0;
+  margin: clamp(0.7rem, 2.6vw, 34px) auto 0;
   max-width: 1122px;
   flex-wrap: nowrap;
 }
@@ -1508,7 +1540,7 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
 .sidecol { display: block; }
 
 /* The page-level gameweek stepper: alone, centred, above the metrics. */
-.sechead.pagestep { margin: clamp(0.8rem, 2.5vw, 2rem) 0 0; }
+.sechead.pagestep { margin: clamp(0.6rem, 1.4vw, 1.25rem) 0 0; }
 
 /* ---------- the cycler ----------
    The frame's control, and now the app's only selector for a short ordered

@@ -104,7 +104,12 @@ if (entry) {
     metric(String(freeTransfers), 'Transfers'),
   );
 }
-addKids(app, stepperHost, gwStrip);
+/* The stepper goes up top; the four metrics do NOT. They are a summary of the
+   squad — points, value, transfers — so they read as a caption underneath the
+   board they summarise rather than as a banner the board hides behind. Sitting
+   above, they cost ~200px between the gameweek control and the first shirt,
+   which was most of the reason the bench fell off the bottom of the screen. */
+addKids(app, stepperHost);
 
 /* ------------------------------------------------------------------ *
  * the squad
@@ -115,7 +120,9 @@ if (squadIds.length !== SQUAD_RULES.size) {
     el('p', { class: 'empty' }, entry?.name
       ? 'FPL has not published your picks yet — they appear after the first deadline.'
       : 'Set FPL_ENTRY_ID, or build a squad on the Players page, and it will appear here.'));
-  addKids(app, noSquad.wrap);
+  /* No squad to summarise, so the metrics have nothing to caption — they go
+     back to the top, where they are the only thing on the page. */
+  addKids(app, gwStrip, noSquad.wrap);
 } else {
   const squad = squadIds.map((id) => byId(5).get(id)).filter(Boolean);
   const picks = d.entry?.picks?.picks || [];
@@ -197,8 +204,8 @@ if (squadIds.length !== SQUAD_RULES.size) {
   const liveTotal = () => chosenXi.map((id) => byId(5).get(id)).filter(Boolean)
     .reduce((t, p) => t + (livePts(p) ?? 0), 0);
 
-  /* No pill above this one. The frame puts the squad straight under the
-     metrics and only introduces pills to separate it from the review below. */
+  /* No pill of its own — the Projections header immediately above it is the
+     label, and a second heading between the two would just add noise. */
   const squadSec = section('', { flush: true });
   squadSec.head.remove();
   addKids(squadSec.body, pitchHost);
@@ -220,11 +227,21 @@ if (squadIds.length !== SQUAD_RULES.size) {
     }, { options: [1, 3, 5, 8] }));
   paintHead();
 
-  /* Two columns from 900px: the pitch holds its shape on the left while the
-     numbers that read as a list — rating, suggestion, this week's move — stack
-     beside it. Widening the pitch instead would just inflate the kits. */
+  /* Order of the page, and the reason for it.
+   *
+   * The first board is the RESULT: the exact eleven that was fielded, what each
+   * player was projected to score and what he actually scored. That is the
+   * question a manager opens the app with, and it used to sit below a board of
+   * future projections. The projections board follows underneath, because
+   * "what happens next" is the second question, not the first.
+   *
+   * Each control sits directly above the board it drives — the gameweek
+   * stepper picks which gameweek is being reviewed, the Projections pill picks
+   * the window the forecast covers. Putting both at the top would leave the
+   * horizon cycler floating above a board it does not affect. */
+  const reviewCol = el('div');
   const sideCol = el('div', { class: 'sidecol' });
-  addKids(app, squadSec.wrap, splitSec.wrap, sideCol);
+  addKids(app, reviewCol, gwStrip, splitSec.wrap, squadSec.wrap, sideCol);
 
   /* ---------------- the review pitch ----------------
    *
@@ -283,7 +300,7 @@ if (squadIds.length !== SQUAD_RULES.size) {
       setKids(reviewHost, sec.wrap);
     };
     paintReview();
-    addKids(sideCol, reviewHost);
+    addKids(reviewCol, reviewHost);
   }
 
   /* ---------------- notes ----------------
