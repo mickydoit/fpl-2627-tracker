@@ -1173,6 +1173,13 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
 .secctl:empty { display: none; }
 .secbody { padding: clamp(0.8rem, 2.2vw, 28px) 0 0; }
 .secbody.flush { padding-top: clamp(1rem, 3.4vw, 44px); }
+/* A headerless section reserves no room for the heading it never draws. The
+   review pitch sat 140px below the gameweek pill — 96px of section rhythm plus
+   44px of clearance under a header that had been removed — which read as the
+   page having stalled rather than as two things being separated. */
+.sec.nohead { margin-top: clamp(0.5rem, 1.3vw, 1.25rem); }
+.sec.nohead > .secbody,
+.sec.nohead > .secbody.flush { padding-top: 0; }
 .secbody > :first-child { margin-top: 0; }
 .secbody > :last-child { margin-bottom: 0; }
 
@@ -1238,7 +1245,7 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
   align-items: flex-start;
   justify-content: space-between;
   gap: clamp(0.5rem, 2vw, 2rem);
-  margin: clamp(0.7rem, 2.6vw, 34px) auto 0;
+  margin: clamp(0.6rem, 1.6vw, 22px) auto 0;
   max-width: 1122px;
   flex-wrap: nowrap;
 }

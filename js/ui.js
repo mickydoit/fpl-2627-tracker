@@ -353,7 +353,13 @@ export function section(name, { control = null, hint = '', flush = false } = {})
   const head = el('div', { class: 'sechead' },
     el('span', { class: 'seclabel', title: hint }, name),
     ctl);
-  return { wrap: el('section', { class: 'sec' }, head, body), body, head, ctl };
+  /* An unnamed section has no header — the pitches are the case, they are
+     introduced by the pill above them rather than by a label of their own.
+     Marking it here means the stylesheet can drop the room reserved above and
+     below a heading that was never drawn, instead of every caller removing the
+     node and living with the gap it left behind. */
+  const wrap = el('section', { class: `sec ${name ? '' : 'nohead'}` }, head, body);
+  return { wrap, body, head, ctl };
 }
 
 /**

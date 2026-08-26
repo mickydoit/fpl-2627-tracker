@@ -104,12 +104,11 @@ if (entry) {
     metric(String(freeTransfers), 'Transfers'),
   );
 }
-/* The stepper goes up top; the four metrics do NOT. They are a summary of the
-   squad — points, value, transfers — so they read as a caption underneath the
-   board they summarise rather than as a banner the board hides behind. Sitting
-   above, they cost ~200px between the gameweek control and the first shirt,
-   which was most of the reason the bench fell off the bottom of the screen. */
-addKids(app, stepperHost);
+/* Stepper, then the four metrics, then the board. The metrics sat below the
+   board for a while to buy vertical room; with the board capped that room is
+   no longer needed, and the gameweek pill reads better with its numbers
+   directly under it than with empty ground between it and the squad. */
+addKids(app, stepperHost, gwStrip);
 
 /* ------------------------------------------------------------------ *
  * the squad
@@ -120,9 +119,7 @@ if (squadIds.length !== SQUAD_RULES.size) {
     el('p', { class: 'empty' }, entry?.name
       ? 'FPL has not published your picks yet — they appear after the first deadline.'
       : 'Set FPL_ENTRY_ID, or build a squad on the Players page, and it will appear here.'));
-  /* No squad to summarise, so the metrics have nothing to caption — they go
-     back to the top, where they are the only thing on the page. */
-  addKids(app, gwStrip, noSquad.wrap);
+  addKids(app, noSquad.wrap);
 } else {
   const squad = squadIds.map((id) => byId(5).get(id)).filter(Boolean);
   const picks = d.entry?.picks?.picks || [];
@@ -241,7 +238,7 @@ if (squadIds.length !== SQUAD_RULES.size) {
    * horizon cycler floating above a board it does not affect. */
   const reviewCol = el('div');
   const sideCol = el('div', { class: 'sidecol' });
-  addKids(app, reviewCol, gwStrip, splitSec.wrap, squadSec.wrap, sideCol);
+  addKids(app, reviewCol, splitSec.wrap, squadSec.wrap, sideCol);
 
   /* ---------------- the review pitch ----------------
    *
