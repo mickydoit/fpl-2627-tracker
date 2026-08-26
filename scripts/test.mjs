@@ -30,7 +30,7 @@ import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scor
 import { topMoves, bestMove } from '../js/transfer-advice.js';
 import { groupByDay, MATCH_VIEWS } from '../js/matches.js';
 import { parseReturnBoundary } from '../js/availability-news.js';
-import { carryForward, schemaFor, ARCHIVE_SCHEMA, AVAILABILITY_FIELDS, DIAGNOSTIC_FIELDS } from './lib/archive-schema.mjs';
+import { carryForward, schemaFor, ARCHIVE_SCHEMA, AVAILABILITY_FIELDS, DIAGNOSTIC_FIELDS, TEAM_CONTEXT_FIELDS } from './lib/archive-schema.mjs';
 
 let failures = 0;
 let checks = 0;
@@ -850,7 +850,7 @@ console.log('\nAvailability archive');
      what `schemaFor(_, undefined)` returns. Asserting the key is always present
      would fail on the very files this requirement exists to protect. */
   ok('every archived gameweek resolves to a known schema',
-    archives.every((a) => [1, 2, 3].includes(a.schema ?? 1)),
+    archives.every((a) => [1, 2, 3, 4].includes(a.schema ?? 1)),
     archives.map((a) => a.schema ?? 'absent').join(','));
   ok('a missing schema key reads as schema 1', schemaFor(null, undefined) === 1);
   ok('schema 1 gameweeks are still readable without the new keys',

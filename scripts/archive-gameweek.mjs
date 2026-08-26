@@ -45,7 +45,7 @@
  */
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { projectAll, availabilitySource } from '../js/model.js';
+import { projectAll, availabilitySource, teamDefence } from '../js/model.js';
 import { hydrate } from '../js/prior.js';
 import { carryForward, schemaFor } from './lib/archive-schema.mjs';
 import { parseReturnBoundary } from '../js/availability-news.js';
@@ -124,6 +124,7 @@ for (const ev of boot.events) {
   let diagnostics = null;
   let news = null;
   let capturedAt = null;
+  let teamContext = null;
 
   if (beforeDeadline) {
     const rows = projectAll(prior ? hydrate(boot, prior, {}, espn) : boot,
@@ -153,6 +154,25 @@ for (const ev of boot.events) {
     diagnostics = {};
     news = {};
     const byId = new Map(boot.elements.map((e) => [e.id, e]));
+
+    /* Fixture context, frozen because it cannot be rebuilt later: teamDefence()
+       reads live minutes and xGC, and both are rewritten on every refresh. The
+       provenance flag records whether a club had enough real evidence or fell
+       back to an editorial strength rating. */
+    const hydrated = prior ? hydrate(boot, prior, {}, espn) : boot;
+    const defence = teamDefence(hydrated.elements, hydrated.teams);
+    const evidenced = {};
+    for (const e of hydrated.elements) {
+      const mins = num(e.evidenceMinutes) || num(e.minutes);
+      if (mins >= 450 && num(e.expected_goals_conceded_per_90) > 0) {
+        evidenced[e.team] = (evidenced[e.team] || 0) + 1;
+      }
+    }
+    teamContext = {};
+    for (const t of hydrated.teams) {
+      if (defence[t.id] == null) continue;
+      teamContext[t.id] = [r2(defence[t.id]), (evidenced[t.id] || 0) >= 3 ? 'measured' : 'fallback'];
+    }
     for (const e of boot.elements) {
       const code = e.code ?? codeOf.get(e.id);
       if (!code) continue;
@@ -213,6 +233,9 @@ for (const ev of boot.events) {
     ...(carryForward(existing?.capturedAt, capturedAt)
       ? { capturedAt: carryForward(existing?.capturedAt, capturedAt) } : {}),
     /* [ elementId, status, chanceThisRound, chanceNextRound, minutes, starts, newsAdded ] */
+    /* [ defence, provenance ] per team id */
+    ...(carryForward(existing?.teamContext, teamContext)
+      ? { teamContext: carryForward(existing?.teamContext, teamContext) } : {}),
     ...(carryForward(existing?.availability, availability)
       ? { availability: carryForward(existing?.availability, availability) } : {}),
     /* [ expMins, pStart, pPlay, p60, productionConfidence, minutesConfidence ] */

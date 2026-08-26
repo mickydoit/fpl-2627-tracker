@@ -28,14 +28,35 @@
  * Schema 2: adds pre-deadline availability, model diagnostics and capturedAt.
  * Schema 3: diagnostics also carry the applied availability, how it was
  *           classified, and any parsed return boundary.
+ * Schema 4: the fixture context each projection was made under — the opponent's
+ *           defensive strength as measured AT THE DEADLINE, and whether that
+ *           figure was measured or fell back to an editorial rating.
+ *
+ *           This exists for one reason: teamDefence() is recomputed from live
+ *           bootstrap minutes and xGC, both of which are rewritten every
+ *           refresh, so the value used at a past deadline cannot be recovered
+ *           afterwards. Without freezing it, the FDR-versus-opponent-defence
+ *           comparison that Phase 6 is waiting on could never be run on
+ *           historical gameweeks.
  */
-export const ARCHIVE_SCHEMA = 3;
+export const ARCHIVE_SCHEMA = 4;
 
 /** `availability[code]` field order. */
 export const AVAILABILITY_FIELDS = [
   'elementId', 'status', 'chanceThisRound', 'chanceNextRound',
   'minutes', 'starts', 'newsAdded',
 ];
+
+/**
+ * `teamContext[teamId]` field order. Frozen per gameweek so a later ablation can
+ * ask what the model believed about each opponent at the time.
+ *
+ * `provenance` matters as much as the number: three clubs currently derive
+ * their figure from `strength_overall_*`, the same family of editorial rating
+ * as FDR, so for them an "opponent defence" model is not an independent signal
+ * and a comparison that treats it as one would be measuring nothing.
+ */
+export const TEAM_CONTEXT_FIELDS = ['defence', 'provenance'];
 
 /** `diagnostics[code]` field order. */
 export const DIAGNOSTIC_FIELDS = [

@@ -10,9 +10,19 @@
  * projection recomputed today has seen the result — the whole point of the
  * archive is that its numbers were written down first.
  *
- *   node scripts/evaluate.mjs              every archived gameweek
+ *   node scripts/evaluate.mjs              concise default
  *   node scripts/evaluate.mjs --gw 3       one gameweek
+ *   node scripts/evaluate.mjs --detail     add positions, minutes and bands
  *   node scripts/evaluate.mjs --json       machine-readable, for ablations
+ *
+ * BIAS SIGN, stated once and used everywhere:
+ *
+ *     bias = actual - projected
+ *
+ * A positive bias means the model projected too LOW. Reported per player, so
+ * `bias x n` reconciles exactly with the aggregate league gap. The calibration
+ * ratio is `actual / projected` over the same set, which is the same fact on a
+ * multiplicative scale — quote one or the other, never both as if independent.
  *
  * The breakdowns exist to answer the question a single MAE cannot: when a
  * forecast was wrong, WHICH layer was wrong — availability, opportunity, or
@@ -26,6 +36,7 @@ const DIR = 'data/history/gw';
 const args = process.argv.slice(2);
 const wantGW = args.includes('--gw') ? Number(args[args.indexOf('--gw') + 1]) : null;
 const asJSON = args.includes('--json');
+const detail = args.includes('--detail');
 
 /* ------------------------------------------------------------------ *
  * statistics
@@ -104,16 +115,36 @@ function loadGameweek(file) {
       /* Schema 3 only. Absent on older gameweeks, which is why every consumer
          below has to tolerate undefined rather than assume. */
       status: av ? av[availIdx.status] : null,
+      position: null,   // filled below where the current bootstrap can supply it
       availability: dg ? dg[diagIdx.availability] : null,
       availabilitySource: dg ? dg[diagIdx.availabilitySource] : null,
       expMins: dg ? dg[diagIdx.expMins] : null,
+      /* How much production evidence the model HAD at the deadline, frozen.
+         Read from the archive rather than recomputed: `evidenceMinutes` lives
+         on the hydrated payload and is rewritten every refresh, so today's
+         value is not what the forecast was made with. */
+      productionConfidence: dg ? dg[diagIdx.productionConfidence] : null,
       pStart: dg ? dg[diagIdx.pStart] : null,
       p60: dg ? dg[diagIdx.p60] : null,
     });
   }
+  for (const r of rows) {
+    const m = meta.get(r.code);
+    if (m) r.position = m.element_type;
+  }
   return { event: g.event, schema: g.schema ?? 1, final: !!g.final,
     capturedAt: g.capturedAt ?? null, deadline: g.deadline, rows };
 }
+
+/* Positions and evidence come from the CURRENT bootstrap. That is safe: a
+   player's position and his accumulated minutes are not outcomes of the
+   gameweek being scored, and nothing here feeds back into a projection. */
+let meta = new Map();
+try {
+  const boot = JSON.parse(fs.readFileSync('data/bootstrap.json', 'utf8'));
+  meta = new Map(boot.elements.map((e) => [e.code, e]));
+} catch { /* evaluation still works without it, just without the breakdowns */ }
+const POS = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
 const files = fs.existsSync(DIR) ? fs.readdirSync(DIR).filter((f) => f.endsWith('.json')) : [];
 const weeks = files.map(loadGameweek).filter(Boolean)
@@ -167,6 +198,52 @@ for (const w of weeks) {
       }).filter(Boolean);
     }
   }
+  /* Calibration ratio alongside bias — the same fact multiplicatively. */
+  const pTot = w.rows.reduce((s2, r) => s2 + r.projected, 0);
+  const aTot = w.rows.reduce((s2, r) => s2 + r.actual, 0);
+  entry.totals = { projected: pTot, actual: aTot, ratio: pTot > 0 ? aTot / pTot : NaN };
+
+  if (detail || asJSON) {
+    entry.byPosition = {};
+    for (const t of [1, 2, 3, 4]) {
+      const b = w.rows.filter((r) => r.position === t);
+      if (!b.length) continue;
+      const p = b.reduce((s2, r) => s2 + r.projected, 0);
+      const a = b.reduce((s2, r) => s2 + r.actual, 0);
+      entry.byPosition[POS[t]] = { n: b.length, projected: p, actual: a, diff: a - p, per: (a - p) / b.length };
+    }
+    /* Evidence bands — how much of the error sits with players the model barely
+       knows. This is the segmentation Phase 7 is monitored on, and it needs the
+       confidence FROZEN at the deadline: `evidenceMinutes` on the live payload
+       is rewritten every refresh, so scoring against today's value would band
+       players by what we know now rather than by what we knew then. Only
+       schema 3+ gameweeks carry it. */
+    const withConf = w.rows.filter((r) => r.productionConfidence != null);
+    if (withConf.length) {
+      const bands = [['none 0', (r) => r.productionConfidence <= 0],
+        ['low <0.25', (r) => r.productionConfidence > 0 && r.productionConfidence < 0.25],
+        ['0.25-0.5', (r) => r.productionConfidence >= 0.25 && r.productionConfidence < 0.5],
+        ['0.5-0.9', (r) => r.productionConfidence >= 0.5 && r.productionConfidence < 0.9],
+        ['full 0.9+', (r) => r.productionConfidence >= 0.9]];
+      entry.byEvidence = {};
+      for (const [label, f] of bands) {
+        const b = withConf.filter(f);
+        if (!b.length) continue;
+        const p = b.reduce((s2, r) => s2 + r.projected, 0);
+        const a = b.reduce((s2, r) => s2 + r.actual, 0);
+        entry.byEvidence[label] = { n: b.length, projected: p, actual: a, diff: a - p };
+      }
+    }
+    /* Minutes error, where the archive froze an expectation to compare against. */
+    const withMins = w.rows.filter((r) => r.expMins != null);
+    if (withMins.length) {
+      entry.minutes = {
+        n: withMins.length,
+        mae: mean(withMins.map((r) => Math.abs(r.minutes - r.expMins))),
+        bias: mean(withMins.map((r) => r.minutes - r.expMins)),
+      };
+    }
+  }
   report.gameweeks.push(entry);
 }
 report.overall = { all: summarise(all), played: summarise(all.filter((r) => r.minutes > 0)),
@@ -183,8 +260,28 @@ for (const g of report.gameweeks) {
     console.log(`   ${k.padEnd(12)} n=${String(s.n).padStart(4)}  MAE ${f(s.mae, 2)}  RMSE ${f(s.rmse, 2)}`
       + `  bias ${f(s.bias, 2)}  rho ${f(s.rho)}`);
   }
+  console.log(`   ${'totals'.padEnd(12)} projected ${f(g.totals.projected, 1)}  actual ${f(g.totals.actual, 1)}`
+    + `  calibration ratio ${f(g.totals.ratio, 3)}`);
   for (const [k, t] of [['top10', g.top10], ['top20', g.top20], ['top50', g.top50]]) {
     if (t) console.log(`   ${k.padEnd(12)} mean actual ${f(t.meanActual, 2)} vs field ${f(t.field, 2)}`);
+  }
+  if (g.minutes) {
+    console.log(`   ${'minutes'.padEnd(12)} n=${String(g.minutes.n).padStart(4)}  MAE ${f(g.minutes.mae, 1)}`
+      + `  bias ${f(g.minutes.bias, 2)}`);
+  }
+  if (g.byPosition) {
+    console.log('   by position:');
+    for (const [k, v] of Object.entries(g.byPosition)) {
+      console.log(`     ${k.padEnd(6)} n=${String(v.n).padStart(4)} projected ${f(v.projected, 1).padStart(7)}`
+        + ` actual ${f(v.actual, 1).padStart(7)} diff ${f(v.diff, 1).padStart(7)} per player ${f(v.per, 2)}`);
+    }
+  }
+  if (g.byEvidence) {
+    console.log('   by production confidence frozen at the deadline:');
+    for (const [k, v] of Object.entries(g.byEvidence)) {
+      console.log(`     ${k.padEnd(8)} n=${String(v.n).padStart(4)} projected ${f(v.projected, 1).padStart(7)}`
+        + ` actual ${f(v.actual, 1).padStart(7)} diff ${f(v.diff, 1).padStart(7)}`);
+    }
   }
   if (g.bySource) {
     console.log('   by availability source:');
@@ -209,6 +306,9 @@ if (weeks.length > 1) {
   }
   console.log('');
 }
+console.log('bias = actual - projected, so a positive bias means the model projected too low.');
+if (!detail) console.log('Run with --detail for positions, minutes and evidence bands, or --json for ablations.');
+console.log('');
 console.log('One gameweek of FPL points is dominated by variance — a goal is 4-6 points and');
 console.log('close to a coin flip. Read rank correlation and calibration across several');
 console.log('gameweeks before concluding anything about a model change.\n');
