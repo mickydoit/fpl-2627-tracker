@@ -1628,3 +1628,52 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
 }
 .rowverdict.go { background: var(--accent); color: var(--ink); }
 .rowverdict.hold { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+
+
+/* ---------- the desktop squad board ----------
+ * Figma BkGUtiiNDfyw1IiSEqn3qD node 241:413. Every number below is measured
+ * off that frame's own 1280px canvas and expressed as vw against it, so the
+ * board keeps the drawn proportions at any desktop width:
+ *
+ *     pitch      1156 x 942      shirt      137 wide
+ *     kit          68            name plate  24
+ *     points plate 42            row gap     60
+ *
+ * A compact pass had taken the shirts to a 45px kit on a 1300px lawn, which
+ * read as fifteen stickers on a field rather than a formation. The whole point
+ * of drawing a pitch instead of printing a list is that the shape is legible,
+ * and it stops being legible below roughly this size.
+ *
+ * Scoped to desktop on purpose. Every clamp below keeps its existing minimum,
+ * and each vw term stays under that minimum at phone widths, so a 375px screen
+ * still resolves to exactly the values it resolved to before this block
+ * existed — the mobile board is deliberately untouched. */
+@media (min-width: 760px) {
+  .pitchwrap {
+    --kit-size:   clamp(1.9rem, 5.3vw, 5.4rem);
+    --kit-bench:  clamp(1.5rem, 3.6vw, 3.6rem);
+    --shirt-w:    clamp(3.1rem, 10.7vw, 11rem);
+    --shirt-font: clamp(0.56rem, 1.17vw, 1.2rem);
+    --shirt-lh:   1.55;
+  }
+  /* The kit sits clear of the name plate — in the frame that gap is about a
+     third of the plate's own height, and closing it makes the shirt read as
+     one block instead of a player above a label. */
+  .pitch .shirt, .bench-strip .shirt { gap: clamp(0.1rem, 0.55vw, 0.6rem); }
+
+  /* The score is the one number on the board that changes, and the frame sizes
+     it accordingly — larger than the name above it, in the display face. */
+  .shirt .pt { font-size: clamp(0.6rem, 2.66vw, 2.7rem); line-height: 1.25; }
+
+  .pitch {
+    padding: clamp(0.6rem, 4.6vw, 4.7rem) var(--s-md) clamp(0.6rem, 5.5vw, 5.6rem);
+    gap: clamp(0.35rem, 4.7vw, 4.8rem);
+    min-height: 0;
+  }
+  .pitch-row { gap: var(--s-sm); }
+
+  /* The bench follows the pitch up in size, or four reserves in the old scale
+     look like a footnote pinned under a board twice their weight. */
+  .bench-strip { padding: var(--s-sm) var(--s-md) var(--s-md); gap: var(--s-sm); }
+  .bench-label { font-size: 0.68rem; }
+}
