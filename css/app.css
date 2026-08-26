@@ -1629,51 +1629,53 @@ table.players th, table.players td { padding: var(--s-sm) var(--s-sm); }
 .rowverdict.go { background: var(--accent); color: var(--ink); }
 .rowverdict.hold { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 
-
 /* ---------- the desktop squad board ----------
- * Figma BkGUtiiNDfyw1IiSEqn3qD node 241:413. Every number below is measured
- * off that frame's own 1280px canvas and expressed as vw against it, so the
- * board keeps the drawn proportions at any desktop width:
+ * The board is capped, and the shirts are sized in rem rather than vw.
  *
- *     pitch      1156 x 942      shirt      137 wide
- *     kit          68            name plate  24
- *     points plate 42            row gap     60
+ * Both halves of that matter. Sizing shirts in vw meant they inflated with the
+ * window — on a 1600px screen a shirt reached 171px and the pitch stretched to
+ * 1472px, so the row gaps had to grow to match and the whole board ran to
+ * 1318px. Barely a row and a half was on screen. Capping the width alone would
+ * have left the shirts growing inside a fixed lawn; sizing in rem alone would
+ * have left small shirts marooned on a huge one, which is the failure mode this
+ * replaced.
  *
- * A compact pass had taken the shirts to a 45px kit on a 1300px lawn, which
- * read as fifteen stickers on a field rather than a formation. The whole point
- * of drawing a pitch instead of printing a list is that the shape is legible,
- * and it stops being legible below roughly this size.
+ * Chosen from three candidates measured at 1600x820. The number that decided it
+ * is the shirt as a share of the board it stands on:
  *
- * Scoped to desktop on purpose. Every clamp below keeps its existing minimum,
- * and each vw term stays under that minimum at phone widths, so a 375px screen
- * still resolves to exactly the values it resolved to before this block
- * existed — the mobile board is deliberately untouched. */
+ *     narrow 640px  shirt  99px  15.5%   board 561px
+ *     medium 880px  shirt 107px  12.2%   board 590px   <- this
+ *     full  1472px  shirt  99px   6.7%   board 491px
+ *
+ * The full-width option had the shortest board and still looked wrong: at 6.7%
+ * the squad reads as stickers on a lawn rather than a formation, which defeats
+ * the point of drawing a pitch instead of printing a list. 12.2% keeps the
+ * shape legible and still cuts the board by 55%.
+ *
+ * Desktop only. Every value below is a plain rem, and mobile never reaches this
+ * media query, so the phone board is byte-for-byte what it was — verified by
+ * measuring it with this block present and absent: 380px both ways. */
 @media (min-width: 760px) {
   .pitchwrap {
-    --kit-size:   clamp(1.9rem, 5.3vw, 5.4rem);
-    --kit-bench:  clamp(1.5rem, 3.6vw, 3.6rem);
-    --shirt-w:    clamp(3.1rem, 10.7vw, 11rem);
-    --shirt-font: clamp(0.56rem, 1.17vw, 1.2rem);
-    --shirt-lh:   1.55;
+    max-width: 55rem;
+    margin-inline: auto;
+    --kit-size: 2.9rem;
+    --kit-bench: 2.2rem;
+    --shirt-w: 6.7rem;
+    --shirt-font: 0.82rem;
+    --shirt-lh: 1.45;
   }
-  /* The kit sits clear of the name plate — in the frame that gap is about a
-     third of the plate's own height, and closing it makes the shirt read as
-     one block instead of a player above a label. */
-  .pitch .shirt, .bench-strip .shirt { gap: clamp(0.1rem, 0.55vw, 0.6rem); }
+  /* The score is the one number on the board that changes, so it stays larger
+     than the name above it, in the display face. */
+  .shirt .pt { font-size: 1.5rem; line-height: 1.22; }
 
-  /* The score is the one number on the board that changes, and the frame sizes
-     it accordingly — larger than the name above it, in the display face. */
-  .shirt .pt { font-size: clamp(0.6rem, 2.66vw, 2.7rem); line-height: 1.25; }
-
-  .pitch {
-    padding: clamp(0.6rem, 4.6vw, 4.7rem) var(--s-md) clamp(0.6rem, 5.5vw, 5.6rem);
-    gap: clamp(0.35rem, 4.7vw, 4.8rem);
-    min-height: 0;
-  }
+  .pitch { padding: 1rem 0.9rem 1.1rem; gap: 0.9rem; min-height: 0; }
   .pitch-row { gap: var(--s-sm); }
+  .pitch .shirt, .bench-strip .shirt { gap: 0.15rem; }
+  .bench-strip { padding: 0.5rem 0.9rem 0.6rem; gap: 0.35rem; }
+  .bench-label { font-size: 0.62rem; }
 
-  /* The bench follows the pitch up in size, or four reserves in the old scale
-     look like a footnote pinned under a board twice their weight. */
-  .bench-strip { padding: var(--s-sm) var(--s-md) var(--s-md); gap: var(--s-sm); }
-  .bench-label { font-size: 0.68rem; }
+  /* The comparison view already holds two boards side by side and sets its own
+     width; a 55rem cap on each would push the pair wider than the column. */
+  .compare-col .pitchwrap { max-width: none; }
 }
