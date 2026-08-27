@@ -212,7 +212,28 @@ p:last-child { margin-bottom: 0; }
      user ever sees, not just the first. At 37px of padding around an 85px mark
      it stood at 162px — 18% of a laptop viewport, permanently, to repeat
      something the user already knows. Trimmed to roughly a seventh. */
-  padding: clamp(0.4rem, 1.4vw, 20px) max(0.75rem, env(safe-area-inset-left));
+  /* The page is served viewport-fit=cover, so it extends under the status bar
+     and the notch. A sticky bar pinned to top:0 therefore renders UNDERNEATH
+     them: the brand and the page nav sat too high and taps in that band went
+     to the system UI instead of the page, which made the nav unpressable on a
+     notched phone. The inset has to live in this element's own padding rather
+     than on the body — a body offset moves the bar down once, but the moment
+     the page scrolls the bar re-pins to the viewport top and climbs straight
+     back under the notch.
+
+     Held in a variable so the behaviour can be exercised in a browser that
+     reports no inset, by setting --safe-top by hand.
+
+     The horizontal pair is split too. `padding: V H` was applying the LEFT
+     inset to both sides, which is wrong in landscape on a notched phone —
+     there the notch is on one side only and the two insets differ. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --bar-pad: clamp(0.4rem, 1.4vw, 20px);
+  padding:
+    calc(var(--bar-pad) + var(--safe-top))
+    max(0.75rem, env(safe-area-inset-right))
+    var(--bar-pad)
+    max(0.75rem, env(safe-area-inset-left));
   position: sticky;
   top: 0;
   z-index: 30;
