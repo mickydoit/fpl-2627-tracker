@@ -104,6 +104,25 @@ export const PRIOR_DEFAULTS = {
    * already answered the question better and ESPN is ignored entirely.
    */
   espnAppliesBelowMinutes: 450,
+  /**
+   * Cap ESPN role evidence at `ESPN_TRANSITION.minutesCeiling` of the minutes
+   * needed for full confidence. Off, this is how a player the Premier League
+   * has never seen reached P(start) = 1.
+   */
+  applyEspnMinutesCeiling: true,
+  /**
+   * Believe this season's reported `starts` rather than inferring starts from
+   * minutes. Bootstrap reports them; `impliedStarts` is for sources that do not.
+   */
+  trustReportedStarts: true,
+  /**
+   * Games of shrinkage on start-rate-given-featured, toward the population rate
+   * measured on GW1 2026/27: 174 starts / 216 featured = 0.806. One game, so a
+   * single appearance is weighed evenly against the population and cannot on
+   * its own establish either certainty or impossibility of starting.
+   */
+  startRateShrinkFeatured: 1,
+  startRateGivenFeaturedMean: 0.806,
 };
 
 /**
@@ -141,7 +160,7 @@ export const PRIOR_DEFAULTS = {
  * keeps the role signal clean and leaves absence to the availability layer,
  * which is where it belongs.
  */
-export function decomposeOpportunity(season, games, o) {
+export function decomposeOpportunity(season, games, o, authoritativeStarts = false) {
   const mins = num(season?.minutes);
   const starts = num(season?.starts);
   if (!(games > 0) || mins <= 0) return null;
@@ -163,7 +182,15 @@ export function decomposeOpportunity(season, games, o) {
   const impliedStarts = mins > maxSubMinutes
     ? Math.ceil((mins - maxSubMinutes) / (90 - o.minutesPerSub))
     : 0;
-  const effStarts = Math.min(games, Math.max(starts, impliedStarts));
+  /* `impliedStarts` exists for records that cannot be trusted to report starts
+     — an older prior file, an ESPN-derived row. This season's bootstrap CAN:
+     it carries `starts` per player, and at one game played the inference is
+     strictly worse than the fact. A 28-minute substitute appearance clears the
+     19.7-minute sub ceiling, so ceil() promotes him to a full start and, with
+     no last-season term to dilute it, start-rate-given-featured becomes 1/1. */
+  const effStarts = authoritativeStarts
+    ? Math.min(games, starts)
+    : Math.min(games, Math.max(starts, impliedStarts));
   const raw = effStarts > 0 ? mins / effStarts : MPS;
   /* Three starts of shrinkage: enough that a single 90-minute cameo does not
      establish a role, little enough that a settled starter keeps his own. */
@@ -215,7 +242,7 @@ export function poolPlayerSeasons(current, prior, { gamesThis, games, lastSeason
    * quantity in the model.
    */
   const o = { ...PRIOR_DEFAULTS, ...opts };
-  const oThis = decomposeOpportunity(current, gamesThis, o);
+  const oThis = decomposeOpportunity(current, gamesThis, o, !!o.trustReportedStarts);
   const oLast = decomposeOpportunity(pr, lastSeasonGames, o);
 
   /* Pool in GAMES. Minutes were the wrong unit for a per-match rate: a full
@@ -264,9 +291,16 @@ export function poolPlayerSeasons(current, prior, { gamesThis, games, lastSeason
   const fThis = oThis ? oThis.featured : 0;
   const fLast = oLast ? o.opportunityWeight * oLast.featured : 0;
   const roleDen = fThis + fLast;
-  const startRateGivenFeatured = roleDen > 0
+  /* Shrinkage toward the population start-rate-given-featured, in GAMES
+     FEATURED, exactly as `minsPerStart` already shrinks toward its own mean.
+     Without it this ratio is a raw 0/1 or 1/1 whenever a player has one game of
+     evidence and no usable prior season — which is not "unknown", it is
+     certainty, in whichever direction the single appearance happened to fall. */
+  const KS = o.startRateShrinkFeatured;
+  const startRateGivenFeatured = (roleDen + KS) > 0
     ? clamp(((oThis?.startRateGivenFeatured ?? 0) * fThis
-           + (oLast?.startRateGivenFeatured ?? 0) * fLast) / roleDen, 0, 1)
+           + (oLast?.startRateGivenFeatured ?? 0) * fLast
+           + o.startRateGivenFeaturedMean * KS) / (roleDen + KS), 0, 1)
     : 0;
 
   const sThis = oThis ? oThis.starts : 0;
@@ -348,7 +382,7 @@ export function poolPlayerSeasons(current, prior, { gamesThis, games, lastSeason
  * @param {object} record  a cached ESPN player record, already season-filtered
  * @param {number} pos     FPL element_type
  */
-export function espnEvidence(record, pos) {
+export function espnEvidence(record, pos, o = PRIOR_DEFAULTS) {
   const seasons = (record?.seasons || []).filter((x) => isAllowedSeason(x.season));
   if (!seasons.length) return null;
 
@@ -376,7 +410,10 @@ export function espnEvidence(record, pos) {
     /* Role evidence, discounted for the league change. Two thirds: enough that
        a full foreign season outweighs a conservative guess, not so much that it
        rivals having actually seen him in this league. */
-    minutesEvidence: minutes * ESPN_TRANSITION.minutesWeight,
+    minutesEvidence: o.applyEspnMinutesCeiling
+      ? Math.min(minutes * ESPN_TRANSITION.minutesWeight,
+                 ESPN_TRANSITION.minutesCeiling * MINUTES_FULL_CONFIDENCE_MINUTES)
+      : minutes * ESPN_TRANSITION.minutesWeight,
     /* Attacking output per 90, in FPL points, before any shrinking. Goals and
        assists only — ESPN has no xG, and the defensive columns are too patchy
        across leagues to price. */
@@ -432,7 +469,23 @@ export const ESPN_TRANSITION = {
    * the open question is the league change rather than the sample size.
    */
   productionCeiling: 0.6,
+  /**
+   * The same ceiling, on the ROLE side. `minutesWeight` alone is defeated by
+   * volume in exactly the way `productionCeiling` exists to prevent: an
+   * ever-present foreign season is ~3,400 minutes, and 0.65 of that is 2,200 —
+   * five times the 450 at which js/model.js trusts role evidence completely.
+   * The player is then treated as a fully-understood starter and his expected
+   * minutes are taken at face value from a league this one has never seen.
+   *
+   * Expressed, like its production twin, as a share of the evidence needed for
+   * full confidence, so the two read as one decision.
+   */
+  minutesCeiling: 0.6,
 };
+
+/** Mirrors DEFAULTS.minutesBlendMinutes in js/model.js — the minutes at which
+ *  ROLE evidence is trusted completely. */
+const MINUTES_FULL_CONFIDENCE_MINUTES = 450;
 
 /**
  * Rebuild a bootstrap payload with last season pooled in.
@@ -473,7 +526,7 @@ export function hydrate(boot, prior, opts = {}, espnHistory = null) {
        real FPL evidence already has better data than ESPN can offer, and FPL
        stays authoritative wherever the two overlap. */
     const espn = espnHistory?.players?.[e.code]
-      ? espnEvidence(espnHistory.players[e.code], e.element_type)
+      ? espnEvidence(espnHistory.players[e.code], e.element_type, o)
       : null;
     const thinHere = !pooled || pooled.evidenceMinutes < o.espnAppliesBelowMinutes;
 

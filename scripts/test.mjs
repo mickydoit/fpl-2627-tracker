@@ -22,7 +22,8 @@ import { runDraft, STRATEGIES } from '../js/draft/compete.js';
 import { optimiseSquad, validate, bestXI, scoreSquad, suggestTransfers, canSwap, splitXI,
   optimiseWithinTransfers, captaincyBonus, captainForGW,
   bestXIForGW, scoreSquadByGW, scoreSquadFixed } from '../js/optimiser.js';
-import { hydrate, PRIOR_DEFAULTS, poolPlayerSeasons, espnEvidence, decomposeOpportunity } from '../js/prior.js';
+import { hydrate, PRIOR_DEFAULTS, poolPlayerSeasons, espnEvidence, decomposeOpportunity,
+  ESPN_TRANSITION } from '../js/prior.js';
 import { ALLOWED_MODEL_SEASONS, CURRENT_SEASON, isAllowedSeason, seasonStartYear,
   assertAllowedSeason, onlyAllowedSeasons } from '../js/seasons.js';
 import { rateSquad, depthCost, minutesSecurity, flexibility, bestLineTotal, scoreRatio,
@@ -2657,6 +2658,82 @@ console.log('\nProduction vs opportunity');
   /* Availability still suppresses everything, however good the prior. */
   const injured = proj({ modelMinutes: 1800, evidenceMinutes: 1800, minutesEvidenceMinutes: 1800, status: 'i' });
   ok('an unavailable player projects nothing however strong his history', injured.total === 0);
+}
+
+/* ------------------------------------------------------------------ *
+ * opportunity cannot exceed the pitch
+ * ------------------------------------------------------------------ */
+console.log('\nOpportunity ceilings');
+{
+  /* Found by checking the GW2 pre-deadline snapshot against an identity that
+     needs no result: a 10-fixture round has exactly 11 x 20 = 220 starters and
+     90 x 22 x 10 = 19,800 minutes. The shipped model claimed 240.9 starters and
+     23,101 minutes. Two independent causes, both pinned below. */
+
+  const O = PRIOR_DEFAULTS;
+  const FULL_CONFIDENCE_MINUTES = 450;   // mirrors DEFAULTS.minutesBlendMinutes
+
+  /* --- cause 1: a foreign season defeated the discount by sheer volume ------
+     `minutesWeight` alone is not a ceiling. An ever-present Championship season
+     is ~3,400 minutes and 0.65 of that is 2,210 — five times the 450 at which
+     role evidence is trusted completely. Expected minutes were then taken at
+     face value from a league this one has never seen, and the appearance
+     fallback in js/model.js inverted them straight to P(start) = 1. */
+  const season = (over) => ({ seasons: [{ season: CURRENT_SEASON - 1, competition: 'X',
+    minutes: 3400, appearances: 38, starts: 38, goals: 0, assists: 0, ...over }] });
+
+  const everPresent = espnEvidence(season({}), 3, O);
+  ok('a full foreign season cannot buy full confidence in a role',
+    everPresent.minutesEvidence <= ESPN_TRANSITION.minutesCeiling * FULL_CONFIDENCE_MINUTES,
+    `got ${everPresent.minutesEvidence}`);
+  ok('the ceiling actually binds on a full foreign season',
+    everPresent.minutesEvidence < 3400 * ESPN_TRANSITION.minutesWeight);
+
+  /* ...but it is a ceiling, not a flat discount: a short season is untouched,
+     so ESPN still says more about a player who played more. */
+  const partial = espnEvidence(season({ minutes: 300, appearances: 10, starts: 8 }), 3, O);
+  ok('a short foreign season is left alone by the ceiling',
+    near(partial.minutesEvidence, 300 * ESPN_TRANSITION.minutesWeight));
+  ok('more foreign minutes still means more role evidence',
+    partial.minutesEvidence < everPresent.minutesEvidence);
+
+  /* --- cause 2: a start was inferred over a reported one -------------------
+     `impliedStarts` exists for records that cannot report starts. Bootstrap
+     can. At one game played, a 28-minute substitute appearance clears the
+     19.7-minute sub ceiling, so ceil() promoted him to a full start and
+     start-rate-given-featured became 1/1 — certainty, from one cameo. */
+  const sub = { minutes: 28, starts: 0 };
+  ok('a reported start count is believed when the source has one',
+    decomposeOpportunity(sub, 1, O, true).starts === 0,
+    `got ${decomposeOpportunity(sub, 1, O, true).starts}`);
+  ok('a start is still inferred when the source reports none',
+    decomposeOpportunity(sub, 1, O, false).starts === 1);
+
+  /* --- neither extreme survives one game of evidence ----------------------- */
+  const pool = (current, prior) => poolPlayerSeasons(current, prior, {
+    gamesThis: 1, games: 1 + O.lastSeasonWeight * O.lastSeasonGames,
+    lastSeasonWeight: O.lastSeasonWeight, lastSeasonGames: O.lastSeasonGames,
+    priorSeason: CURRENT_SEASON - 1, opts: O });
+  const noPriorSeason = { minutes: 0, starts: 0 };
+
+  const cameo = pool({ minutes: 28, starts: 0 }, noPriorSeason);
+  ok('one substitute appearance does not make a certain starter',
+    cameo.startProbability < 0.9, `got ${cameo.startProbability}`);
+  ok('one substitute appearance does not make a certain non-starter',
+    cameo.startProbability > 0.05, `got ${cameo.startProbability}`);
+
+  const oneStart = pool({ minutes: 90, starts: 1 }, noPriorSeason);
+  ok('one start does not make a certain starter',
+    oneStart.startProbability < 1, `got ${oneStart.startProbability}`);
+  ok('starting still beats coming off the bench',
+    oneStart.startProbability > cameo.startProbability);
+
+  /* Shrinkage is weighted by evidence, so a player with a full prior season
+     keeps his own rate rather than being dragged toward the population. */
+  const settled = pool({ minutes: 90, starts: 1 },
+    { minutes: 3000, starts: 34, expected_goals: 5, expected_assists: 4 });
+  ok('a settled starter keeps his own start rate',
+    settled.startRateGivenFeatured > 0.9, `got ${settled.startRateGivenFeatured}`);
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);
