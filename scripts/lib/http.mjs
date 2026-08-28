@@ -13,7 +13,7 @@ const BROWSER_UA =
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export async function getJSON(url, { retries = 4, browserUA = false, timeout = 30000 } = {}) {
+export async function getJSON(url, { retries = 4, browserUA = false, timeout = 30000, headers = {} } = {}) {
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
     if (attempt > 0) {
@@ -30,9 +30,21 @@ export async function getJSON(url, { retries = 4, browserUA = false, timeout = 3
           'User-Agent': browserUA ? BROWSER_UA : UA,
           Accept: 'application/json,text/plain,*/*',
           'Accept-Language': 'en-GB,en;q=0.9',
+          // Additional headers last, so an authenticated source can supply its
+          // own token without the defaults above overwriting it.
+          ...headers,
         },
       });
       if (res.status === 404) return null; // expected for not-yet-existing GW resources
+      // 429 means we are being told to slow down, not that the resource is
+      // broken. Honour Retry-After when it is offered rather than hammering
+      // through the normal backoff ladder.
+      if (res.status === 429) {
+        const wait = Number(res.headers.get('retry-after')) || 60;
+        console.warn(`  rate limited, waiting ${wait}s — ${url}`);
+        await sleep(wait * 1000);
+        throw new Error('HTTP 429 rate limited');
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
       return await res.json();
     } catch (err) {

@@ -1,0 +1,97 @@
+# The research warehouse. Deliberately NOT part of refresh.yml.
+#
+# refresh.yml is on the critical path: it feeds the live site every thirty
+# minutes and a failure there is visible to anyone using the tracker. Warehouse
+# collection talks to two external providers, one of them undocumented, over
+# long backfills — exactly the kind of job that should never be able to fail a
+# deployment. So it runs on its own schedule, writes only under data/warehouse,
+# and nothing the site loads depends on it.
+name: Warehouse
+
+on:
+  schedule:
+    # Once a day. The backfill is incremental and capped per run, so it walks
+    # forward a slice at a time rather than making one long burst of requests.
+    - cron: '40 3 * * *'
+  workflow_dispatch:
+    inputs:
+      competitions:
+        description: 'Comma-separated competition keys (blank = all)'
+        type: string
+        default: ''
+      seasons:
+        description: 'Comma-separated start years (blank = the warehouse window)'
+        type: string
+        default: ''
+      espn_matches:
+        description: 'ESPN match budget for this run (3 requests each)'
+        type: string
+        default: '120'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: warehouse
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Structure: competitions, seasons, clubs, fixtures, results, tables and
+      # season squads. Absent a token this step warns and exits 0, leaving every
+      # committed file untouched.
+      - name: Structural data (football-data.org)
+        env:
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+          WAREHOUSE_COMPETITIONS: ${{ inputs.competitions }}
+          WAREHOUSE_SEASONS: ${{ inputs.seasons }}
+        run: node scripts/warehouse/fetch-football-data.mjs
+
+      # Performance: formations, starting elevens and 28 team statistics a side.
+      # Capped per run — the whole backfill is ~166 runs and is meant to take
+      # days rather than hammer an undocumented API in one sitting.
+      - name: Performance data (ESPN)
+        env:
+          WAREHOUSE_COMPETITIONS: ${{ inputs.competitions }}
+          WAREHOUSE_SEASONS: ${{ inputs.seasons }}
+          WAREHOUSE_ESPN_MATCHES: ${{ inputs.espn_matches || '120' }}
+        run: node scripts/warehouse/fetch-espn-matches.mjs
+        continue-on-error: true
+
+      - name: Identity, normalise, coverage
+        run: |
+          node scripts/warehouse/build-identity.mjs
+          node scripts/warehouse/normalise.mjs
+          node scripts/warehouse/coverage.mjs
+
+      # The warehouse must never be able to change a projection. This is the
+      # assertion that keeps that true, and it runs before anything is
+      # committed rather than after.
+      - name: Prove isolation from the projection
+        run: |
+          node scripts/test-warehouse.mjs
+          node scripts/test.mjs
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/warehouse
+          if git diff --cached --quiet; then
+            echo "nothing new collected"
+            exit 0
+          fi
+          git commit -m "warehouse: collect $(date -u +'%Y-%m-%d %H:%M UTC')"
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && exit 0
+            sleep 5
+          done
+          echo "Push failed after 3 attempts" >&2
+          exit 1

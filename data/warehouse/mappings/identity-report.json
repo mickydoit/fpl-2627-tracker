@@ -1,0 +1,357 @@
+{
+ "builtAt": "2026-08-28T05:51:23.666Z",
+ "teams": {
+  "total": 222,
+  "withFpl": 21,
+  "withEspn": 22,
+  "problems": 0
+ },
+ "players": {
+  "fplTotal": 616,
+  "inFplEspnMap": 543,
+  "mappedToFootballData": 520,
+  "byMethod": {
+   "dob+full-name": 492,
+   "dob+surname": 28
+  },
+  "proposals": 0,
+  "unmapped": 23
+ },
+ "footballDataPlayersSeen": 10092,
+ "teamProblems": [],
+ "proposals": [],
+ "unmapped": [
+  {
+   "code": 121709,
+   "name": "Benitez",
+   "dateOfBirth": "1993-01-19",
+   "candidates": [
+    {
+     "footballDataId": 3253,
+     "name": "João Mário"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 221389,
+   "name": "John",
+   "dateOfBirth": "1996-02-13",
+   "candidates": [
+    {
+     "footballDataId": 1299,
+     "name": "John"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 231899,
+   "name": "Taylor",
+   "dateOfBirth": "2005-04-12",
+   "candidates": [
+    {
+     "footballDataId": 273415,
+     "name": "Henry Cartwright"
+    },
+    {
+     "footballDataId": 217910,
+     "name": "Giacomo Stabile"
+    },
+    {
+     "footballDataId": 227024,
+     "name": "Luis Fernando"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 247348,
+   "name": "Muñoz",
+   "dateOfBirth": "2006-07-19",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
+  {
+   "code": 434399,
+   "name": "Reinildo",
+   "dateOfBirth": "1994-01-21",
+   "candidates": [
+    {
+     "footballDataId": 37094,
+     "name": "Reinildo"
+    },
+    {
+     "footballDataId": 58282,
+     "name": "Cimo Röcker"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 436761,
+   "name": "Kitching",
+   "dateOfBirth": "1999-09-25",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
+  {
+   "code": 465390,
+   "name": "Kesler-Hayden",
+   "dateOfBirth": "2002-10-23",
+   "candidates": [
+    {
+     "footballDataId": 171509,
+     "name": "Kaine Kesler"
+    },
+    {
+     "footballDataId": 151919,
+     "name": "Elkan Baggott"
+    },
+    {
+     "footballDataId": 293863,
+     "name": "Francisco Dias"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 472713,
+   "name": "Hickey",
+   "dateOfBirth": "2002-06-10",
+   "candidates": [
+    {
+     "footballDataId": 170627,
+     "name": "Thierno Baldé"
+    },
+    {
+     "footballDataId": 172599,
+     "name": "Marcelencio Esajas"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 483067,
+   "name": "Silva",
+   "dateOfBirth": "2003-10-30",
+   "candidates": [
+    {
+     "footballDataId": 171802,
+     "name": "Cameron Humphreys"
+    },
+    {
+     "footballDataId": 264158,
+     "name": "Oier Gastesi"
+    },
+    {
+     "footballDataId": 186393,
+     "name": "Duke Verduin"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 490094,
+   "name": "Iroegbunam",
+   "dateOfBirth": "2003-06-30",
+   "candidates": [
+    {
+     "footballDataId": 206334,
+     "name": "Bonota Traore"
+    },
+    {
+     "footballDataId": 183544,
+     "name": "Tochukwu Nadi"
+    },
+    {
+     "footballDataId": 213101,
+     "name": "João Santos"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 494928,
+   "name": "Sanchez",
+   "dateOfBirth": "2003-08-15",
+   "candidates": [
+    {
+     "footballDataId": 180038,
+     "name": "Juanlu"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 501902,
+   "name": "Hughes",
+   "dateOfBirth": "2008-09-19",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
+  {
+   "code": 503301,
+   "name": "Hutchinson",
+   "dateOfBirth": "2003-10-30",
+   "candidates": [
+    {
+     "footballDataId": 171802,
+     "name": "Cameron Humphreys"
+    },
+    {
+     "footballDataId": 264158,
+     "name": "Oier Gastesi"
+    },
+    {
+     "footballDataId": 186393,
+     "name": "Duke Verduin"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 508395,
+   "name": "Yarmoliuk",
+   "dateOfBirth": "2004-03-01",
+   "candidates": [
+    {
+     "footballDataId": 204421,
+     "name": "Yegor Yarmolyuk"
+    },
+    {
+     "footballDataId": 151666,
+     "name": "Alfie Pond"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 523700,
+   "name": "Jebbison",
+   "dateOfBirth": "2003-08-13",
+   "candidates": [
+    {
+     "footballDataId": 276719,
+     "name": "Diego Martín"
+    },
+    {
+     "footballDataId": 246114,
+     "name": "Carmel Mabanza"
+    },
+    {
+     "footballDataId": 192383,
+     "name": "Stan Berkani"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 538007,
+   "name": "David",
+   "dateOfBirth": "2001-07-03",
+   "candidates": [
+    {
+     "footballDataId": 260992,
+     "name": "Promise Akinpelu"
+    },
+    {
+     "footballDataId": 150087,
+     "name": "Denis Huseinbasic"
+    },
+    {
+     "footballDataId": 131040,
+     "name": "Folarin Balogun"
+    },
+    {
+     "footballDataId": 99195,
+     "name": "Leo Greiml"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 569577,
+   "name": "Rowe",
+   "dateOfBirth": "2006-10-02",
+   "candidates": [
+    {
+     "footballDataId": 270633,
+     "name": "Jamaldeen Jimoh"
+    },
+    {
+     "footballDataId": 251115,
+     "name": "Leo Ramirez-Espain"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 571380,
+   "name": "Lynch",
+   "dateOfBirth": "2007-01-11",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
+  {
+   "code": 586309,
+   "name": "Barry",
+   "dateOfBirth": "2002-10-21",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
+  {
+   "code": 606930,
+   "name": "Mendy",
+   "dateOfBirth": "2004-09-03",
+   "candidates": [
+    {
+     "footballDataId": 213425,
+     "name": "Anan Khalaili"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 612855,
+   "name": "Osman",
+   "dateOfBirth": "2004-11-29",
+   "candidates": [
+    {
+     "footballDataId": 191894,
+     "name": "Mihailo Ivanovic"
+    },
+    {
+     "footballDataId": 188897,
+     "name": "Lucas Stassin"
+    },
+    {
+     "footballDataId": 264211,
+     "name": "Joseph Kalulu"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 629397,
+   "name": "Andrews",
+   "dateOfBirth": "2006-08-06",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
+  {
+   "code": 696104,
+   "name": "Ahoka",
+   "dateOfBirth": "2005-12-17",
+   "candidates": [
+    {
+     "footballDataId": 286773,
+     "name": "Jaden Heskey"
+    },
+    {
+     "footballDataId": 229272,
+     "name": "Ifechukwu Ogbus"
+    },
+    {
+     "footballDataId": 245346,
+     "name": "Messias"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  }
+ ]
+}

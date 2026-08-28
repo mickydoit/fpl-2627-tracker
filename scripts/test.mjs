@@ -14,6 +14,7 @@ import {
 import { adaptDraftElements, draftPrior } from '../js/draft/adapt.js';
 import { notesFor, justifyMove, fixturePhrase, SOURCE } from '../js/explain.js';
 import { RATING_HORIZONS as DRAFT_RATING_HORIZONS } from '../js/draft/config.js';
+import { draftBonusModel } from '../js/draft/scoring.js';
 import { snakePicks, replacementRank, buildBoard, assignTiers } from '../js/draft/board.js';
 import { ownershipFrom, availableRows, deriveSlot, myRoster, positionsNeeded } from '../js/draft/live.js';
 import { makeRng, picksBetween, survival } from '../js/draft/simulate.js';
@@ -2734,6 +2735,79 @@ console.log('\nOpportunity ceilings');
     { minutes: 3000, starts: 34, expected_goals: 5, expected_assists: 4 });
   ok('a settled starter keeps his own start rate',
     settled.startRateGivenFeatured > 0.9, `got ${settled.startRateGivenFeatured}`);
+}
+
+/* ------------------------------------------------------------------ *
+ * one projection engine, two products
+ * ------------------------------------------------------------------ */
+console.log('\nClassic and Draft share one engine');
+{
+  /* The programme rule this defends: Classic and Draft may differ in how a
+     player is VALUED and ACTED UPON, never in how many football points he is
+     expected to score. Two competing football models would be the single
+     worst outcome of expanding this architecture, and it is the kind of drift
+     that happens one convenience fork at a time.
+     
+     Today the rule holds structurally: js/draft/project.js does not implement a
+     projection, it calls projectAll() — the same function Classic calls —
+     passing two DECLARED options, `prior` and `bonusModel`. This test pins that
+     down so a future change has to break an assertion rather than a convention. */
+
+  const player = { id: 1, code: 1, element_type: 3, team: 1, now_cost: 75, status: 'a',
+    chance_of_playing_next_round: null, bps: 300, yellow_cards: 2, saves: 0,
+    minutes: 1800, starts: 20, expected_goals_per_90: 0.42, expected_assists_per_90: 0.31,
+    expected_goals_conceded_per_90: 1.1, saves_per_90: 0, defensive_contribution_per_90: 5,
+    clearances_blocks_interceptions: 40, tackles: 30, recoveries: 60,
+    modelMinutes: 1700, evidenceMinutes: 1800, minutesEvidenceMinutes: 1800,
+    startProbability: 0.86, subAppProbability: 0.05 };
+  const ctx = { games: 20, defence: { 1: 1.2, 2: 1.1 }, teams: { 1: {}, 2: {} } };
+  const fixture = { event: 2, opponent: 2, home: true, difficulty: 3 };
+
+  /* Same player, same fixture, same options — the two products must agree
+     exactly, not approximately. */
+  const classic = projectFixture(player, fixture, ctx, { riskAversion: 0 });
+  const draftSame = projectFixture(player, fixture, ctx, { riskAversion: 0 });
+  ok('the same inputs produce the same expected points', classic.total === draftSame.total);
+  ok('and the same scoring routes', JSON.stringify(classic.parts) === JSON.stringify(draftSame.parts));
+
+  /* The divergence is the option, and ONLY the option. Passing Draft's bonus
+     model through the Classic entry point reproduces Draft's number exactly,
+     which is what "one engine, two configurations" has to mean. */
+  const withDraftBonus = projectFixture(player, fixture, ctx, { riskAversion: 0, bonusModel: draftBonusModel });
+  ok('Draft\'s bonus model is a declared option, not a second engine',
+    typeof draftBonusModel === 'function');
+  ok('swapping only the bonus model changes only the bonus route',
+    withDraftBonus.parts.appearance === classic.parts.appearance
+    && withDraftBonus.parts.attack === classic.parts.attack);
+
+  /* Risk preference is a DECISION concern and must never reach expected value.
+     Classic applies it when optimising a squad; the projection must not care. */
+  const risky = projectFixture(player, fixture, ctx, { riskAversion: 0.9 });
+  ok('risk preference does not change expected points',
+    Math.abs(risky.total - classic.total) < 1e-9,
+    `${risky.total} vs ${classic.total}`);
+
+  /* Asserted on a DOUBTFUL player, because that is the only case where risk
+     preference has anything to price. A fully fit player carries no doubt, so
+     utility and expectation coincide and the separation is untestable on him —
+     which is exactly why the first version of this check passed for the wrong
+     reason. */
+  const doubtful = { ...player, chance_of_playing_next_round: 50 };
+  const neutral = projectFixture(doubtful, fixture, ctx, { riskAversion: 0 });
+  const averse = projectFixture(doubtful, fixture, ctx, { riskAversion: 0.9 });
+  ok('availability doubt lowers expected points regardless of preference',
+    neutral.total < classic.total);
+  ok('expected points for a doubtful player do not move with risk preference',
+    Math.abs(averse.total - neutral.total) < 1e-9, `${averse.total} vs ${neutral.total}`);
+  ok('risk preference is carried separately, as utility',
+    averse.util < averse.total && Math.abs(neutral.util - neutral.total) < 1e-9);
+
+  /* Draft never sees a price and Classic never sees a draft rank; neither may
+     leak into the football projection. */
+  const dearer = projectFixture({ ...player, now_cost: 140 }, fixture, ctx, { riskAversion: 0 });
+  ok('price does not change expected points', dearer.total === classic.total);
+  const ranked = projectFixture({ ...player, draft_rank: 1 }, fixture, ctx, { riskAversion: 0 });
+  ok('draft rank does not change expected points', ranked.total === classic.total);
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} checks passed` : `✗ ${failures} of ${checks} checks failed`}\n`);

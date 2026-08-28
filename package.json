@@ -16,9 +16,17 @@
     "experimental:draft-live": "node scripts/draft-live.mjs",
     "freeze-prior": "node scripts/freeze-prior.mjs",
     "test:draft": "node scripts/test-draft.mjs",
-    "test": "node scripts/make-sample.mjs && node scripts/make-draft-sample.mjs && node scripts/test.mjs && node scripts/test-draft.mjs",
+    "test": "node scripts/make-sample.mjs && node scripts/make-draft-sample.mjs && node scripts/test.mjs && node scripts/test-draft.mjs && node scripts/test-warehouse.mjs",
     "serve": "python3 -m http.server 8080",
-    "diagnostics": "node scripts/draft-diagnostics.mjs"
+    "diagnostics": "node scripts/draft-diagnostics.mjs",
+    "warehouse:structural": "node scripts/warehouse/fetch-football-data.mjs",
+    "warehouse:performance": "node scripts/warehouse/fetch-espn-matches.mjs",
+    "warehouse:identity": "node scripts/warehouse/build-identity.mjs",
+    "warehouse:normalise": "node scripts/warehouse/normalise.mjs",
+    "warehouse:coverage": "node scripts/warehouse/coverage.mjs",
+    "test:warehouse": "node scripts/test-warehouse.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }
