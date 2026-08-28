@@ -1,0 +1,19 @@
+{
+ "builtAt": "2026-08-28T06:16:05.551Z",
+ "teamVsTeam": {
+  "available": true,
+  "teamMatchRows": 1072,
+  "distinctPairsWithinCompetition": 222,
+  "pairsWithAtLeast4Meetings": 190,
+  "residualsSupported": true,
+  "note": "Residuals are expressed against each club's own season average, so a matchup effect can be separated from the clubs simply being good or bad. That separation is the whole test."
+ },
+ "playerVsTeam": {
+  "available": false,
+  "reason": "Player-level H2H needs player-MATCH evidence. The warehouse holds player-SEASON aggregates, and a season total cannot be attributed to individual opponents. Dividing one across a season's fixtures would fabricate per-opponent figures indistinguishable from measurements.",
+  "onlyPlayerMatchStore": "data/history/matches (existing production store, Premier League, current season)",
+  "playerMatchFiles": 10,
+  "playerMatchRows": 400
+ },
+ "modelWeight": "ZERO, deliberately. H2H may become a feature only if it explains residual variation after current team strength, venue and role are accounted for."
+}

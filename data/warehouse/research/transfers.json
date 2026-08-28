@@ -1,0 +1,83 @@
+{
+ "builtAt": "2026-08-28T06:27:54.667Z",
+ "seasonsCovered": [
+  2023,
+  2024,
+  2025,
+  2026
+ ],
+ "seasonTransitions": [
+  "2023->2024",
+  "2024->2025",
+  "2025->2026"
+ ],
+ "totalMoves": 2566,
+ "movesIntoEpl": 429,
+ "cohorts": [
+  {
+   "route": "eng.1 -> eng.1",
+   "players": 142,
+   "withPreMinutes": 0,
+   "withPostMinutes": 0,
+   "withBoth": 0,
+   "withBoth450": 0
+  },
+  {
+   "route": "eng.2 -> eng.1",
+   "players": 69,
+   "withPreMinutes": 0,
+   "withPostMinutes": 0,
+   "withBoth": 0,
+   "withBoth450": 0
+  },
+  {
+   "route": "ger.1 -> eng.1",
+   "players": 49,
+   "withPreMinutes": 0,
+   "withPostMinutes": 0,
+   "withBoth": 0,
+   "withBoth450": 0
+  },
+  {
+   "route": "fra.1 -> eng.1",
+   "players": 49,
+   "withPreMinutes": 0,
+   "withPostMinutes": 0,
+   "withBoth": 0,
+   "withBoth450": 0
+  },
+  {
+   "route": "esp.1 -> eng.1",
+   "players": 40,
+   "withPreMinutes": 0,
+   "withPostMinutes": 0,
+   "withBoth": 0,
+   "withBoth450": 0
+  },
+  {
+   "route": "ita.1 -> eng.1",
+   "players": 39,
+   "withPreMinutes": 0,
+   "withPostMinutes": 0,
+   "withBoth": 0,
+   "withBoth450": 0
+  },
+  {
+   "route": "ned.1 -> eng.1",
+   "players": 23,
+   "withPreMinutes": 0,
+   "withPostMinutes": 0,
+   "withBoth": 0,
+   "withBoth450": 0
+  },
+  {
+   "route": "por.1 -> eng.1",
+   "players": 18,
+   "withPreMinutes": 0,
+   "withPostMinutes": 0,
+   "withBoth": 0,
+   "withBoth450": 0
+  }
+ ],
+ "caveat": "Derived from squad membership. No fees, no loan/permanent distinction, no within-season dates — none of which any source here publishes. \"withBoth450\" is the only column that matters for translation work: it counts players with 450+ minutes on BOTH sides of the move."
+}

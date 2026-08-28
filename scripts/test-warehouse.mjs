@@ -205,5 +205,273 @@ console.log('\nCollected data');
   } else console.log('  – no team-match rows yet, skipping uniqueness check');
 }
 
+/* ------------------------------------------------------------------ *
+ * Milestone 2 — substitution field trap
+ * ------------------------------------------------------------------ */
+console.log('\nSubstitution fields cannot become evidence');
+{
+  /* Measured: across 240 ESPN roster entries, `subbedIn` and `subbedOut` read
+     true for ALL twenty entries on every team, starters included. They are
+     schema flags for whether an entry MAY be substituted, not a record of what
+     happened. Interpreted as "came off the bench" they would have marked every
+     starting eleven as substitutes and corrupted every rotation, minutes and
+     role signal built on top.
+     
+     Raw archives may keep whatever the source sent. What must never happen is
+     one of these becoming a NORMALISED semantic field. */
+  const fields = ['subbedIn', 'subbedOut'];
+
+  const readAll = (dir, out = []) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) readAll(p, out);
+      else if (e.name.endsWith('.mjs') || e.name.endsWith('.js')) out.push(p);
+    }
+    return out;
+  };
+
+  /* No warehouse module may even mention them — not read, not write, not map. */
+  const warehouseCode = readAll('scripts/warehouse');
+  const mentions = warehouseCode.filter((f) => {
+    const src = fs.readFileSync(f, 'utf8');
+    /* Prose in a comment explaining WHY they are rejected is allowed and
+       wanted; a code reference is not. Strip comments before looking. */
+    const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    return fields.some((x) => code.includes(x));
+  });
+  ok('no warehouse module references subbedIn/subbedOut in code', mentions.length === 0, mentions.join(', '));
+
+  /* And no normalised row may carry them, whatever a future fetcher does. */
+  const { paths: P2 } = await import('./warehouse/store.mjs');
+  let scanned = 0; let carrying = 0;
+  for (const c of COMPETITIONS) {
+    for (const s of WAREHOUSE_SEASONS) {
+      for (const src of [P2.teamMatch(c.key, s), P2.espnRosters(c.key, s), P2.espnPlayerSeasons(c.key, s)]) {
+        for (const r of await readRows(src)) {
+          scanned += 1;
+          const flat = JSON.stringify(r);
+          if (fields.some((x) => flat.includes(`"${x}"`))) carrying += 1;
+        }
+      }
+    }
+  }
+  ok('no normalised or player-season row carries a substitution flag', carrying === 0,
+    `${carrying} of ${scanned} rows`);
+  ok('there were rows to scan', scanned > 0, `${scanned}`);
+
+  /* The fields that DO carry selection evidence, and the cross-check between
+     them. `starter` is exactly eleven a side; `formationPlace` is 1-11 for the
+     eleven and "0" for the bench, so the two must always agree. */
+  let lineups = 0; let elevens = 0; let agree = 0;
+  for (const c of COMPETITIONS) {
+    for (const s of WAREHOUSE_SEASONS) {
+      for (const m of await readRows(P2.espnMatches(c.key, s))) {
+        for (const t of m.teams) {
+          if (!t.lineup?.length) continue;
+          lineups += 1;
+          if (t.lineup.filter((p) => p.starter).length === 11) elevens += 1;
+          if (t.lineup.every((p) => p.starter === (p.formationPlace !== '0'))) agree += 1;
+        }
+      }
+    }
+  }
+  if (lineups) {
+    ok('every collected lineup names exactly eleven starters', elevens === lineups, `${elevens}/${lineups}`);
+    ok('starter and formationPlace cross-validate on every lineup', agree === lineups, `${agree}/${lineups}`);
+  } else console.log('  – no lineups collected yet, skipping');
+}
+
+/* ------------------------------------------------------------------ *
+ * Milestone 2 — entity integrity
+ * ------------------------------------------------------------------ */
+console.log('\nEntity integrity');
+{
+  const { paths: P } = await import('./warehouse/store.mjs');
+
+  /* B. player-season uniqueness, per tier. A player may legitimately appear in
+     two competitions in one season (a domestic league and a European one), so
+     uniqueness is per competition-season, not global. */
+  let psRows = 0; let psDupes = 0; let tierMarked = 0;
+  for (const c of COMPETITIONS) {
+    for (const s of WAREHOUSE_SEASONS) {
+      for (const [src, keyOf] of [
+        [P.espnRosters(c.key, s), (r) => `${r.espnTeamId}:${r.espnId}`],
+        [P.espnPlayerSeasons(c.key, s), (r) => `${r.espnId}`],
+      ]) {
+        const rows = await readRows(src);
+        psRows += rows.length;
+        const keys = rows.map(keyOf);
+        psDupes += keys.length - new Set(keys).size;
+        tierMarked += rows.filter((r) => r.tier === 'A' || r.tier === 'B').length;
+      }
+    }
+  }
+  if (psRows) {
+    ok('no duplicate player-season rows within a competition-season', psDupes === 0, `${psDupes} dupes`);
+    ok('every player-season row declares which tier produced it', tierMarked === psRows, `${tierMarked}/${psRows}`);
+  } else console.log('  – no player-season rows yet, skipping');
+
+  /* C. match uniqueness across every raw store. */
+  let dupM = 0; let mRows = 0;
+  for (const c of COMPETITIONS) {
+    for (const s of WAREHOUSE_SEASONS) {
+      const espn = await readRows(P.espnMatches(c.key, s));
+      mRows += espn.length;
+      dupM += espn.length - new Set(espn.map((r) => r.eventId)).size;
+      const fd = await readRows(P.fdMatches(c.key, s));
+      mRows += fd.length;
+      dupM += fd.length - new Set(fd.map((r) => r.matchId)).size;
+    }
+  }
+  ok('no duplicate matches in any raw store', dupM === 0, `${dupM} dupes across ${mRows} rows`);
+
+  /* G/H. null and zero are different claims and must stay different. Tier A
+     does not carry minutes, so minutes MUST be null there — never 0, which
+     would read as "played none" and destroy any per-90 rate built on it. */
+  let tierA = 0; let tierAMinutesNull = 0; let tierAMinutesZero = 0; let measuredZeros = 0;
+  for (const c of COMPETITIONS) {
+    for (const s of WAREHOUSE_SEASONS) {
+      for (const r of await readRows(P.espnRosters(c.key, s))) {
+        tierA += 1;
+        if (r.minutes === null) tierAMinutesNull += 1;
+        if (r.minutes === 0) tierAMinutesZero += 1;
+        // A keeper with zero goals is a MEASURED zero and must be preserved.
+        if (r.goals === 0) measuredZeros += 1;
+      }
+    }
+  }
+  if (tierA) {
+    ok('Tier A minutes are null, never zero', tierAMinutesNull === tierA && tierAMinutesZero === 0,
+      `null ${tierAMinutesNull}/${tierA}, zero ${tierAMinutesZero}`);
+    ok('measured zeros are preserved, not turned into null', measuredZeros > 0, `${measuredZeros}`);
+  } else console.log('  – no Tier A rows yet, skipping null/zero checks');
+
+  /* Tier B is the only source of minutes, so on a Tier B row minutes must be a
+     NUMBER — present, not null.
+     
+     Deliberately not "> 0". Two Championship 2021 rows read minutes 0 with one
+     appearance and one substitute entry: players who came on inside the last
+     minute, which ESPN rounds down to zero. That is a MEASURED zero and the
+     first version of this check called it a failure — conflating "he played
+     none" with "we did not fetch it", which is precisely the distinction the
+     rest of this file exists to defend. */
+  let tierB = 0; let tierBPresent = 0; let tierBZero = 0; let tierBStarts = 0; let tierBSane = 0;
+  for (const c of COMPETITIONS) {
+    for (const s of WAREHOUSE_SEASONS) {
+      for (const r of await readRows(P.espnPlayerSeasons(c.key, s))) {
+        tierB += 1;
+        if (typeof r.minutes === 'number') tierBPresent += 1;
+        if (r.minutes === 0) tierBZero += 1;
+        if (typeof r.starts === 'number') tierBStarts += 1;
+        /* A physical bound: nobody accumulates N x 90 minutes in fewer than N
+           starts, so starts can never exceed appearances. */
+        if (r.starts != null && r.appearances != null && r.starts <= r.appearances) tierBSane += 1;
+      }
+    }
+  }
+  if (tierB) {
+    ok('Tier B rows carry minutes as a number, never null', tierBPresent === tierB, `${tierBPresent}/${tierB}`);
+    ok('Tier B rows carry starts as a number', tierBStarts === tierB, `${tierBStarts}/${tierB}`);
+    ok('starts never exceed appearances', tierBSane === tierB, `${tierBSane}/${tierB}`);
+  } else console.log('  – no Tier B rows yet, skipping');
+}
+
+/* ------------------------------------------------------------------ *
+ * Milestone 2 — identity across boundaries
+ * ------------------------------------------------------------------ */
+console.log('\nIdentity across promotion, relegation and transfer');
+{
+  const { paths: P } = await import('./warehouse/store.mjs');
+  const teams = await readRows(P.teams());
+  const players = await readRows(P.players());
+
+  if (teams.length) {
+    /* D. A club followed out of the Championship into the Premier League must
+       keep ONE global id. If promotion minted a new identity, every
+       promoted-club comparison would be comparing a club with itself. */
+    const multi = teams.filter((t) => new Set(t.seasons.map((x) => x.competition)).size > 1);
+    ok('some clubs appear in more than one competition', multi.length > 0, `${multi.length}`);
+    ok('a club in two competitions still has exactly one global id',
+      multi.every((t) => typeof t.globalTeamId === 'string' && t.globalTeamId.startsWith('fd:')));
+    const ids = teams.map((t) => t.globalTeamId);
+    ok('global team ids are unique', new Set(ids).size === ids.length);
+    /* And no two clubs may claim the same external id. */
+    const fplIds = teams.map((t) => t.fplTeamId).filter(Boolean);
+    ok('no two clubs claim the same FPL team id', new Set(fplIds).size === fplIds.length);
+    const espnIds = teams.map((t) => t.espnTeamId).filter(Boolean);
+    ok('no two clubs claim the same ESPN team id', new Set(espnIds).size === espnIds.length);
+  } else console.log('  – no team identity built yet, skipping');
+
+  if (players.length) {
+    /* E. A player's identity is keyed on FPL code and must not depend on which
+       club he is at, so a transfer cannot break it. */
+    const mapped = players.filter((p) => p.footballDataId);
+    ok('player identity is keyed on the stable FPL code',
+      players.every((p) => Number.isInteger(p.fplCode)));
+    ok('no two players claim the same football-data id',
+      new Set(mapped.map((p) => p.footballDataId)).size === mapped.length);
+    ok('no two players claim the same ESPN id', (() => {
+      const e = players.map((p) => p.espnId).filter(Boolean);
+      return new Set(e).size === e.length;
+    })());
+    /* F. ambiguity is refused, never resolved by guessing. */
+    ok('every mapping agreed on date of birth', mapped.every((p) => p.dateOfBirth));
+    ok('no mapping was made on a name alone', mapped.every((p) => p.method?.startsWith('dob+')));
+  } else console.log('  – no player identity built yet, skipping');
+}
+
+/* ------------------------------------------------------------------ *
+ * Milestone 2 — derived research entities
+ * ------------------------------------------------------------------ */
+console.log('\nDerived research entities');
+{
+  const { paths: P } = await import('./warehouse/store.mjs');
+  const transfers = await readRows(P.transfers());
+
+  if (transfers.length) {
+    /* J. one move per player per season-pair per club-pair. */
+    const keys = transfers.map((m) => `${m.footballDataPlayerId}|${m.fromSeason}|${m.toSeason}|${m.fromTeam}|${m.toTeam}`);
+    ok('the transfer cohort contains no duplicate moves', new Set(keys).size === keys.length,
+      `${keys.length - new Set(keys).size} dupes of ${keys.length}`);
+    ok('a move never has the same club on both sides', transfers.every((m) => m.fromTeam !== m.toTeam));
+    ok('a move always spans consecutive seasons', transfers.every((m) => m.toSeason === m.fromSeason + 1));
+    /* Nothing here may claim a fee or a loan status: no source publishes them. */
+    ok('no move claims a transfer fee or loan status',
+      transfers.every((m) => m.fee === undefined && m.loan === undefined));
+  } else console.log('  – no transfers derived yet, skipping');
+
+  /* K. promoted-club detection, and L. continuity bounds. */
+  const promoted = (() => { try { return JSON.parse(fs.readFileSync('data/warehouse/research/promoted-clubs.json', 'utf8')); } catch { return null; } })();
+  if (promoted?.cohort?.length) {
+    ok('every promoted club was in the Championship the season before',
+      promoted.cohort.every((c) => c.championshipSeason === c.eplSeason - 1));
+    ok('a promoted club finished in a promotion place',
+      promoted.cohort.every((c) => c.championship.position <= 6),
+      promoted.cohort.filter((c) => c.championship.position > 6).map((c) => `${c.club} ${c.championship.position}`).join(','));
+    ok('the promotion route matches the finishing position',
+      promoted.cohort.every((c) => (c.championship.position <= 2 ? c.route === 'automatic' : c.route === 'playoff')));
+    /* Three clubs are promoted each season — a useful check that detection is
+       neither missing clubs nor inventing them. */
+    const perSeason = {};
+    for (const c of promoted.cohort) perSeason[c.eplSeason] = (perSeason[c.eplSeason] || 0) + 1;
+    ok('exactly three clubs are detected per promotion season',
+      Object.values(perSeason).every((n) => n === 3), JSON.stringify(perSeason));
+  } else console.log('  – no promoted-club report yet, skipping');
+
+  const cont = (() => { try { return JSON.parse(fs.readFileSync('data/warehouse/research/squad-continuity.json', 'utf8')); } catch { return null; } })();
+  if (cont?.clubs?.length) {
+    const pcts = cont.clubs.flatMap((c) => [c.membershipContinuityPct, c.minutesContinuityPct,
+      c.startsContinuityPct, c.goalsContinuityPct, c.assistsContinuityPct]).filter((v) => v != null);
+    ok('every continuity share is a percentage between 0 and 100',
+      pcts.every((v) => v >= 0 && v <= 100), pcts.filter((v) => v < 0 || v > 100).join(','));
+    ok('retained plus lost equals the previous squad',
+      cont.clubs.every((c) => c.retained + c.lost === c.squadBefore));
+    /* Minutes continuity must be null, not zero, where the detailed tier has
+       not been collected — otherwise "no evidence" reads as "kept nobody". */
+    ok('minutes continuity is null where minutes evidence is absent',
+      cont.clubs.every((c) => c.minutesEvidencePlayers > 0 || c.minutesContinuityPct === null));
+  } else console.log('  – no continuity report yet, skipping');
+}
+
 console.log(`\n${failures === 0 ? `✓ all ${checks} warehouse checks passed` : `✗ ${failures} of ${checks} failed`}\n`);
 process.exit(failures === 0 ? 0 : 1);

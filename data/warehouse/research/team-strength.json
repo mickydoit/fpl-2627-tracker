@@ -1,0 +1,262 @@
+{
+ "builtAt": "2026-08-28T06:14:08.955Z",
+ "competition": "eng.1",
+ "seasonsAggregated": [
+  2023
+ ],
+ "tests": {
+  "stability": {
+   "2023": {
+    "shotsPerGame": {
+     "n": 20,
+     "r": 0.648,
+     "ci95": [
+      0.288,
+      0.847
+     ]
+    },
+    "sotPerGame": {
+     "n": 20,
+     "r": 0.669,
+     "ci95": [
+      0.322,
+      0.858
+     ]
+    },
+    "possession": {
+     "n": 20,
+     "r": 0.939,
+     "ci95": [
+      0.85,
+      0.976
+     ]
+    },
+    "cornersPerGame": {
+     "n": 20,
+     "r": 0.62,
+     "ci95": [
+      0.245,
+      0.834
+     ]
+    },
+    "shotsAgainstPerGame": {
+     "n": 20,
+     "r": 0.773,
+     "ci95": [
+      0.501,
+      0.906
+     ]
+    },
+    "sotAgainstPerGame": {
+     "n": 20,
+     "r": 0.71,
+     "ci95": [
+      0.391,
+      0.877
+     ]
+    },
+    "gfPerGame": {
+     "n": 20,
+     "r": 0.56,
+     "ci95": [
+      0.156,
+      0.803
+     ]
+    },
+    "gaPerGame": {
+     "n": 20,
+     "r": 0.726,
+     "ci95": [
+      0.417,
+      0.884
+     ]
+    }
+   }
+  },
+  "sameSeason": {
+   "2023": {
+    "shotsPerGame -> gfPerGame": {
+     "n": 20,
+     "r": 0.818,
+     "ci95": [
+      0.589,
+      0.926
+     ]
+    },
+    "sotPerGame -> gfPerGame": {
+     "n": 20,
+     "r": 0.887,
+     "ci95": [
+      0.732,
+      0.955
+     ]
+    },
+    "shotShare -> gfPerGame": {
+     "n": 20,
+     "r": 0.816,
+     "ci95": [
+      0.584,
+      0.925
+     ]
+    },
+    "sotShare -> gfPerGame": {
+     "n": 20,
+     "r": 0.829,
+     "ci95": [
+      0.611,
+      0.93
+     ]
+    },
+    "possession -> gfPerGame": {
+     "n": 20,
+     "r": 0.795,
+     "ci95": [
+      0.544,
+      0.916
+     ]
+    },
+    "cornersPerGame -> gfPerGame": {
+     "n": 20,
+     "r": 0.774,
+     "ci95": [
+      0.504,
+      0.906
+     ]
+    },
+    "passPct -> gfPerGame": {
+     "n": 20,
+     "r": 0.753,
+     "ci95": [
+      0.466,
+      0.897
+     ]
+    },
+    "shotsAgainstPerGame -> gaPerGame": {
+     "n": 20,
+     "r": 0.84,
+     "ci95": [
+      0.633,
+      0.935
+     ]
+    },
+    "sotAgainstPerGame -> gaPerGame": {
+     "n": 20,
+     "r": 0.915,
+     "ci95": [
+      0.793,
+      0.966
+     ]
+    },
+    "savesPerGame -> gaPerGame": {
+     "n": 20,
+     "r": 0.813,
+     "ci95": [
+      0.58,
+      0.924
+     ]
+    }
+   }
+  },
+  "nextSeason": {
+   "2023->2024": {
+    "shotsPerGame -> next gfPerGame": {
+     "n": 16,
+     "r": 0.724,
+     "ci95": [
+      0.356,
+      0.898
+     ]
+    },
+    "sotPerGame -> next gfPerGame": {
+     "n": 16,
+     "r": 0.776,
+     "ci95": [
+      0.455,
+      0.918
+     ]
+    },
+    "shotShare -> next gfPerGame": {
+     "n": 16,
+     "r": 0.737,
+     "ci95": [
+      0.379,
+      0.903
+     ]
+    },
+    "sotShare -> next gfPerGame": {
+     "n": 16,
+     "r": 0.675,
+     "ci95": [
+      0.269,
+      0.877
+     ]
+    },
+    "possession -> next gfPerGame": {
+     "n": 16,
+     "r": 0.679,
+     "ci95": [
+      0.276,
+      0.879
+     ]
+    },
+    "cornersPerGame -> next gfPerGame": {
+     "n": 16,
+     "r": 0.574,
+     "ci95": [
+      0.11,
+      0.833
+     ]
+    },
+    "passPct -> next gfPerGame": {
+     "n": 16,
+     "r": 0.408,
+     "ci95": [
+      -0.11,
+      0.752
+     ]
+    },
+    "shotsAgainstPerGame -> next gaPerGame": {
+     "n": 16,
+     "r": 0.43,
+     "ci95": [
+      -0.084,
+      0.763
+     ]
+    },
+    "sotAgainstPerGame -> next gaPerGame": {
+     "n": 16,
+     "r": 0.565,
+     "ci95": [
+      0.096,
+      0.828
+     ]
+    },
+    "savesPerGame -> next gaPerGame": {
+     "n": 16,
+     "r": 0.471,
+     "ci95": [
+      -0.033,
+      0.784
+     ]
+    },
+    "CONTROL goals for -> next gfPerGame": {
+     "n": 16,
+     "r": 0.705,
+     "ci95": [
+      0.322,
+      0.89
+     ]
+    },
+    "CONTROL goals against -> next gaPerGame": {
+     "n": 16,
+     "r": 0.646,
+     "ci95": [
+      0.221,
+      0.865
+     ]
+    }
+   }
+  }
+ },
+ "caveat": "DESCRIPTIVE ONLY. No coefficient here may enter a projection. A metric only earns consideration by beating the CONTROL rows in the next-season test, not by looking sophisticated."
+}

@@ -1,0 +1,474 @@
+{
+ "builtAt": "2026-08-28T06:11:34.016Z",
+ "scope": {
+  "footballDataSeasons": [
+   2023,
+   2024,
+   2025,
+   2026
+  ],
+  "promotionsDetectable": [
+   2024,
+   2025,
+   2026
+  ],
+  "note": "A promotion needs consecutive eng.1 and eng.2 seasons. football-data free tier starts at 2023, so 2024 is the earliest detectable promotion and 2026 has no completed EPL season to pair."
+ },
+ "cohortSize": 9,
+ "completePairs": 6,
+ "cohort": [
+  {
+   "club": "LEI",
+   "name": "Leicester City FC",
+   "eplSeason": 2024,
+   "championshipSeason": 2023,
+   "route": "automatic",
+   "championship": {
+    "position": 1,
+    "points": 97,
+    "played": 46,
+    "won": 31,
+    "draw": 4,
+    "lost": 11,
+    "goalsFor": 89,
+    "goalsAgainst": 41,
+    "goalDifference": 48,
+    "pointsPerGame": 2.109,
+    "gdPerGame": 1.043,
+    "espn": null
+   },
+   "epl": {
+    "position": 18,
+    "points": 25,
+    "played": 38,
+    "won": 6,
+    "draw": 7,
+    "lost": 25,
+    "goalsFor": 33,
+    "goalsAgainst": 80,
+    "goalDifference": -47,
+    "pointsPerGame": 0.658,
+    "gdPerGame": -1.237,
+    "complete": true,
+    "espn": null
+   }
+  },
+  {
+   "club": "IPS",
+   "name": "Ipswich Town FC",
+   "eplSeason": 2024,
+   "championshipSeason": 2023,
+   "route": "automatic",
+   "championship": {
+    "position": 2,
+    "points": 96,
+    "played": 46,
+    "won": 28,
+    "draw": 12,
+    "lost": 6,
+    "goalsFor": 92,
+    "goalsAgainst": 57,
+    "goalDifference": 35,
+    "pointsPerGame": 2.087,
+    "gdPerGame": 0.761,
+    "espn": null
+   },
+   "epl": {
+    "position": 19,
+    "points": 22,
+    "played": 38,
+    "won": 4,
+    "draw": 10,
+    "lost": 24,
+    "goalsFor": 36,
+    "goalsAgainst": 82,
+    "goalDifference": -46,
+    "pointsPerGame": 0.579,
+    "gdPerGame": -1.211,
+    "complete": true,
+    "espn": {
+     "team": "IPS",
+     "matches": 1,
+     "shots": 0,
+     "shotsAgainst": 0,
+     "sot": 0,
+     "sotAgainst": 0,
+     "poss": 0,
+     "corners": 0,
+     "insufficient": true,
+     "shotsPerGame": null,
+     "shotsAgainstPerGame": null,
+     "shotDiffPerGame": null,
+     "sotDiffPerGame": null,
+     "possession": null
+    }
+   }
+  },
+  {
+   "club": "SOU",
+   "name": "Southampton FC",
+   "eplSeason": 2024,
+   "championshipSeason": 2023,
+   "route": "playoff",
+   "championship": {
+    "position": 4,
+    "points": 87,
+    "played": 46,
+    "won": 26,
+    "draw": 9,
+    "lost": 11,
+    "goalsFor": 87,
+    "goalsAgainst": 63,
+    "goalDifference": 24,
+    "pointsPerGame": 1.891,
+    "gdPerGame": 0.522,
+    "espn": null
+   },
+   "epl": {
+    "position": 20,
+    "points": 12,
+    "played": 38,
+    "won": 2,
+    "draw": 6,
+    "lost": 30,
+    "goalsFor": 26,
+    "goalsAgainst": 86,
+    "goalDifference": -60,
+    "pointsPerGame": 0.316,
+    "gdPerGame": -1.579,
+    "complete": true,
+    "espn": {
+     "team": "SOU",
+     "matches": 1,
+     "shots": 19,
+     "shotsAgainst": 3,
+     "sot": 4,
+     "sotAgainst": 1,
+     "poss": 77.8,
+     "corners": 12,
+     "insufficient": true,
+     "shotsPerGame": null,
+     "shotsAgainstPerGame": null,
+     "shotDiffPerGame": null,
+     "sotDiffPerGame": null,
+     "possession": null
+    }
+   }
+  },
+  {
+   "club": "SUN",
+   "name": "Sunderland AFC",
+   "eplSeason": 2025,
+   "championshipSeason": 2024,
+   "route": "playoff",
+   "championship": {
+    "position": 4,
+    "points": 76,
+    "played": 46,
+    "won": 21,
+    "draw": 13,
+    "lost": 12,
+    "goalsFor": 58,
+    "goalsAgainst": 44,
+    "goalDifference": 14,
+    "pointsPerGame": 1.652,
+    "gdPerGame": 0.304,
+    "espn": null
+   },
+   "epl": {
+    "position": 7,
+    "points": 54,
+    "played": 38,
+    "won": 14,
+    "draw": 12,
+    "lost": 12,
+    "goalsFor": 42,
+    "goalsAgainst": 48,
+    "goalDifference": -6,
+    "pointsPerGame": 1.421,
+    "gdPerGame": -0.158,
+    "complete": true,
+    "espn": {
+     "team": "SUN",
+     "matches": 15,
+     "shots": 144,
+     "shotsAgainst": 229,
+     "sot": 45,
+     "sotAgainst": 71,
+     "poss": 629.7,
+     "corners": 55,
+     "shotsPerGame": 9.6,
+     "shotsAgainstPerGame": 15.27,
+     "shotDiffPerGame": -5.67,
+     "sotDiffPerGame": -1.73,
+     "possession": 42
+    }
+   }
+  },
+  {
+   "club": "LEE",
+   "name": "Leeds United FC",
+   "eplSeason": 2025,
+   "championshipSeason": 2024,
+   "route": "automatic",
+   "championship": {
+    "position": 1,
+    "points": 100,
+    "played": 46,
+    "won": 29,
+    "draw": 13,
+    "lost": 4,
+    "goalsFor": 95,
+    "goalsAgainst": 30,
+    "goalDifference": 65,
+    "pointsPerGame": 2.174,
+    "gdPerGame": 1.413,
+    "espn": null
+   },
+   "epl": {
+    "position": 14,
+    "points": 47,
+    "played": 38,
+    "won": 11,
+    "draw": 14,
+    "lost": 13,
+    "goalsFor": 49,
+    "goalsAgainst": 56,
+    "goalDifference": -7,
+    "pointsPerGame": 1.237,
+    "gdPerGame": -0.184,
+    "complete": true,
+    "espn": {
+     "team": "LEE",
+     "matches": 15,
+     "shots": 184,
+     "shotsAgainst": 178,
+     "sot": 57,
+     "sotAgainst": 65,
+     "poss": 692.1999999999998,
+     "corners": 60,
+     "shotsPerGame": 12.27,
+     "shotsAgainstPerGame": 11.87,
+     "shotDiffPerGame": 0.4,
+     "sotDiffPerGame": -0.53,
+     "possession": 46.1
+    }
+   }
+  },
+  {
+   "club": "BUR",
+   "name": "Burnley FC",
+   "eplSeason": 2025,
+   "championshipSeason": 2024,
+   "route": "automatic",
+   "championship": {
+    "position": 2,
+    "points": 100,
+    "played": 46,
+    "won": 28,
+    "draw": 16,
+    "lost": 2,
+    "goalsFor": 69,
+    "goalsAgainst": 16,
+    "goalDifference": 53,
+    "pointsPerGame": 2.174,
+    "gdPerGame": 1.152,
+    "espn": null
+   },
+   "epl": {
+    "position": 19,
+    "points": 22,
+    "played": 38,
+    "won": 4,
+    "draw": 10,
+    "lost": 24,
+    "goalsFor": 38,
+    "goalsAgainst": 75,
+    "goalDifference": -37,
+    "pointsPerGame": 0.579,
+    "gdPerGame": -0.974,
+    "complete": true,
+    "espn": {
+     "team": "BUR",
+     "matches": 15,
+     "shots": 124,
+     "shotsAgainst": 241,
+     "sot": 46,
+     "sotAgainst": 84,
+     "poss": 603.1,
+     "corners": 49,
+     "shotsPerGame": 8.27,
+     "shotsAgainstPerGame": 16.07,
+     "shotDiffPerGame": -7.8,
+     "sotDiffPerGame": -2.53,
+     "possession": 40.2
+    }
+   }
+  },
+  {
+   "club": "HUL",
+   "name": "Hull City AFC",
+   "eplSeason": 2026,
+   "championshipSeason": 2025,
+   "route": "playoff",
+   "championship": {
+    "position": 6,
+    "points": 73,
+    "played": 46,
+    "won": 21,
+    "draw": 10,
+    "lost": 15,
+    "goalsFor": 70,
+    "goalsAgainst": 66,
+    "goalDifference": 4,
+    "pointsPerGame": 1.587,
+    "gdPerGame": 0.087,
+    "espn": null
+   },
+   "epl": {
+    "position": 4,
+    "points": 3,
+    "played": 1,
+    "won": 1,
+    "draw": 0,
+    "lost": 0,
+    "goalsFor": 2,
+    "goalsAgainst": 0,
+    "goalDifference": 2,
+    "pointsPerGame": 3,
+    "gdPerGame": 2,
+    "complete": false,
+    "espn": null
+   }
+  },
+  {
+   "club": "IPS",
+   "name": "Ipswich Town FC",
+   "eplSeason": 2026,
+   "championshipSeason": 2025,
+   "route": "automatic",
+   "championship": {
+    "position": 2,
+    "points": 84,
+    "played": 46,
+    "won": 23,
+    "draw": 15,
+    "lost": 8,
+    "goalsFor": 80,
+    "goalsAgainst": 47,
+    "goalDifference": 33,
+    "pointsPerGame": 1.826,
+    "gdPerGame": 0.717,
+    "espn": null
+   },
+   "epl": {
+    "position": 7,
+    "points": 3,
+    "played": 1,
+    "won": 1,
+    "draw": 0,
+    "lost": 0,
+    "goalsFor": 2,
+    "goalsAgainst": 1,
+    "goalDifference": 1,
+    "pointsPerGame": 3,
+    "gdPerGame": 1,
+    "complete": false,
+    "espn": null
+   }
+  },
+  {
+   "club": "COV",
+   "name": "Coventry City FC",
+   "eplSeason": 2026,
+   "championshipSeason": 2025,
+   "route": "automatic",
+   "championship": {
+    "position": 1,
+    "points": 95,
+    "played": 46,
+    "won": 28,
+    "draw": 11,
+    "lost": 7,
+    "goalsFor": 97,
+    "goalsAgainst": 45,
+    "goalDifference": 52,
+    "pointsPerGame": 2.065,
+    "gdPerGame": 1.13,
+    "espn": null
+   },
+   "epl": {
+    "position": 18,
+    "points": 0,
+    "played": 1,
+    "won": 0,
+    "draw": 0,
+    "lost": 1,
+    "goalsFor": 0,
+    "goalsAgainst": 3,
+    "goalDifference": -3,
+    "pointsPerGame": 0,
+    "gdPerGame": -3,
+    "complete": false,
+    "espn": null
+   }
+  }
+ ],
+ "relationships": {
+  "championship PPG -> EPL PPG": {
+   "n": 6,
+   "r": -0.362,
+   "ci95": [
+    -0.907,
+    0.637
+   ]
+  },
+  "championship GD/game -> EPL GD/game": {
+   "n": 6,
+   "r": 0.131,
+   "ci95": [
+    -0.762,
+    0.852
+   ]
+  },
+  "championship position -> EPL points": {
+   "n": 6,
+   "r": -0.006,
+   "ci95": [
+    -0.814,
+    0.81
+   ]
+  },
+  "championship GF -> EPL GF": {
+   "n": 6,
+   "r": -0.12,
+   "ci95": [
+    -0.849,
+    0.766
+   ]
+  },
+  "championship GA -> EPL GA": {
+   "n": 6,
+   "r": 0.375,
+   "ci95": [
+    -0.627,
+    0.91
+   ]
+  }
+ },
+ "byRoute": {
+  "automatic": {
+   "clubs": 4,
+   "meanEplPoints": 29,
+   "meanEplGD": -34.3,
+   "meanChampionshipPPG": 2.136
+  },
+  "playoff": {
+   "clubs": 2,
+   "meanEplPoints": 33,
+   "meanEplGD": -33,
+   "meanChampionshipPPG": 1.772
+  }
+ },
+ "caveat": "DESCRIPTIVE ONLY. No coefficient here may enter a projection. With this many clubs every confidence interval below spans most of the possible range, and the route split has 2-4 clubs a side."
+}

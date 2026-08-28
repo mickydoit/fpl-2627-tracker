@@ -44,7 +44,7 @@ for (const comp of targets) {
        structural twin without depending on either feed's match id. */
     const fdIndex = new Map();
     for (const m of fd) {
-      fdIndex.set(fixtureKey('football-data', dayOf(m.utcDate), m.homeTeamTla, m.awayTeamTla), m);
+      fdIndex.set(fixtureKey('football-data', dayOf(m.utcDate), m.homeTeamTla, m.awayTeamTla, comp.key), m);
     }
 
     const rows = [];
@@ -52,7 +52,7 @@ for (const comp of targets) {
       const home = m.teams.find((t) => t.homeAway === 'home');
       const away = m.teams.find((t) => t.homeAway === 'away');
       if (!home || !away) continue;
-      const twin = fdIndex.get(fixtureKey('espn', dayOf(m.date), home.abbreviation, away.abbreviation)) ?? null;
+      const twin = fdIndex.get(fixtureKey('espn', dayOf(m.date), home.abbreviation, away.abbreviation, comp.key)) ?? null;
       if (twin) joined += 1;
 
       /* One row PER TEAM, not per match: every later question — team attack,
@@ -76,10 +76,10 @@ for (const comp of targets) {
           referee: twin?.referee ?? null,
 
           espnTeamId: side.espnTeamId,
-          team: canonicalTla('espn', side.abbreviation),
+          team: canonicalTla('espn', side.abbreviation, comp.key),
           teamName: side.name,
           opponentEspnTeamId: opp.espnTeamId,
-          opponent: canonicalTla('espn', opp.abbreviation),
+          opponent: canonicalTla('espn', opp.abbreviation, comp.key),
           home: isHome,
 
           goalsFor: side.score ?? null,

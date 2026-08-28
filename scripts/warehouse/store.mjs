@@ -139,11 +139,18 @@ export const paths = {
   fdTeams: (comp, season) => `${ROOT}/raw/football-data/${comp}/${season}/teams.ndjson.gz`,
   fdStandings: (comp, season) => `${ROOT}/raw/football-data/${comp}/${season}/standings.ndjson.gz`,
   espnMatches: (comp, season) => `${ROOT}/raw/espn/${comp}/${season}/matches.ndjson.gz`,
-  espnPlayerSeasons: (season) => `${ROOT}/raw/espn/player-seasons/${season}.ndjson.gz`,
+  /* Tier A: one request per team-season, 15 summary fields, no minutes. */
+  espnRosters: (comp, season) => `${ROOT}/raw/espn/rosters/${comp}/${season}.ndjson.gz`,
+  /* Tier B: one request per player-league-season, 95 fields including minutes
+     and starts. Targeted, never a sweep. */
+  espnPlayerSeasons: (comp, season) => `${ROOT}/raw/espn/player-seasons/${comp}/${season}.ndjson.gz`,
   teams: () => `${ROOT}/normalised/teams.ndjson.gz`,
   players: () => `${ROOT}/normalised/players.ndjson.gz`,
   teamMatch: (comp, season) => `${ROOT}/normalised/team_match/${comp}/${season}.ndjson.gz`,
   playerSeason: (season) => `${ROOT}/normalised/player_season/${season}.ndjson.gz`,
   transfers: () => `${ROOT}/normalised/transfers.ndjson.gz`,
+  /* football-data player id <-> ESPN athlete id, for EVERY player the census
+     has seen — not only the current FPL squad. */
+  playerXref: () => `${ROOT}/normalised/player_xref.ndjson.gz`,
   coverage: () => `${ROOT}/coverage.json`,
 };

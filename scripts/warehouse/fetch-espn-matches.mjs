@@ -37,6 +37,38 @@ import { COMPETITIONS, WAREHOUSE_SEASONS, assertWarehouseSeason, BUDGET } from '
 const SITE = 'https://site.web.api.espn.com/apis/site/v2/sports/soccer';
 const CORE = 'https://sports.core.api.espn.com/v2/sports/soccer/leagues';
 
+/**
+ * ESPN's scoreboard refuses a date range longer than 366 days with HTTP 400.
+ *
+ * Measured, and the measurement matters because the symptom was so misleading.
+ * The first version of this file asked for `{season}0701-{season+1}0701`, which
+ * is 367 days INCLUSIVE — and 367 days fails always, in every season and every
+ * competition. It appeared to work for four seasons out of five purely because
+ * only one window in that set contained a leap day, and without Feb 29 the same
+ * literal string spans 366 days rather than 367.
+ *
+ * So the "transient eng.1 2023 400, adjacent seasons fine" was neither
+ * transient nor about 2023: it was every window containing 29 February. Left
+ * unfixed it would have silently cost the whole 2023/24 season across all ten
+ * competitions, and the coverage report would have shown a plausible-looking
+ * gap with no error attached to it.
+ *
+ * A season runs August to May, so 1 July to 30 June is comfortable cover.
+ */
+const SCOREBOARD_MAX_SPAN_DAYS = 366;
+
+function seasonWindow(season) {
+  const from = `${season}0701`;
+  const to = `${season + 1}0630`;
+  const span = Math.round((Date.parse(`${season + 1}-06-30`) - Date.parse(`${season}-07-01`)) / 864e5) + 1;
+  if (span > SCOREBOARD_MAX_SPAN_DAYS) {
+    // Cannot happen with the literals above, and asserted anyway: a silent 400
+    // costs a whole season and looks like missing data rather than a bug.
+    throw new Error(`season ${season} window spans ${span} days, over ESPN's ${SCOREBOARD_MAX_SPAN_DAYS}-day ceiling`);
+  }
+  return { range: `${from}-${to}`, span };
+}
+
 const SEASONS = (process.env.WAREHOUSE_SEASONS || WAREHOUSE_SEASONS.join(','))
   .split(',').map((s) => assertWarehouseSeason(s.trim(), 'espn warehouse ingest'));
 const ONLY = (process.env.WAREHOUSE_COMPETITIONS || '').split(',').filter(Boolean);
@@ -144,8 +176,9 @@ for (const season of SEASONS) {
     const path = paths.espnMatches(comp.key, season);
     const have = new Set((await readRows(path)).map((r) => r.eventId));
 
+    const { range } = seasonWindow(season);
     const board = await getJSON(
-      `${SITE}/${comp.espn}/scoreboard?dates=${season}0701-${season + 1}0701&limit=700`,
+      `${SITE}/${comp.espn}/scoreboard?dates=${range}&limit=700`,
       { browserUA: true },
     ).catch((e) => ({ _err: e.message }));
     if (board?._err || !Array.isArray(board?.events)) {

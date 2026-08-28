@@ -80,16 +80,45 @@ for (const comp of COMPETITIONS.filter((c) => c.footballData)) {
         seasons: [],
       };
       prev.seasons.push({ competition: comp.key, season });
-      const tla = canonicalTla('football-data', t.tla);
-      const fpl = fplByTla.get(tla);
-      if (fpl) { prev.fplTeamId = fpl.id; prev.fplShort = fpl.short_name; }
       teams.set(key, prev);
     }
   }
 }
 
+/* The FPL join, done AFTER every club is known so it can be restricted and
+   checked rather than applied optimistically inside the loop.
+   
+   Two rules, both learned the hard way:
+   
+   1. Only a club that has actually played in eng.1 may claim an FPL team id.
+      FPL contains Premier League clubs and nothing else, so matching on the
+      three-letter code alone reaches across leagues — Brentford FC and Stade
+      Brestois 29 are both "BRE", and without this restriction Brest's seasons
+      were attributed to Brentford. A cross-league club collision is exactly the
+      error this file exists to prevent and it produced no symptom at all.
+   
+   2. One FPL club, one claimant. A second claim is recorded as a problem rather
+      than overwriting the first, because whichever won would be arbitrary. */
+const fplClaimed = new Map();
+for (const row of teams.values()) {
+  const playedInEpl = row.seasons.some((s) => s.competition === 'eng.1');
+  if (!playedInEpl) continue;
+  const tla = canonicalTla('football-data', row.tla, 'eng.1');
+  const fpl = fplByTla.get(tla);
+  if (!fpl) continue;
+  if (fplClaimed.has(fpl.id)) {
+    teamProblems.push({
+      globalTeamId: row.globalTeamId, name: row.name, tla: row.tla,
+      reason: `FPL team ${fpl.short_name} already claimed by ${fplClaimed.get(fpl.id)}`,
+    });
+    continue;
+  }
+  fplClaimed.set(fpl.id, row.globalTeamId);
+  row.fplTeamId = fpl.id; row.fplShort = fpl.short_name;
+}
+
 /* ESPN joins on club NAME, not on its three-letter code: the codes collide
-   across leagues (several "MAN"s, several "REA"s) while displayName does not
+   across leagues (several "MAN"s, several "BRE"s) while displayName does not
    inside a single competition. */
 const espnTeams = new Map();
 for (const comp of COMPETITIONS) {

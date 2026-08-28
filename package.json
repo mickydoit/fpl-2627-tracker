@@ -24,7 +24,14 @@
     "warehouse:identity": "node scripts/warehouse/build-identity.mjs",
     "warehouse:normalise": "node scripts/warehouse/normalise.mjs",
     "warehouse:coverage": "node scripts/warehouse/coverage.mjs",
-    "test:warehouse": "node scripts/test-warehouse.mjs"
+    "test:warehouse": "node scripts/test-warehouse.mjs",
+    "warehouse:playerseasons": "node scripts/warehouse/fetch-player-seasons.mjs",
+    "warehouse:xref": "node scripts/warehouse/build-xref.mjs",
+    "research:promoted": "node scripts/warehouse/research/promoted-clubs.mjs",
+    "research:continuity": "node scripts/warehouse/research/squad-continuity.mjs",
+    "research:transfers": "node scripts/warehouse/research/transfers.mjs",
+    "research:teamstrength": "node scripts/warehouse/research/team-strength.mjs",
+    "research:h2h": "node scripts/warehouse/research/head-to-head.mjs"
   },
   "engines": {
     "node": ">=20"
