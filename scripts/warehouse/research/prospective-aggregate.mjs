@@ -25,11 +25,29 @@
  * detail call), the FPL event total is used instead — one value per player-event,
  * never once per match.
  *
- * ── Absence is never zero ──
+ * ── Absence is never zero, and a PARTIAL total is not a total ──
  *
  * A player with no fixture in an event has NOT been observed taking no shots.
- * He is absent from the output entirely, and a blank is reported as
- * NO_FIXTURE rather than as a measured zero.
+ * He is absent from the output entirely, and a blank is reported as NO_FIXTURE
+ * rather than as a measured zero.
+ *
+ * The subtler case is a double gameweek where one match was fetched and the
+ * other was not. Summing 3 and null to 3 would publish a partial observation as
+ * a complete event total, and nothing downstream could tell the difference — it
+ * would simply read as a player who created three chances across two matches.
+ *
+ * So an aggregate becomes a numeric total ONLY when every constituent
+ * observation is present, or when absence is semantically PROVEN to mean zero.
+ * Otherwise the value is null and the partial sum is carried alongside it,
+ * labelled, for diagnostics.
+ *
+ * ── When absence really does mean zero ──
+ *
+ * If the source establishes that a player played zero minutes in a match, then
+ * he took zero shots in it — that is a fact about football, not a gap in the
+ * data. Verified non-participation therefore counts as an observed zero. A
+ * failed fetch never does, and the two are distinguishable because an unfetched
+ * row carries `minutes: null` while a non-participant carries `minutes: 0`.
  */
 import { readRows, paths } from '../store.mjs';
 
@@ -38,6 +56,8 @@ import { readRows, paths } from '../store.mjs';
  * @param {Map} fplEventMinutes  `${espnId}|${event}` -> FPL minutes for that event
  * @returns {object[]} one row per player-event
  */
+const METRIC_FIELDS = ['shots', 'shotsOnTarget', 'keyPasses'];
+
 export function aggregateToEvent(matchRows, fplEventMinutes = new Map()) {
   const byKey = new Map();
   for (const r of matchRows) {
@@ -48,31 +68,67 @@ export function aggregateToEvent(matchRows, fplEventMinutes = new Map()) {
       matches: 0, eventIds: [],
       shots: null, shotsOnTarget: null, keyPasses: null,
       espnMinutes: null, minutesSource: null, starts: 0,
+      _partial: {}, _observed: {}, _minutesObserved: 0,
     };
     acc.matches += 1;
     acc.eventIds.push(r.eventId);
-    /* Sum only over rows that actually carry the field. A null contributes
-       nothing and must not turn the running total into a zero. */
-    for (const f of ['shots', 'shotsOnTarget', 'keyPasses']) {
-      if (r[f] != null) acc[f] = (acc[f] ?? 0) + r[f];
+    /* Verified non-participation: the player was on no pitch, so his outcome
+       counts for this match are genuinely zero. Distinguishable from a failed
+       fetch because that leaves minutes null, not 0. */
+    const verifiedAbsent = r.minutes === 0;
+    for (const f of METRIC_FIELDS) {
+      const observed = r[f] != null ? r[f] : (verifiedAbsent ? 0 : null);
+      if (observed != null) {
+        acc._partial[f] = (acc._partial[f] ?? 0) + observed;
+        acc._observed[f] = (acc._observed[f] ?? 0) + 1;
+      }
     }
-    if (r.minutes != null) acc.espnMinutes = (acc.espnMinutes ?? 0) + r.minutes;
+    if (r.minutes != null) { acc.espnMinutes = (acc.espnMinutes ?? 0) + r.minutes; acc._minutesObserved += 1; }
     if (r.starter) acc.starts += 1;
     byKey.set(key, acc);
   }
 
   const out = [];
   for (const acc of byKey.values()) {
-    /* ONE minutes total per player-event, whichever source supplied it. */
+    /* ONE minutes total per player-event, and only when every constituent match
+       supplied one. A half-observed denominator is worse than none: it makes
+       every rate built on it silently too large. */
     const fpl = fplEventMinutes.get(`${acc.espnId}|${acc.gameweek}`);
-    let minutes = null; let source = null;
-    if (acc.espnMinutes != null) { minutes = acc.espnMinutes; source = 'espn-match-summed'; }
-    else if (fpl != null) { minutes = fpl; source = 'fpl-event-total'; }
-    const per90 = (v) => (v != null && minutes > 0 ? (v / minutes) * 90 : null);
+    const espnMinutesComplete = acc._minutesObserved === acc.matches && acc.espnMinutes != null;
+    let minutes = null; let source = null; let minutesComplete = false;
+    if (espnMinutesComplete) { minutes = acc.espnMinutes; source = 'espn-match-summed'; minutesComplete = true; }
+    else if (fpl != null) {
+      /* The FPL total covers the WHOLE event by construction, so it is complete
+         even when ESPN's per-match minutes are not. */
+      minutes = fpl; source = 'fpl-event-total'; minutesComplete = true;
+    } else if (acc.espnMinutes != null) {
+      source = 'espn-match-partial';   // carried for diagnostics, not used as a denominator
+    }
+
+    const coverage = {}; const partial = {};
+    const value = {};
+    for (const f of METRIC_FIELDS) {
+      const observedMatches = acc._observed[f] ?? 0;
+      const complete = observedMatches === acc.matches;
+      coverage[f] = { observedMatches, expectedMatches: acc.matches, coverageComplete: complete };
+      partial[f] = acc._partial[f] ?? null;
+      /* The invariant: a numeric total only when fully observed. */
+      value[f] = complete ? (acc._partial[f] ?? null) : null;
+    }
+
+    const per90 = (v) => (v != null && minutesComplete && minutes > 0 ? (v / minutes) * 90 : null);
+    const { _partial, _observed, _minutesObserved, ...rest } = acc;
     out.push({
-      ...acc, minutes, minutesSource: source,
-      shots90: per90(acc.shots), shotsOnTarget90: per90(acc.shotsOnTarget), keyPasses90: per90(acc.keyPasses),
+      ...rest,
+      shots: value.shots, shotsOnTarget: value.shotsOnTarget, keyPasses: value.keyPasses,
+      minutes: minutesComplete ? minutes : null,
+      minutesSource: source, minutesComplete,
+      partialTotals: partial,
+      fieldCoverage: coverage,
+      coverageComplete: METRIC_FIELDS.every((f) => coverage[f].coverageComplete) && minutesComplete,
+      shots90: per90(value.shots), shotsOnTarget90: per90(value.shotsOnTarget), keyPasses90: per90(value.keyPasses),
       isDoubleGameweek: acc.matches > 1,
+      espnMinutesPartial: espnMinutesComplete ? null : acc.espnMinutes,
     });
   }
   return out.sort((a, b) => a.espnId - b.espnId || a.gameweek - b.gameweek);

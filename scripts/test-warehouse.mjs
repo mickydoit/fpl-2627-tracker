@@ -1083,6 +1083,53 @@ console.log('\nEvent-grain aggregation');
     return z[0].shots === 0 && z[0].shots90 === 0;
   })());
 
+  /* PE-14. A partial observation must never be published as a complete total.
+     This is the case that would have been invisible: summing 3 and null to 3
+     reads downstream as a player who created three chances across two matches,
+     with nothing to say one match was never fetched. */
+  const partialDgw = [
+    { espnId: 6, gameweek: 9, eventId: 300, minutes: 90, keyPasses: 3, shots: 2, shotsOnTarget: 1, starter: true },
+    { espnId: 6, gameweek: 9, eventId: 301, minutes: 60, keyPasses: null, shots: 1, shotsOnTarget: 0, starter: true },
+  ];
+  const pa = aggregateToEvent(partialDgw)[0];
+  ok('PE-14 minutes still total across both matches', pa.minutes === 150, `${pa.minutes}`);
+  ok('PE-14 a partially observed metric is NOT a numeric total', pa.keyPasses === null, `${pa.keyPasses}`);
+  ok('PE-14 the partial sum is carried alongside, labelled', pa.partialTotals.keyPasses === 3);
+  ok('PE-14 coverage records observed and expected matches',
+    pa.fieldCoverage.keyPasses.observedMatches === 1 && pa.fieldCoverage.keyPasses.expectedMatches === 2);
+  ok('PE-14 the incomplete field is flagged', pa.fieldCoverage.keyPasses.coverageComplete === false);
+  ok('PE-14 a partially observed metric yields no rate', pa.keyPasses90 === null);
+  ok('PE-14 fully observed metrics in the same event are unaffected',
+    pa.shots === 3 && pa.shotsOnTarget === 1 && pa.fieldCoverage.shots.coverageComplete === true);
+  ok('PE-14 the event is marked as not fully covered', pa.coverageComplete === false);
+
+  /* Two genuinely observed zeros ARE a measured zero. */
+  const bothZero = aggregateToEvent([
+    { espnId: 7, gameweek: 9, eventId: 300, minutes: 90, keyPasses: 0, shots: 0, shotsOnTarget: 0, starter: true },
+    { espnId: 7, gameweek: 9, eventId: 301, minutes: 45, keyPasses: 0, shots: 0, shotsOnTarget: 0, starter: false },
+  ])[0];
+  ok('PE-14 observed zero plus observed zero is a measured zero', bothZero.keyPasses === 0);
+  ok('PE-14 a measured zero produces a real rate of zero', bothZero.keyPasses90 === 0);
+  ok('PE-14 a measured zero counts as complete coverage', bothZero.coverageComplete === true);
+
+  /* Verified non-participation is an observed zero; a failed fetch is not. */
+  const didNotPlay = aggregateToEvent([
+    { espnId: 8, gameweek: 9, eventId: 300, minutes: 90, keyPasses: 2, shots: 1, shotsOnTarget: 1, starter: true },
+    { espnId: 8, gameweek: 9, eventId: 301, minutes: 0, keyPasses: null, shots: null, shotsOnTarget: null, starter: false },
+  ])[0];
+  ok('PE-14 zero minutes proves zero outcomes for that match', didNotPlay.keyPasses === 2,
+    `${didNotPlay.keyPasses}`);
+  ok('PE-14 verified non-participation counts as complete coverage',
+    didNotPlay.fieldCoverage.keyPasses.coverageComplete === true);
+  const failedFetch = aggregateToEvent([
+    { espnId: 9, gameweek: 9, eventId: 300, minutes: 90, keyPasses: 2, starter: true },
+    { espnId: 9, gameweek: 9, eventId: 301, minutes: null, keyPasses: null, starter: false },
+  ])[0];
+  ok('PE-14 a failed fetch is NOT treated as non-participation', failedFetch.keyPasses === null);
+  ok('PE-14 an incomplete minutes denominator is withheld',
+    failedFetch.minutes === null && failedFetch.minutesComplete === false);
+  ok('PE-14 the partial minutes are kept for diagnostics', failedFetch.espnMinutesPartial === 90);
+
   /* PE-13. A rescheduled match keeps the FPL event that scores it, whatever the
      calendar says. */
   const fixtures = [
