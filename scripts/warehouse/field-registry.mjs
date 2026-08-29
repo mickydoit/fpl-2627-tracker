@@ -101,10 +101,15 @@ export const FIELD_REGISTRY = {
     population: 'as above', semantics: 'reads zero for every row including goalkeepers who conceded',
     evidence: 'Zero on all 440 rows.' },
   'matchAthlete.minutes': { status: 'MODEL_SAFE', source: 'core roster entry statistics $ref (per player-match)',
-    population: 'inherits the player-season audit of the same core statistics block',
-    semantics: 'minutes played by this player in this match',
-    evidence: 'Same block and field as the audited season-level minutes; absent from the cheap summary route, '
-      + 'which is why it is fetched separately.' },
+    population: '40 player-match rows, one settled 2026/27 match, cross-checked against FPL',
+    semantics: 'minutes played by this player in THIS match',
+    evidence: 'Audited independently rather than inherited. Present on 40/40 rows; range 0-90 with no value '
+      + 'over 120; starters average 82.9 against 8.7 for non-starters; and the two teams total exactly 1980 '
+      + 'minutes, which is the physical identity 90 x 22 for a completed match. Cross-checked against FPL '
+      + 'gameweek-1 minutes — a single-fixture gameweek, so the two must agree — and 25 of 25 matched '
+      + 'players agreed to within one minute.',
+    note: 'Because this is per MATCH, it removes the double-gameweek denominator problem entirely for any '
+      + 'player it is fetched for. The FPL-event aggregation path remains implemented for players without it.' },
   'matchAthlete.shotAssists': { status: 'MODEL_SAFE', source: 'core roster entry statistics $ref (per player-match)',
     population: 'inherits the player-season audit', semantics: 'key passes by this player in this match',
     evidence: 'Same block and field as the audited season-level shotAssists.' },

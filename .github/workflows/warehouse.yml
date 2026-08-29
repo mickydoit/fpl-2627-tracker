@@ -65,11 +65,28 @@ jobs:
         run: node scripts/warehouse/fetch-espn-matches.mjs
         continue-on-error: true
 
+      # Prospective outcome collection, for scoring already-frozen candidates.
+      # Deliberately AFTER collection and BEFORE the isolation check, and
+      # continue-on-error: an undocumented ESPN endpoint having a bad day must
+      # not stop the warehouse committing what it already gathered, and it must
+      # certainly never reach the deploy path — which it cannot, because this
+      # workflow does not deploy.
+      #
+      # The collector is idempotent, resumable, capped at 140 requests a run,
+      # and treats completed outcomes as immutable, so a run with nothing new
+      # exits successfully reporting NO NEW SETTLED MATCHES.
+      - name: Prospective outcomes (evaluation only, never refits)
+        env:
+          PROSPECTIVE_BUDGET: '140'
+        run: node scripts/warehouse/fetch-prospective-outcomes.mjs
+        continue-on-error: true
+
       - name: Identity, normalise, coverage
         run: |
           node scripts/warehouse/build-identity.mjs
           node scripts/warehouse/normalise.mjs
           node scripts/warehouse/coverage.mjs
+          node scripts/warehouse/research/prospective-report.mjs || true
 
       # The warehouse must never be able to change a projection. This is the
       # assertion that keeps that true, and it runs before anything is

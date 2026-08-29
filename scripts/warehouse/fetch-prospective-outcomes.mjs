@@ -57,12 +57,16 @@ const archive = J('data/warehouse/research/shadow-archive.json');
 const cohortEspnIds = new Set((archive?.players || []).map((p) => p.espnId).filter(Boolean));
 console.log(`→ prospective outcomes, GW>=${FIRST_GW}, cohort ${cohortEspnIds.size} players, budget ${BUDGET} requests\n`);
 
-/* Which gameweeks are settled and eligible. */
+/* Eligible MATCHES, not eligible gameweeks.
+ *
+ * Waiting for a whole gameweek to settle would leave Saturday's matches
+ * unarchived until Monday night, and ESPN endpoints are undocumented — a match
+ * that becomes harder to reconstruct later is evidence lost for nothing. So the
+ * trigger is per match: eligible event, finished, not already archived. */
 const boot = J('data/bootstrap.json');
-const settled = (boot?.events || []).filter((e) => e.finished && e.id >= FIRST_GW).map((e) => e.id);
-if (!settled.length) {
-  console.log(`  no settled gameweek at or after GW${FIRST_GW} — nothing to collect yet.`);
-  console.log('  (this is the correct state before the evaluation window opens)');
+const eligibleEvents = (boot?.events || []).filter((e) => e.id >= FIRST_GW).map((e) => e.id);
+if (!eligibleEvents.length) {
+  console.log(`  no gameweek at or after GW${FIRST_GW} — nothing to collect yet.`);
   process.exit(0);
 }
 
@@ -81,23 +85,34 @@ if (!sb?.events) { console.warn('✗ scoreboard unavailable — committed data u
 
 const missing = [];
 let collected = 0; let cohortFetched = 0;
+/* Item 9's ledger. The ~80/GW estimate is a claim about the future, so it is
+   measured every run rather than assumed to have stayed true. */
+const ledger = { newMatches: 0, summaryRequests: 0, rosterRequests: 0, detailRequests: 0,
+  cacheHits: 0, failures: 0, deferredForBudget: 0 };
 
-for (const gw of settled) {
+for (const gw of eligibleEvents) {
   const path = paths.prospectiveRaw(SEASON, gw);
   const have = new Set((await readRows(path)).map((r) => `${r.eventId}:${r.espnId}`));
   const haveEvents = new Set((await readRows(path)).map((r) => r.eventId));
 
   const evs = sb.events.filter((e) => e.competitions?.[0]?.status?.type?.completed
     && gwByDay.get(String(e.date).slice(0, 10)) === gw);
+  /* A gameweek with no completed match yet is simply the future — not worth a
+     line each for the rest of the season. */
+  if (!evs.length) continue;
   const todo = evs.filter((e) => !haveEvents.has(Number(e.id)));
-  if (!todo.length) { console.log(`  GW${gw}: ${haveEvents.size} matches already stored`); continue; }
+  if (!todo.length) { console.log(`  GW${gw}: ${haveEvents.size}/${evs.length} matches stored, nothing new`); continue; }
 
   const rows = [];
   for (const ev of todo) {
     if (spent >= BUDGET) break;
     const s = await getJSON(`${SITE}/summary?event=${ev.id}`, { browserUA: true }).catch(() => null);
-    spent += 1;
-    if (!s?.rosters?.length) { missing.push({ gw, eventId: ev.id, reason: 'summary unavailable' }); continue; }
+    spent += 1; ledger.summaryRequests += 1;
+    if (!s?.rosters?.length) {
+      ledger.failures += 1;
+      missing.push({ gw, eventId: ev.id, reason: 'summary unavailable' });
+      continue;
+    }
 
     for (const t of s.rosters) {
       for (const entry of t.roster || []) {
@@ -125,8 +140,10 @@ for (const gw of settled) {
           competition: 'eng.1', season: SEASON, fetchedAt: new Date().toISOString() }));
       }
     }
-    collected += 1;
+    collected += 1; ledger.newMatches += 1;
   }
+  ledger.cacheHits += evs.length - todo.length;
+  if (spent >= BUDGET) ledger.deferredForBudget += evs.length - todo.length >= 0 ? (evs.length - (todo.length)) : 0;
 
   /* Targeted second pass: key passes for cohort players only.
    *
@@ -149,7 +166,7 @@ for (const gw of settled) {
         const roster = await getJSON(
           `https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/events/${eventId}`
           + `/competitions/${eventId}/competitors/${c.id}/roster`, { browserUA: true }).catch(() => null);
-        spent += 1;
+        spent += 1; ledger.rosterRequests += 1;
         for (const e of roster?.entries || []) {
           if (e.statistics?.$ref) refByPlayer.set(Number(e.playerId), String(e.statistics.$ref).replace(/^http:/, 'https:'));
         }
@@ -159,7 +176,7 @@ for (const gw of settled) {
         const ref = refByPlayer.get(r.espnId);
         if (!ref) continue;
         const st = await getJSON(ref, { browserUA: true }).catch(() => null);
-        spent += 1;
+        spent += 1; ledger.detailRequests += 1;
         const cats = st?.splits?.categories;
         // No statistics block = unknown. Leave null; never write a zero.
         if (!Array.isArray(cats) || !cats.length) continue;
@@ -183,8 +200,14 @@ for (const gw of settled) {
   if (spent >= BUDGET) { console.log(`  budget reached (${spent}) — the next run continues`); break; }
 }
 
-console.log(`\n✓ ${spent} requests spent, ${collected} matches collected`
-  + (cohortFetched ? `, ${cohortFetched} cohort detail rows` : ''));
+console.log('\nREQUEST LEDGER');
+for (const [k, v] of Object.entries(ledger)) console.log('  ' + k.padEnd(20) + v);
+console.log('  ' + 'totalRequests'.padEnd(20) + spent + ` (cap ${BUDGET})`);
+if (ledger.newMatches) {
+  console.log('  ' + 'perMatch'.padEnd(20) + (spent / ledger.newMatches).toFixed(1)
+    + `  -> ~${Math.round((spent / ledger.newMatches) * 10)} per 10-match gameweek`);
+}
+if (!collected && !missing.length) console.log('\n  NO NEW SETTLED MATCHES');
 if (missing.length) {
   console.log(`  ⚠ COVERAGE INCOMPLETE — ${missing.length} match(es) unavailable, recorded as missing, NOT as zero:`);
   for (const m of missing.slice(0, 5)) console.log(`    GW${m.gw} event ${m.eventId}: ${m.reason}`);

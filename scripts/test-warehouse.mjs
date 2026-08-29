@@ -1034,5 +1034,75 @@ console.log('\nProspective evidence (PE)');
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * Double gameweeks, blanks and reschedules
+ * ------------------------------------------------------------------ */
+console.log('\nEvent-grain aggregation');
+{
+  const { aggregateToEvent, buildEventMap, coverage } = await import('./warehouse/research/prospective-aggregate.mjs');
+
+  /* PE-11. The denominator trap. Two matches in one FPL event must produce ONE
+     rate over ONE minutes total — not two rates each using the full total, and
+     not one rate over a doubled total. */
+  const dgw = [
+    { espnId: 1, gameweek: 7, eventId: 100, name: 'A', shots: 2, shotsOnTarget: 1, keyPasses: 1, minutes: 90, starter: true },
+    { espnId: 1, gameweek: 7, eventId: 101, name: 'A', shots: 3, shotsOnTarget: 2, keyPasses: 0, minutes: 60, starter: true },
+  ];
+  const agg = aggregateToEvent(dgw);
+  ok('PE-11 a double gameweek produces exactly one player-event row', agg.length === 1, `${agg.length}`);
+  ok('PE-11 outcomes are summed across both matches', agg[0].shots === 5 && agg[0].shotsOnTarget === 3);
+  ok('PE-11 minutes are summed once, not applied per match', agg[0].minutes === 150, `${agg[0].minutes}`);
+  ok('PE-11 the rate is 5 shots per 150 minutes', Math.abs(agg[0].shots90 - (5 / 150) * 90) < 1e-9,
+    `${agg[0].shots90}`);
+  ok('PE-11 the denominator is not doubled', Math.abs(agg[0].shots90 - (5 / 300) * 90) > 1e-9);
+  ok('PE-11 the row is flagged as a double gameweek', agg[0].isDoubleGameweek === true);
+
+  /* The FPL-event fallback must behave identically — one total, not one per match. */
+  const noEspnMins = dgw.map((r) => ({ ...r, minutes: null }));
+  const aggF = aggregateToEvent(noEspnMins, new Map([['1|7', 150]]));
+  ok('PE-11 the FPL fallback also uses one event total', aggF[0].minutes === 150 && aggF[0].shots === 5);
+  ok('PE-11 the fallback records which source supplied minutes', aggF[0].minutesSource === 'fpl-event-total');
+  ok('PE-11 ESPN match minutes are preferred when present', agg[0].minutesSource === 'espn-match-summed');
+
+  /* PE-12. A blank gameweek is not a measured zero. */
+  const blank = aggregateToEvent([
+    { espnId: 2, gameweek: 7, eventId: 100, name: 'B', shots: 1, minutes: 90, starter: true },
+  ]);
+  ok('PE-12 a player with no fixture produces no row at all',
+    !blank.some((r) => r.espnId === 3));
+  ok('PE-12 absence is never rendered as zero shots',
+    !blank.some((r) => r.espnId === 3 && r.shots === 0));
+  /* And a field that was never fetched stays null rather than summing to zero. */
+  const partial = aggregateToEvent([
+    { espnId: 4, gameweek: 8, eventId: 200, name: 'C', shots: 2, keyPasses: null, minutes: 90, starter: true },
+  ]);
+  ok('PE-12 an unfetched field aggregates to null, not zero', partial[0].keyPasses === null);
+  ok('PE-12 a null field yields a null rate, not zero', partial[0].keyPasses90 === null);
+  ok('PE-12 a genuinely observed zero is preserved', (() => {
+    const z = aggregateToEvent([{ espnId: 5, gameweek: 8, eventId: 200, shots: 0, minutes: 90, starter: true }]);
+    return z[0].shots === 0 && z[0].shots90 === 0;
+  })());
+
+  /* PE-13. A rescheduled match keeps the FPL event that scores it, whatever the
+     calendar says. */
+  const fixtures = [
+    { event: 5, kickoff_time: '2026-10-03T14:00:00Z', team_h: 1, team_a: 2 },
+    /* played months late, still scored in event 5 */
+    { event: 5, kickoff_time: '2027-01-14T20:00:00Z', team_h: 3, team_a: 4 },
+    { event: 20, kickoff_time: '2027-01-14T17:30:00Z', team_h: 5, team_a: 6 },
+  ];
+  const map = buildEventMap(fixtures, []);
+  ok('PE-13 a rescheduled match maps to its FPL event, not its calendar week',
+    map.resolve('2027-01-14', 3, 4) === 5, String(map.resolve('2027-01-14', 3, 4)));
+  ok('PE-13 a same-day match in a different event is not confused with it',
+    map.resolve('2027-01-14', 5, 6) === 20);
+  ok('PE-13 an unmapped fixture resolves to null rather than a guess',
+    map.resolve('2027-02-01', 9, 9) === null);
+
+  /* Coverage must name gaps. */
+  const cov = coverage([], { 5: { eligible: 10, settled: 8, archived: 6 } });
+  ok('PE-13 incomplete coverage is reported as incomplete', cov[5].status === 'COVERAGE INCOMPLETE');
+}
+
 console.log(`\n${failures === 0 ? `✓ all ${checks} warehouse checks passed` : `✗ ${failures} of ${checks} failed`}\n`);
 process.exit(failures === 0 ? 0 : 1);
