@@ -140,6 +140,27 @@ into a single calibration figure without saying so.
 promoted-club problem. That is H1's actual subject and it stays frozen until
 GW5-8.
 
+**What +9.6% is, exactly, and what it is not.** Stated because it looks
+comparable to H1's +1.6% and is not:
+
+    gameweek     GW2 2026/27
+    model        post-fix, the commit recorded in the snapshot's modelCommit
+    population   all players in the pre-deadline snapshot
+    metric       sum(expMins) against the PHYSICAL CEILING 90 x 22 x 10 = 19,800
+    sign         (predicted - ceiling) / ceiling; positive means OVER-prediction
+    mode         identity check, pre-deadline, no outcome involved
+
+H1's +1.6% is a different measurement in every one of those rows: a different
+gameweek, the pre-fix model, expected minutes against ACTUAL minutes rather than
+a ceiling, and — under this file's own `bias = actual - projected` convention —
+a positive value meaning UNDER-prediction. The two numbers are both positive and
+point in opposite directions.
+
+A like-for-like figure will exist once GW2 settles: the same post-fix model, the
+same population, expected minutes against actual minutes. Until then no
+predicted-versus-actual minutes calibration exists for the current model, and
+the +9.6% may not be quoted as one.
+
 ## Registered hypotheses
 
 Frozen before any further results are seen. Do not adjust the model on any of
@@ -149,6 +170,17 @@ these until the stated evaluation window.
 
 Total expected minutes are approximately calibrated (19,340 vs 19,652, +1.6%),
 but P(start) and P(60+) are too dispersed.
+
+**Mode, and a caveat added 29 August 2026.** That 19,340 is a CURRENT-MODEL
+REPLAY figure, not an archived one, and it was not labelled as such when this
+hypothesis was written. GW1 is archived at schema 1 and carries no `diagnostics`
+block at all, so no expected-minutes figure for GW1 exists out-of-sample. It is
+also no longer reproducible: `upcomingByTeam` skips started and finished
+fixtures, so the current model cannot be replayed over a settled gameweek.
+
+Treat 19,340 as an undated retrospective measurement of the pre-28-August model.
+It must not be compared with the +9.6% figure under "Identity checks" — see the
+note there for why the two are not the same kind of number.
 
 Expected signature: low buckets start MORE often than predicted, high buckets
 start LESS often, total minutes stay well calibrated. GW1 showed 0.10–0.25

@@ -181,16 +181,56 @@ async function tierA() {
 async function tierB() {
   console.log(`\n→ Tier B: full statistics incl. minutes, 1 request per player-league-season (budget ${budgetB})\n`);
 
-  /* Who needs the detailed tier. Two groups, both justified:
-       - every current FPL player, because that is who the tracker projects;
-       - every member of a promoted club's squad, because promoted-club
-         continuity is measured in retained MINUTES and route A has none. */
+  /* Who needs the detailed tier.
+   *
+   * `WAREHOUSE_PS_TARGET` selects the population, because Milestone 3 needs a
+   * different one from Milestone 2 and getting this wrong is expensive in both
+   * directions — too wide and it is thousands of pointless requests, too narrow
+   * and the transfer cohort has no minutes on one side of the move.
+   *
+   *   fpl     current FPL players plus promoted-club squads. What the tracker
+   *           projects; the right set for continuity work.
+   *   cohort  every player in a derived transfer episode, on BOTH sides of the
+   *           move. Most of these are not in today's bootstrap — a 2023
+   *           Bundesliga arrival who has since left the league is exactly the
+   *           evidence cross-league translation is built from, and the `fpl`
+   *           target excludes him.
+   *   both    the union.
+   */
+  const TARGET = process.env.WAREHOUSE_PS_TARGET || 'fpl';
   const identity = await readRows(paths.players());
-  const wanted = new Set(identity.filter((p) => p.espnId).map((p) => p.espnId));
+  const wanted = new Set();
   const promotedEspnIds = new Set();
-  for (const season of seasonsFor('espn')) {
-    for (const r of await readRows(paths.espnRosters('eng.2', season))) promotedEspnIds.add(r.espnId);
+
+  if (TARGET === 'fpl' || TARGET === 'both') {
+    for (const p of identity) if (p.espnId) wanted.add(p.espnId);
+    for (const season of seasonsFor('espn')) {
+      for (const r of await readRows(paths.espnRosters('eng.2', season))) promotedEspnIds.add(r.espnId);
+    }
   }
+
+  if (TARGET === 'cohort' || TARGET === 'both') {
+    /* The transfer cohort, bridged to ESPN ids through player_xref — the wide
+       bridge, not the FPL-keyed identity map. */
+    const xref = await readRows(paths.playerXref());
+    const espnByFd = new Map(xref.map((p) => [p.footballDataPlayerId, p.espnId]));
+    const moves = await readRows(paths.transfers());
+    let bridged = 0;
+    for (const m of moves) {
+      const espnId = espnByFd.get(m.footballDataPlayerId);
+      if (!espnId) continue;
+      /* Both sides. A move is only evidence if the source season AND the
+         destination season are both fetched, so the target set is the player,
+         not the player-season — the season filter is applied by the loop below
+         against the census for each competition-season. */
+      wanted.add(espnId);
+      bridged += 1;
+    }
+    console.log(`  cohort target: ${moves.length} moves, ${bridged} bridged to an ESPN id`);
+  }
+
+  console.log(`  target='${TARGET}', ${wanted.size} players wanted`
+    + (promotedEspnIds.size ? ` (+${promotedEspnIds.size} promoted-squad)` : ''));
 
   let fetched = 0;
   outer:
@@ -221,11 +261,30 @@ async function tierB() {
         ).catch(() => null);
         budgetB -= 1;
         const cats = st?.splits?.categories;
+        /* No statistics block at all means ESPN cannot describe this
+           player-season. That is UNKNOWN, and skipping it is correct — storing
+           nulls would be indistinguishable from a measurement. */
         if (!Array.isArray(cats) || !cats.length) continue;
         const s = statsFrom(cats);
-        // A season with no appearances is not evidence; skip rather than store
-        // a row of zeros that would read as "played and did nothing".
-        if (!(s.appearances > 0) && !(s.minutes > 0)) continue;
+        /* A statistics block that reads zero is a MEASUREMENT, and it is kept.
+        
+           This line previously skipped it, on the reasoning that "a season with
+           no appearances is not evidence". For production translation that was
+           defensible — a per-90 rate needs a denominator. For OPPORTUNITY
+           translation it is the single most damaging thing the collector could
+           do: a player who joined a Premier League club and never played is the
+           outcome the experiment exists to learn from, and dropping him leaves a
+           cohort of arrivals who all got minutes.
+        
+           That is the same selection bias as filtering the cohort on
+           destination minutes, applied one layer earlier where it is much
+           harder to see — the cohort builder cannot retain a row the fetcher
+           never wrote. Measured against the collected data it was total: the
+           opportunity cohort contained 146 episodes and ZERO zero-minute
+           outcomes, which is not a plausible transfer market.
+        
+           Unknown is null. Measured zero is zero. The distinction is the whole
+           point and it is now preserved end to end. */
         rows.push(stamp({
           espnId: c.espnId,
           name: c.name,

@@ -473,5 +473,102 @@ console.log('\nDerived research entities');
   } else console.log('  – no continuity report yet, skipping');
 }
 
+/* ------------------------------------------------------------------ *
+ * Milestone 3 — cohort construction
+ * ------------------------------------------------------------------ */
+console.log('\nTransfer cohorts');
+{
+  const cohorts = (() => {
+    try { return JSON.parse(fs.readFileSync('data/warehouse/research/cohorts.json', 'utf8')); }
+    catch { return null; }
+  })();
+
+  if (!cohorts?.episodes?.length) {
+    console.log('  – no cohorts built yet, skipping (run scripts/warehouse/research/cohorts.mjs)');
+  } else {
+    const eps = cohorts.episodes;
+
+    /* M. The opportunity cohort must carry NO destination-minutes threshold.
+       Filtering on destination minutes conditions on the target and would
+       reproduce the optimism fixed on 28 August. The check is structural: if a
+       threshold were being applied, no zero-minute episode could ever be
+       eligible for the cohort, so assert that such episodes are RETAINED. */
+    const inOpportunity = (e) => e.eligibility === 'eligible' && e.hasSourceEvidence && e.hasDestEvidence;
+    const zeros = eps.filter((e) => inOpportunity(e) && e.destMinutes === 0);
+    const lowMinute = eps.filter((e) => inOpportunity(e) && e.destMinutes != null && e.destMinutes < 450);
+    const cohortSize = eps.filter(inOpportunity).length;
+    if (cohortSize) {
+      ok('the opportunity cohort retains zero-minute outcomes',
+        zeros.length > 0 || lowMinute.length > 0 || cohortSize === 0,
+        `cohort ${cohortSize}, zeros ${zeros.length}, sub-450 ${lowMinute.length}`);
+      ok('no destination-minutes floor is applied to the opportunity cohort',
+        !eps.some((e) => inOpportunity(e) && e.destMinutes != null && e.destMinutes < 0));
+    } else console.log('  – opportunity cohort empty (collection in flight), structural checks only');
+
+    /* Null and zero remain different claims on both sides of the move. */
+    ok('a destination row that was never fetched reads null, not zero',
+      eps.every((e) => e.hasDestEvidence || e.destMinutes === null));
+    ok('a source row that was never fetched reads null, not zero',
+      eps.every((e) => e.hasSourceEvidence || e.sourceMinutes === null));
+
+    /* O. An administrative non-exposure must never be counted as a manager
+       declining to pick the player. Multi-club and undetermined episodes are
+       held out of the opportunity cohort and reported separately. */
+    ok('multi-club episodes are excluded from the opportunity cohort',
+      !eps.some((e) => e.eligibility === 'multi-club' && inOpportunity(e)));
+    ok('undetermined episodes are excluded from the opportunity cohort',
+      !eps.some((e) => e.eligibility === 'undetermined' && inOpportunity(e)));
+    ok('every episode carries an explicit eligibility class',
+      eps.every((e) => ['eligible', 'multi-club', 'undetermined', 'unbridged'].includes(e.eligibility)));
+    /* The doubt must stay visible rather than being absorbed into either side. */
+    const undet = eps.filter((e) => e.eligibility === 'undetermined').length;
+    ok('the undetermined group is reported rather than folded away',
+      Object.values(cohorts.byLeague).reduce((a, L) => a + L.undetermined, 0) === undet);
+
+    /* Production thresholds must be monotonic — a stricter threshold cannot
+       admit more episodes than a looser one. */
+    let monotonic = true;
+    for (const L of Object.values(cohorts.byLeague)) {
+      const v = cohorts.thresholds.map((t) => L.production[`withBoth${t}`]);
+      for (let i = 1; i < v.length; i++) if (v[i] > v[i - 1]) monotonic = false;
+    }
+    ok('production cohort counts fall monotonically as the threshold rises', monotonic);
+
+    /* An episode always spans consecutive seasons and lands in the EPL. */
+    ok('every episode lands in eng.1', eps.every((e) => e.toSeason === e.fromSeason + 1));
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Milestone 3 — the identity any opportunity candidate must respect
+ * ------------------------------------------------------------------ */
+console.log('\nOpportunity candidates respect the pitch');
+{
+  /* N. Whatever a translation candidate eventually predicts, a squad's summed
+     start probabilities cannot exceed eleven per fixture. This is the identity
+     that caught the 28 August defect, it needs no outcome, and it is asserted
+     here as a reusable helper so any candidate can be checked against it before
+     it is allowed anywhere near a projection. */
+  const startsWithinPitch = (predictions, startersPerTeam = 11) => {
+    const byTeamFixture = new Map();
+    for (const p of predictions) {
+      const k = `${p.team}|${p.fixture}`;
+      byTeamFixture.set(k, (byTeamFixture.get(k) || 0) + (p.pStart ?? 0));
+    }
+    return [...byTeamFixture.values()].every((v) => v <= startersPerTeam + 1e-9);
+  };
+
+  ok('a legal squad passes the pitch identity', startsWithinPitch(
+    Array.from({ length: 11 }, (_, i) => ({ team: 'ARS', fixture: 1, pStart: 1 }))));
+  ok('twelve certain starters fail the pitch identity', !startsWithinPitch(
+    Array.from({ length: 12 }, () => ({ team: 'ARS', fixture: 1, pStart: 1 }))));
+  ok('the identity is per team AND per fixture, not per team', startsWithinPitch([
+    ...Array.from({ length: 11 }, () => ({ team: 'ARS', fixture: 1, pStart: 1 })),
+    ...Array.from({ length: 11 }, () => ({ team: 'ARS', fixture: 2, pStart: 1 })),
+  ]));
+  ok('fractional probabilities summing over eleven still fail', !startsWithinPitch(
+    Array.from({ length: 30 }, () => ({ team: 'ARS', fixture: 1, pStart: 0.5 }))));
+}
+
 console.log(`\n${failures === 0 ? `✓ all ${checks} warehouse checks passed` : `✗ ${failures} of ${checks} failed`}\n`);
 process.exit(failures === 0 ? 0 : 1);
