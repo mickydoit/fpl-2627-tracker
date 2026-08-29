@@ -939,5 +939,100 @@ console.log('\nProspective window');
   } else console.log('  – no prospective report, skipping PW-5..7');
 }
 
+/* ------------------------------------------------------------------ *
+ * Prospective evidence period — collection and population discipline
+ * ------------------------------------------------------------------ */
+console.log('\nProspective evidence (PE)');
+{
+  const readIf = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
+  const man = readIf('data/warehouse/research/EXPERIMENT-MANIFEST.json');
+  const rep = readIf('data/warehouse/research/prospective-report.json');
+  const tsFrozen = readIf('data/warehouse/research/team-strength-RESULT-FROZEN.json');
+  const { isModelSafe, FIELD_REGISTRY } = await import('./warehouse/field-registry.mjs');
+
+  /* PE-1. A structural absence is null/false, never a zero forecast. */
+  if (man) {
+    const players = man.incumbentControl?.players || [];
+    ok('PE-1 structural absence is flagged, never presented as a zero forecast',
+      players.filter((p) => !p.incumbentHasProductionEstimate)
+        .every((p) => p.incumbentHasProductionEstimate === false));
+    ok('PE-1 the manifest states the structural-zero rule',
+      /structural absence, not a forecast/.test(man.incumbentControl?.caveat || ''));
+    ok('PE-1 both a real-estimate and a no-estimate group exist',
+      man.incumbentControl.withProductionEstimate > 0 && man.incumbentControl.withoutProductionEstimate > 0);
+  }
+
+  /* PE-2 / PE-3. The two populations answer different questions and the
+     cold-start group must never be scored against the incumbent. */
+  if (rep?.populations) {
+    const A = rep.populations['GROUP A — INCUMBENT-COMPARABLE'];
+    const B = rep.populations['GROUP B — COLD-START GAP'];
+    ok('PE-2 the cold-start group excludes the incumbent as a comparator',
+      !B.comparators.some((c) => /incumbent/i.test(c)));
+    ok('PE-2 the cold-start group records why', /manufacture a win/.test(B.forbidden || ''));
+    ok('PE-3 the cold-start group is still evaluated against the position baseline',
+      B.comparators.some((c) => /position baseline/i.test(c)));
+    ok('PE-3 the incumbent-comparable group does include the incumbent',
+      A.comparators.some((c) => /incumbent/i.test(c)));
+  } else console.log('  – no eligible window yet, population split not exercised');
+
+  /* PE-4 / PE-9. Only GW>=3 outcomes and minutes. */
+  if (rep) {
+    ok('PE-4 no eligible gameweek precedes the freeze',
+      (rep.eligibleGameweeks || []).every((g) => g >= rep.experimentFreeze.firstScorableGW));
+    ok('PE-9 prospective minutes are summed only from eligible gameweeks',
+      (rep.rows || []).every((r) => r.eligibleGws <= (rep.eligibleGwCount || 0)));
+  }
+
+  /* PE-5. A collection failure can never become a measured zero. */
+  {
+    const src = fs.readFileSync('scripts/warehouse/fetch-prospective-outcomes.mjs', 'utf8');
+    ok('PE-5 the collector initialises unfetched detail fields to null, not zero',
+      /minutes: null, keyPasses: null/.test(src));
+    ok('PE-5 a missing statistics block is skipped rather than zeroed',
+      /never write a zero/.test(src));
+    ok('PE-5 unavailable matches are recorded as missing coverage',
+      /COVERAGE INCOMPLETE/.test(src) && /NOT as zero/.test(src));
+  }
+
+  /* PE-6. Endpoint-specific safety, enforced before collection. */
+  ok('PE-6 the collector refuses fields that are not MODEL_SAFE for its endpoint',
+    /refusing to collect it into evaluation/.test(fs.readFileSync('scripts/warehouse/fetch-prospective-outcomes.mjs', 'utf8')));
+  ok('PE-6 match-summary shots are registered for that endpoint specifically',
+    isModelSafe('matchSummary.totalShots'));
+  ok('PE-6 the same field name can differ by endpoint',
+    isModelSafe('matchSummary.saves') && !isModelSafe('saves'));
+  ok('PE-6 match-summary goalsConceded is rejected as team-level',
+    FIELD_REGISTRY['matchSummary.goalsConceded']?.status === 'REJECTED_SEMANTICS');
+
+  /* PE-7. Re-running the report changes nothing. */
+  if (rep) {
+    ok('PE-7 the report declares no model change', /NONE/.test(rep.modelChanges));
+    ok('PE-7 the report is keyed to a freeze version', !!rep.experimentFreeze?.firstScorableGW);
+  }
+
+  /* PE-8. Frozen candidates cannot be edited by outcomes. */
+  {
+    const bridge = readIf('data/warehouse/research/xg-bridge-FROZEN.json');
+    ok('PE-8 the bridge remains marked frozen with a new-version rule',
+      /FROZEN/.test(bridge?.status || '') && /NEW candidate version/.test(bridge?.status || ''));
+    const collector = fs.readFileSync('scripts/warehouse/fetch-prospective-outcomes.mjs', 'utf8');
+    ok('PE-8 the collector states it may not refit a candidate',
+      /EVALUATION ONLY/.test(collector) && /may refit any candidate|refit/.test(collector));
+  }
+
+  /* PE-10. The pre-registered team-strength result is immutable. */
+  if (tsFrozen) {
+    ok('PE-10 the team-strength result is frozen after scoring', /FROZEN RESULT/.test(tsFrozen.status));
+    ok('PE-10 it forbids re-selecting a defensive metric post hoc',
+      /invalidate it/.test(tsFrozen.prohibition) && /different defensive metric/.test(tsFrozen.prohibition));
+    ok('PE-10 attack is a shadow hypothesis, not a production change',
+      /SHADOW HYPOTHESIS/.test(tsFrozen.attack.action) && /No production change/.test(tsFrozen.attack.action));
+    ok('PE-10 defence keeps the control', /KEEP CONTROL/.test(tsFrozen.defence.action));
+    ok('PE-10 the replication caveats are recorded, not just the numbers',
+      Array.isArray(tsFrozen.attack.reasons) && tsFrozen.attack.reasons.length >= 3);
+  }
+}
+
 console.log(`\n${failures === 0 ? `✓ all ${checks} warehouse checks passed` : `✗ ${failures} of ${checks} failed`}\n`);
 process.exit(failures === 0 ? 0 : 1);

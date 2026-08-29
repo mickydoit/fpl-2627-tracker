@@ -73,6 +73,41 @@ export const FIELD_REGISTRY = {
     population: '1,716 team-match rows', semantics: 'saves by the team in that match',
     evidence: 'A team-level block by construction; 100% populated on collected rows and used only '
       + 'as a team quantity in team-strength research.' },
+  /* ---- match summary roster block: same names, DIFFERENT endpoint ---- *
+   * These come from site summary.rosters[].roster[].stats, which is a per-match
+   * player block reachable in the SAME request as the match summary. Audited
+   * independently on 440 player-match rows across 11 settled 2026/27 matches —
+   * the registry is endpoint-specific precisely because a name that lies on one
+   * endpoint can be honest on another, and `saves` is exactly that case. */
+  'matchSummary.totalShots': { status: 'MODEL_SAFE', source: 'site summary.rosters[].roster[].stats',
+    population: '440 player-match rows, 11 settled 2026/27 matches',
+    semantics: 'shots by this player in this match',
+    evidence: 'Zero for every goalkeeper and rising DEF 44% / MID 67% / FWD 84% — the positional gradient '
+      + 'a genuine player-level shot count must show.' },
+  'matchSummary.shotsOnTarget': { status: 'MODEL_SAFE', source: 'site summary.rosters[].roster[].stats',
+    population: 'as above', semantics: 'shots on target by this player in this match',
+    evidence: 'Zero for every goalkeeper; DEF 18% / MID 36% / FWD 50%; never exceeds totalShots.' },
+  'matchSummary.saves': { status: 'MODEL_SAFE', source: 'site summary.rosters[].roster[].stats',
+    population: 'as above', semantics: 'saves by this goalkeeper in this match',
+    evidence: 'Non-zero for 95% of goalkeepers and ZERO non-goalkeeper rows. This is the same NAME as the '
+      + 'rejected player-season field and the opposite verdict — which is why status is keyed on the '
+      + 'endpoint, not the word.' },
+  'matchSummary.goalsConceded': { status: 'REJECTED_SEMANTICS', source: 'site summary.rosters[].roster[].stats',
+    population: 'as above',
+    semantics: 'NOT a personal statistic — non-zero for 69-73% of players at EVERY position including '
+      + 'outfielders. Team goals conceded while on the pitch.',
+    evidence: 'Measured by position; no positional gradient at all.' },
+  'matchSummary.shotsFaced': { status: 'REJECTED_SEMANTICS', source: 'site summary.rosters[].roster[].stats',
+    population: 'as above', semantics: 'reads zero for every row including goalkeepers who conceded',
+    evidence: 'Zero on all 440 rows.' },
+  'matchAthlete.minutes': { status: 'MODEL_SAFE', source: 'core roster entry statistics $ref (per player-match)',
+    population: 'inherits the player-season audit of the same core statistics block',
+    semantics: 'minutes played by this player in this match',
+    evidence: 'Same block and field as the audited season-level minutes; absent from the cheap summary route, '
+      + 'which is why it is fetched separately.' },
+  'matchAthlete.shotAssists': { status: 'MODEL_SAFE', source: 'core roster entry statistics $ref (per player-match)',
+    population: 'inherits the player-season audit', semantics: 'key passes by this player in this match',
+    evidence: 'Same block and field as the audited season-level shotAssists.' },
   attemptsInBox: { status: 'REJECTED_SEMANTICS', source: 'espn core athlete statistics',
     population: 'Liverpool v Bournemouth, all players',
     semantics: 'NOT the player\'s shots in the box — the TEAM\'s, during his minutes.',

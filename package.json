@@ -33,7 +33,8 @@
     "research:teamstrength": "node scripts/warehouse/research/team-strength.mjs",
     "research:h2h": "node scripts/warehouse/research/head-to-head.mjs",
     "prospective": "node scripts/warehouse/research/prospective-report.mjs",
-    "freeze:manifest": "node scripts/warehouse/research/freeze-manifest.mjs"
+    "freeze:manifest": "node scripts/warehouse/research/freeze-manifest.mjs",
+    "prospective:collect": "node scripts/warehouse/fetch-prospective-outcomes.mjs"
   },
   "engines": {
     "node": ">=20"

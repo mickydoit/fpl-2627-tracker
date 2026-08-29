@@ -111,6 +111,37 @@ if (!eligible.length) {
         status: g.length < 8 ? 'NOT YET INDIVIDUALLY SCORABLE' : 'scorable' };
     }
   }
+  /* ---- E. two populations, permanently separate ------------------
+   *
+   * GROUP A answers "does the bridge improve on the current model?" — it can
+   * only be asked where the incumbent holds a real event-rate estimate.
+   *
+   * GROUP B answers "can warehouse evidence fill a gap where the live model has
+   * no comparable estimate?" — a different and weaker claim. Scoring the bridge
+   * against the incumbent's structural zero here would manufacture a win, so
+   * the incumbent is not a comparator in this group at all; the position
+   * baseline is.
+   *
+   * These two must never be pooled into one statement of superiority. */
+  const groupA = rows.filter((r) => r.incumbentHasProductionEstimate);
+  const groupB = rows.filter((r) => !r.incumbentHasProductionEstimate);
+  report.populations = {
+    'GROUP A — INCUMBENT-COMPARABLE': {
+      n: groupA.length,
+      question: 'Does the frozen bridge improve on the live model, in the same units?',
+      comparators: ['live incumbent xG/90 and xA/90', 'XG0/XA0 position baseline', 'XG2/XA1 frozen bridge'],
+      scorable: groupA.filter((r) => r.prospectiveMinutes >= 180).length,
+    },
+    'GROUP B — COLD-START GAP': {
+      n: groupB.length,
+      question: 'Can warehouse evidence inform players where the live model has no comparable event-rate estimate?',
+      comparators: ['XG0/XA0 position baseline', 'XG2/XA1 frozen bridge'],
+      forbidden: 'The incumbent is NOT a comparator here. Its xG/90 is a structural absence, not a forecast, '
+        + 'and scoring the bridge against it would manufacture a win.',
+      scorable: groupB.filter((r) => r.prospectiveMinutes >= 180).length,
+    },
+  };
+
   /* Pooled early diagnostics — level only, never a promotion basis. */
   const out = rows.filter((r) => !isGK(r.position) && r.prospectiveMinutes > 0);
   const sum = (f) => out.reduce((a, r) => a + (f(r) || 0), 0);
@@ -141,7 +172,14 @@ if (!eligible.length) {
     const v = report.thresholds[k];
     console.log('    ' + k.padEnd(16) + 'n=' + String(v.n).padStart(3) + '  ' + v.status);
   }
-  console.log('\n  POOLED (level only):', JSON.stringify(report.pooled).slice(0, 200));
+  console.log('\n  BRIDGE POPULATIONS (never pooled into one superiority claim):');
+  for (const [k, v] of Object.entries(report.populations || {})) {
+    console.log('    ' + k);
+    console.log('      n ' + v.n + ', scorable at 180 prospective minutes: ' + v.scorable);
+    console.log('      ' + v.question);
+    if (v.forbidden) console.log('      NOTE: ' + v.forbidden.split('.')[0] + '.');
+  }
+  console.log('\n  POOLED (level only):', JSON.stringify(report.pooled).slice(0, 180));
 }
 console.log('\n  PRODUCTION VOLUME   ' + manifest.measurability['production volume (shots, SOT, keyPasses)'].split(' —')[0]);
 console.log('  NO MODEL CHANGES    ' + report.modelChanges);

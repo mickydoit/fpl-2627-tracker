@@ -1,0 +1,49 @@
+{
+ "frozenAt": "2026-08-29T01:49:36.219Z",
+ "status": "FROZEN RESULT — the pre-registered test has been executed; it may not be re-run with different metrics",
+ "preRegistration": "data/warehouse/research/team-strength-PREREGISTERED.json",
+ "warehouse": {
+  "schemaVersion": 2,
+  "coverageDigest": "92fdf46187f5c1ff"
+ },
+ "seasonPairs": [
+  "2023->2024",
+  "2024->2025"
+ ],
+ "attack": {
+  "verdict": "REPLICATED DIRECTIONALLY, NOT INDEPENDENTLY ESTABLISHED",
+  "results": {
+   "2023->2024": {
+    "sot": 0.76,
+    "control": 0.728
+   },
+   "2024->2025": {
+    "sot": 0.57,
+    "control": 0.447
+   }
+  },
+  "reasons": [
+   "n = 17, not 20",
+   "intervals overlap substantially",
+   "the two pairs share the 2024 season, so they are not independent",
+   "the control itself is unstable across pairs (0.728 then 0.447), which deserves as much attention as the candidate"
+  ],
+  "action": "SHADOW HYPOTHESIS. No production change."
+ },
+ "defence": {
+  "verdict": "NO DEFENSIVE MATCH-STAT CANDIDATE HAS CONVINCINGLY BEATEN THE CONTROL",
+  "results": {
+   "2023->2024": {
+    "best": 0.583,
+    "control": 0.646
+   },
+   "2024->2025": {
+    "best": 0.705,
+    "control": 0.699
+   }
+  },
+  "note": "The second-pair margin of 0.705 vs 0.699 is 0.006 on n=17 with near-total interval overlap. That is not evidence of superiority.",
+  "action": "KEEP CONTROL. No production change."
+ },
+ "prohibition": "Do NOT search the now-visible dataset for a different defensive metric. The pre-registration fixed the candidate list before scoring, and re-selecting after seeing the data would invalidate it. The next valuable evidence is an independent season pair or prospective 2026/27 outcomes."
+}

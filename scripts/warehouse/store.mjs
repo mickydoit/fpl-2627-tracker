@@ -152,5 +152,8 @@ export const paths = {
   /* football-data player id <-> ESPN athlete id, for EVERY player the census
      has seen — not only the current FPL squad. */
   playerXref: () => `${ROOT}/normalised/player_xref.ndjson.gz`,
+  /* Prospective per-match player outcomes, 2026/27. Raw first, then normalised. */
+  prospectiveRaw: (season, gw) => `${ROOT}/raw/espn/prospective/${season}/gw${gw}.ndjson.gz`,
+  prospectiveOutcomes: (season) => `${ROOT}/normalised/prospective_player_match/${season}.ndjson.gz`,
   coverage: () => `${ROOT}/coverage.json`,
 };
