@@ -1,0 +1,14 @@
+{
+ "registeredAt": "2026-08-29T00:56:34.965Z",
+ "id": "O6 — calibrated source-role candidate",
+ "status": "POST-HOC / EXPLORATORY — NOT HISTORICALLY VALIDATED",
+ "provenance": "Arose from inspecting the chronological holdout during the Stage 2 audit. It must never be reported as a historical-holdout improvement.",
+ "hypothesis": "Source role carries discrimination; position/transition priors carry the correct absolute level. Shrinkage as implemented conflates the two and degrades the ranking it is meant to protect.",
+ "architecture": [
+  "position (and possibly transition-type) prior supplies a calibrated baseline level",
+  "source feature/start rate supplies RELATIVE ordering around that baseline",
+  "source appearances govern how far a player may move from the baseline, not the baseline itself"
+ ],
+ "fittingRule": "Any coefficients must be fitted on the TRAINING cohort alone. If it cannot be specified without further holdout inspection it stays unfitted and remains a registered hypothesis.",
+ "decision": "LEFT UNFITTED this milestone. The holdout has been inspected repeatedly and cannot serve as a training set; O6 is reserved for prospective testing from GW3."
+}

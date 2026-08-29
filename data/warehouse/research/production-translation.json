@@ -1,0 +1,727 @@
+{
+ "threshold": 450,
+ "trainN": 63,
+ "testN": 97,
+ "cohortTable": {
+  "180": {
+   "total": 186,
+   "byType": {
+    "EPL_TO_EPL_TRANSFER": 42,
+    "FOREIGN_TO_EPL_TRANSFER": 82,
+    "CHAMPIONSHIP_TO_EPL_TRANSFER": 8,
+    "SAME_CLUB_PROMOTION": 54
+   },
+   "bySource": {
+    "eng.1": 42,
+    "ita.1": 11,
+    "ger.1": 25,
+    "fra.1": 22,
+    "esp.1": 12,
+    "eng.2": 62,
+    "por.1": 4,
+    "ned.1": 8
+   }
+  },
+  "450": {
+   "total": 160,
+   "byType": {
+    "EPL_TO_EPL_TRANSFER": 32,
+    "FOREIGN_TO_EPL_TRANSFER": 75,
+    "SAME_CLUB_PROMOTION": 48,
+    "CHAMPIONSHIP_TO_EPL_TRANSFER": 5
+   },
+   "bySource": {
+    "eng.1": 32,
+    "ita.1": 10,
+    "fra.1": 21,
+    "esp.1": 10,
+    "ger.1": 22,
+    "eng.2": 53,
+    "por.1": 4,
+    "ned.1": 8
+   }
+  },
+  "900": {
+   "total": 119,
+   "byType": {
+    "EPL_TO_EPL_TRANSFER": 23,
+    "FOREIGN_TO_EPL_TRANSFER": 57,
+    "SAME_CLUB_PROMOTION": 36,
+    "CHAMPIONSHIP_TO_EPL_TRANSFER": 3
+   },
+   "bySource": {
+    "eng.1": 23,
+    "fra.1": 16,
+    "esp.1": 8,
+    "eng.2": 39,
+    "ger.1": 17,
+    "por.1": 2,
+    "ned.1": 6,
+    "ita.1": 8
+   }
+  },
+  "1800": {
+   "total": 42,
+   "byType": {
+    "FOREIGN_TO_EPL_TRANSFER": 15,
+    "SAME_CLUB_PROMOTION": 17,
+    "EPL_TO_EPL_TRANSFER": 10
+   },
+   "bySource": {
+    "fra.1": 3,
+    "eng.2": 17,
+    "eng.1": 10,
+    "esp.1": 3,
+    "ger.1": 4,
+    "por.1": 1,
+    "ita.1": 2,
+    "ned.1": 2
+   }
+  }
+ },
+ "persistence": {
+  "goals": {
+   "EPL_TO_EPL_TRANSFER": {
+    "n": 32,
+    "r": 0.569,
+    "ci": [
+     0.274,
+     0.766
+    ],
+    "srcMean": 0.225,
+    "dstMean": 0.175,
+    "retained": 78
+   },
+   "SAME_CLUB_PROMOTION": {
+    "n": 48,
+    "r": 0.661,
+    "ci": [
+     0.463,
+     0.795
+    ],
+    "srcMean": 0.124,
+    "dstMean": 0.087,
+    "retained": 70
+   },
+   "FOREIGN_TO_EPL_TRANSFER": {
+    "n": 75,
+    "r": 0.634,
+    "ci": [
+     0.475,
+     0.753
+    ],
+    "srcMean": 0.167,
+    "dstMean": 0.126,
+    "retained": 76
+   },
+   "CHAMPIONSHIP_TO_EPL_TRANSFER": {
+    "n": 5,
+    "r": null,
+    "ci": null,
+    "srcMean": 0.196,
+    "dstMean": 0.127,
+    "retained": 65
+   }
+  },
+  "assists": {
+   "EPL_TO_EPL_TRANSFER": {
+    "n": 32,
+    "r": 0.317,
+    "ci": [
+     -0.035,
+     0.6
+    ],
+    "srcMean": 0.127,
+    "dstMean": 0.123,
+    "retained": 97
+   },
+   "SAME_CLUB_PROMOTION": {
+    "n": 48,
+    "r": 0.295,
+    "ci": [
+     0.012,
+     0.534
+    ],
+    "srcMean": 0.098,
+    "dstMean": 0.057,
+    "retained": 59
+   },
+   "FOREIGN_TO_EPL_TRANSFER": {
+    "n": 75,
+    "r": 0.602,
+    "ci": [
+     0.434,
+     0.729
+    ],
+    "srcMean": 0.122,
+    "dstMean": 0.093,
+    "retained": 76
+   },
+   "CHAMPIONSHIP_TO_EPL_TRANSFER": {
+    "n": 5,
+    "r": null,
+    "ci": null,
+    "srcMean": 0.143,
+    "dstMean": 0.009,
+    "retained": 6
+   }
+  },
+  "shots": {
+   "EPL_TO_EPL_TRANSFER": {
+    "n": 32,
+    "r": 0.906,
+    "ci": [
+     0.815,
+     0.953
+    ],
+    "srcMean": 1.909,
+    "dstMean": 1.629,
+    "retained": 85
+   },
+   "SAME_CLUB_PROMOTION": {
+    "n": 48,
+    "r": 0.85,
+    "ci": [
+     0.746,
+     0.914
+    ],
+    "srcMean": 1.212,
+    "dstMean": 0.964,
+    "retained": 80
+   },
+   "FOREIGN_TO_EPL_TRANSFER": {
+    "n": 75,
+    "r": 0.849,
+    "ci": [
+     0.77,
+     0.902
+    ],
+    "srcMean": 1.293,
+    "dstMean": 1.11,
+    "retained": 86
+   },
+   "CHAMPIONSHIP_TO_EPL_TRANSFER": {
+    "n": 5,
+    "r": null,
+    "ci": null,
+    "srcMean": 1.655,
+    "dstMean": 1.277,
+    "retained": 77
+   }
+  },
+  "shotsOnTarget": {
+   "EPL_TO_EPL_TRANSFER": {
+    "n": 32,
+    "r": 0.768,
+    "ci": [
+     0.573,
+     0.881
+    ],
+    "srcMean": 0.659,
+    "dstMean": 0.54,
+    "retained": 82
+   },
+   "SAME_CLUB_PROMOTION": {
+    "n": 48,
+    "r": 0.747,
+    "ci": [
+     0.587,
+     0.85
+    ],
+    "srcMean": 0.376,
+    "dstMean": 0.287,
+    "retained": 76
+   },
+   "FOREIGN_TO_EPL_TRANSFER": {
+    "n": 75,
+    "r": 0.772,
+    "ci": [
+     0.661,
+     0.85
+    ],
+    "srcMean": 0.465,
+    "dstMean": 0.377,
+    "retained": 81
+   },
+   "CHAMPIONSHIP_TO_EPL_TRANSFER": {
+    "n": 5,
+    "r": null,
+    "ci": null,
+    "srcMean": 0.533,
+    "dstMean": 0.589,
+    "retained": 110
+   }
+  },
+  "keyPasses": {
+   "EPL_TO_EPL_TRANSFER": {
+    "n": 32,
+    "r": 0.646,
+    "ci": [
+     0.384,
+     0.812
+    ],
+    "srcMean": 1.062,
+    "dstMean": 1.005,
+    "retained": 95
+   },
+   "SAME_CLUB_PROMOTION": {
+    "n": 48,
+    "r": 0.818,
+    "ci": [
+     0.695,
+     0.894
+    ],
+    "srcMean": 0.984,
+    "dstMean": 0.744,
+    "retained": 76
+   },
+   "FOREIGN_TO_EPL_TRANSFER": {
+    "n": 75,
+    "r": 0.84,
+    "ci": [
+     0.758,
+     0.896
+    ],
+    "srcMean": 0.985,
+    "dstMean": 0.853,
+    "retained": 87
+   },
+   "CHAMPIONSHIP_TO_EPL_TRANSFER": {
+    "n": 5,
+    "r": null,
+    "ci": null,
+    "srcMean": 1.287,
+    "dstMean": 0.878,
+    "retained": 68
+   }
+  }
+ },
+ "metrics": {
+  "goals": {
+   "scores": {
+    "P1": {
+     "n": 97,
+     "mae": 0.0921,
+     "rmse": 0.1233,
+     "bias": -0.0085,
+     "rho": 0.527,
+     "calib": 0.937
+    },
+    "P2": {
+     "n": 97,
+     "mae": 0.1037,
+     "rmse": 0.1568,
+     "bias": -0.0432,
+     "rho": 0.544,
+     "calib": 0.745
+    },
+    "P3": {
+     "n": 97,
+     "mae": 0.0931,
+     "rmse": 0.1227,
+     "bias": -0.0231,
+     "rho": 0.568,
+     "calib": 0.845
+    },
+    "P4": {
+     "n": 97,
+     "mae": 0.0883,
+     "rmse": 0.1226,
+     "bias": 0.0007,
+     "rho": 0.544,
+     "calib": 1.006
+    },
+    "P5": {
+     "n": 97,
+     "mae": 0.096,
+     "rmse": 0.127,
+     "bias": 0.0041,
+     "rho": 0.552,
+     "calib": 1.034
+    }
+   },
+   "vsP1": {
+    "P2": {
+     "dMAE": -0.0119,
+     "ci": [
+      -0.0351,
+      0.0125
+     ],
+     "p": 0.17
+    },
+    "P3": {
+     "dMAE": -0.001,
+     "ci": [
+      -0.013,
+      0.0113
+     ],
+     "p": 0.429
+    },
+    "P4": {
+     "dMAE": 0.0037,
+     "ci": [
+      -0.0088,
+      0.0164
+     ],
+     "p": 0.72
+    },
+    "P5": {
+     "dMAE": -0.0039,
+     "ci": [
+      -0.0128,
+      0.005
+     ],
+     "p": 0.202
+    }
+   }
+  },
+  "assists": {
+   "scores": {
+    "P1": {
+     "n": 97,
+     "mae": 0.0719,
+     "rmse": 0.1007,
+     "bias": 0.015,
+     "rho": 0.359,
+     "calib": 1.194
+    },
+    "P2": {
+     "n": 97,
+     "mae": 0.0735,
+     "rmse": 0.1026,
+     "bias": -0.0192,
+     "rho": 0.558,
+     "calib": 0.828
+    },
+    "P3": {
+     "n": 97,
+     "mae": 0.068,
+     "rmse": 0.0915,
+     "bias": 0.0024,
+     "rho": 0.534,
+     "calib": 1.027
+    },
+    "P4": {
+     "n": 97,
+     "mae": 0.0677,
+     "rmse": 0.0942,
+     "bias": 0.0208,
+     "rho": 0.558,
+     "calib": 1.291
+    },
+    "P5": {
+     "n": 97,
+     "mae": 0.0702,
+     "rmse": 0.0988,
+     "bias": 0.0182,
+     "rho": 0.517,
+     "calib": 1.245
+    }
+   },
+   "vsP1": {
+    "P2": {
+     "dMAE": -0.0015,
+     "ci": [
+      -0.0197,
+      0.0166
+     ],
+     "p": 0.43
+    },
+    "P3": {
+     "dMAE": 0.0039,
+     "ci": [
+      -0.0039,
+      0.0112
+     ],
+     "p": 0.838
+    },
+    "P4": {
+     "dMAE": 0.0043,
+     "ci": [
+      -0.0016,
+      0.0099
+     ],
+     "p": 0.919
+    },
+    "P5": {
+     "dMAE": 0.0018,
+     "ci": [
+      -0.003,
+      0.0068
+     ],
+     "p": 0.755
+    }
+   }
+  },
+  "shots": {
+   "scores": {
+    "P1": {
+     "n": 97,
+     "mae": 0.4786,
+     "rmse": 0.604,
+     "bias": -0.019,
+     "rho": 0.7,
+     "calib": 0.985
+    },
+    "P2": {
+     "n": 97,
+     "mae": 0.4147,
+     "rmse": 0.5519,
+     "bias": -0.2016,
+     "rho": 0.905,
+     "calib": 0.857
+    },
+    "P3": {
+     "n": 97,
+     "mae": 0.3718,
+     "rmse": 0.483,
+     "bias": -0.1698,
+     "rho": 0.909,
+     "calib": 0.876
+    },
+    "P4": {
+     "n": 97,
+     "mae": 0.3062,
+     "rmse": 0.4239,
+     "bias": 0.0686,
+     "rho": 0.905,
+     "calib": 1.06
+    },
+    "P5": {
+     "n": 97,
+     "mae": 0.4212,
+     "rmse": 0.5538,
+     "bias": 0.0683,
+     "rho": 0.888,
+     "calib": 1.06
+    }
+   },
+   "vsP1": {
+    "P2": {
+     "dMAE": 0.0644,
+     "ci": [
+      -0.0336,
+      0.1642
+     ],
+     "p": 0.892
+    },
+    "P3": {
+     "dMAE": 0.1073,
+     "ci": [
+      0.0199,
+      0.1952
+     ],
+     "p": 0.993
+    },
+    "P4": {
+     "dMAE": 0.1726,
+     "ci": [
+      0.1054,
+      0.2397
+     ],
+     "p": 1
+    },
+    "P5": {
+     "dMAE": 0.0576,
+     "ci": [
+      0.0083,
+      0.1089
+     ],
+     "p": 0.99
+    }
+   }
+  },
+  "shotsOnTarget": {
+   "scores": {
+    "P1": {
+     "n": 97,
+     "mae": 0.2043,
+     "rmse": 0.269,
+     "bias": -0.0389,
+     "rho": 0.649,
+     "calib": 0.91
+    },
+    "P2": {
+     "n": 97,
+     "mae": 0.1968,
+     "rmse": 0.2965,
+     "bias": -0.0946,
+     "rho": 0.792,
+     "calib": 0.806
+    },
+    "P3": {
+     "n": 97,
+     "mae": 0.1938,
+     "rmse": 0.289,
+     "bias": -0.0918,
+     "rho": 0.79,
+     "calib": 0.811
+    },
+    "P4": {
+     "n": 97,
+     "mae": 0.1753,
+     "rmse": 0.2455,
+     "bias": -0.0087,
+     "rho": 0.792,
+     "calib": 0.978
+    },
+    "P5": {
+     "n": 97,
+     "mae": 0.1869,
+     "rmse": 0.2514,
+     "bias": -0.0002,
+     "rho": 0.76,
+     "calib": 0.999
+    }
+   },
+   "vsP1": {
+    "P2": {
+     "dMAE": 0.0075,
+     "ci": [
+      -0.04,
+      0.0535
+     ],
+     "p": 0.617
+    },
+    "P3": {
+     "dMAE": 0.0105,
+     "ci": [
+      -0.0348,
+      0.0553
+     ],
+     "p": 0.67
+    },
+    "P4": {
+     "dMAE": 0.0291,
+     "ci": [
+      -0.0042,
+      0.0623
+     ],
+     "p": 0.957
+    },
+    "P5": {
+     "dMAE": 0.0174,
+     "ci": [
+      -0.0033,
+      0.0373
+     ],
+     "p": 0.954
+    }
+   }
+  },
+  "keyPasses": {
+   "scores": {
+    "P1": {
+     "n": 97,
+     "mae": 0.4128,
+     "rmse": 0.5461,
+     "bias": 0.0547,
+     "rho": 0.482,
+     "calib": 1.066
+    },
+    "P2": {
+     "n": 97,
+     "mae": 0.3192,
+     "rmse": 0.4552,
+     "bias": -0.1287,
+     "rho": 0.804,
+     "calib": 0.873
+    },
+    "P3": {
+     "n": 97,
+     "mae": 0.2902,
+     "rmse": 0.4073,
+     "bias": -0.0784,
+     "rho": 0.794,
+     "calib": 0.918
+    },
+    "P4": {
+     "n": 97,
+     "mae": 0.2598,
+     "rmse": 0.3976,
+     "bias": 0.0751,
+     "rho": 0.804,
+     "calib": 1.093
+    },
+    "P5": {
+     "n": 97,
+     "mae": 0.3426,
+     "rmse": 0.4662,
+     "bias": 0.0734,
+     "rho": 0.803,
+     "calib": 1.091
+    }
+   },
+   "vsP1": {
+    "P2": {
+     "dMAE": 0.0934,
+     "ci": [
+      0.0078,
+      0.1752
+     ],
+     "p": 0.986
+    },
+    "P3": {
+     "dMAE": 0.1231,
+     "ci": [
+      0.0458,
+      0.1968
+     ],
+     "p": 1
+    },
+    "P4": {
+     "dMAE": 0.1539,
+     "ci": [
+      0.0896,
+      0.2158
+     ],
+     "p": 1
+    },
+    "P5": {
+     "dMAE": 0.0711,
+     "ci": [
+      0.0358,
+      0.1042
+     ],
+     "p": 1
+    }
+   }
+  }
+ },
+ "fitted": {
+  "k": {
+   "goals": 1800,
+   "assists": 3600,
+   "shots": 250,
+   "shotsOnTarget": 50,
+   "keyPasses": 500
+  },
+  "slope": {
+   "goals": {
+    "a": 0.0273,
+    "b": 0.5801
+   },
+   "assists": {
+    "a": 0.0397,
+    "b": 0.2855
+   },
+   "shots": {
+    "a": 0.1311,
+    "b": 0.7145
+   },
+   "shotsOnTarget": {
+    "a": 0.0067,
+    "b": 0.81
+   },
+   "keyPasses": {
+    "a": 0.1067,
+    "b": 0.6929
+   }
+  }
+ },
+ "notReconstructible": {
+  "P0": "Live fallback pricePrior() returns POINTS PER APPEARANCE, not per-90 event rates — different units. Historical FPL price is also absent for most of these players. NOT RECONSTRUCTIBLE for these targets.",
+  "P6": "Price + translated hybrid requires historical FPL price. Registered, not fitted.",
+  "goalkeepers": "saves is non-zero for 65% of defenders and 57% of midfielders across 4,133 player-seasons — a team-level quantity in a player block, like attemptsInBox. GK production track NOT buildable."
+ }
+}
