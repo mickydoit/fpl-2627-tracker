@@ -871,5 +871,73 @@ console.log('\nMilestone 5');
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * Prospective evidence period — the window rule
+ * ------------------------------------------------------------------ */
+console.log('\nProspective window');
+{
+  const readIf = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
+  const man = readIf('data/warehouse/research/EXPERIMENT-MANIFEST.json');
+  const rep = readIf('data/warehouse/research/prospective-report.json');
+
+  if (man) {
+    ok('PW-1 the manifest is marked immutable', /IMMUTABLE/.test(man.status));
+    ok('PW-1 the manifest records freeze commit, timestamp and digest',
+      !!man.freezeTimestamp && !!man.warehouseDigest);
+    ok('PW-1 every candidate family is versioned',
+      !!man.candidateVersions?.xGBridge && !!man.candidateVersions?.productionVolume
+      && !!man.candidateVersions?.opportunity?.O3);
+    ok('PW-2 the evaluation window starts at or after gameweek 3', man.evaluationWindowStartGW >= 3);
+    ok('PW-2 the window rule forbids season-to-date totals',
+      /may not be used/.test(man.windowRule) && /removed exactly/.test(man.windowRule));
+
+    /* The incumbent control must carry the structural-zero flag, or a Stage A
+       comparison would score the bridge against an absence and call it a win. */
+    const players = man.incumbentControl?.players || [];
+    ok('PW-3 the incumbent control is frozen per player', players.length > 0);
+    ok('PW-3 each player declares whether the incumbent holds a real estimate',
+      players.every((p) => typeof p.incumbentHasProductionEstimate === 'boolean'));
+    ok('PW-3 a zero incumbent xG is flagged as no estimate, not as a forecast',
+      players.filter((p) => p.incumbent_xG90 === 0 && p.incumbent_xA90 === 0)
+        .every((p) => p.incumbentHasProductionEstimate === false));
+    ok('PW-3 the caveat states pricePrior carries cold-start production instead',
+      /pricePrior/.test(man.incumbentControl.caveat) && /POINTS PER/.test(man.incumbentControl.caveat));
+
+    /* Production volume must be declared unscorable rather than scored on
+       contaminated season totals. */
+    ok('PW-4 production volume is declared not yet scorable',
+      /NOT YET SCORABLE/.test(man.measurability['production volume (shots, SOT, keyPasses)']));
+    ok('PW-4 opportunity and bridge are declared scorable',
+      /SCORABLE/.test(man.measurability['opportunity (minutes, starts, 60+)'])
+      && /SCORABLE/.test(man.measurability['bridge (xG/90, xA/90)']));
+  } else console.log('  – no manifest, skipping PW-1..4');
+
+  if (rep) {
+    /* PW-5. The decisive regression test: no pre-freeze gameweek may appear in
+       the eligible window, and pre-freeze gameweeks must be reported as
+       excluded rather than silently dropped. */
+    ok('PW-5 no eligible gameweek precedes the freeze',
+      (rep.eligibleGameweeks || []).every((g) => g >= rep.experimentFreeze.firstScorableGW),
+      JSON.stringify(rep.eligibleGameweeks));
+    ok('PW-5 pre-freeze gameweeks are reported as excluded, not hidden',
+      Array.isArray(rep.excludedGameweeks));
+    ok('PW-5 every excluded gameweek really is before the freeze',
+      (rep.excludedGameweeks || []).every((g) => g < rep.experimentFreeze.firstScorableGW));
+    /* Per-player accounting must show the exclusion too. */
+    ok('PW-5 each row records how many gameweeks it excluded',
+      (rep.rows || []).every((r) => Number.isInteger(r.excludedGws)));
+    ok('PW-5 no row counts more eligible gameweeks than exist',
+      (rep.rows || []).every((r) => r.eligibleGws <= (rep.eligibleGwCount || 0)));
+    /* And when there is no window, nothing may be scored. */
+    if (!(rep.eligibleGwCount > 0)) {
+      ok('PW-6 with no eligible window the report scores nothing',
+        /NOT YET SCORABLE/.test(rep.status || ''));
+      ok('PW-6 season-to-date totals are not substituted when the window is empty',
+        !rep.pooled || Object.keys(rep.pooled).length === 0);
+    }
+    ok('PW-7 the report states that no model was changed', /NONE/.test(rep.modelChanges));
+  } else console.log('  – no prospective report, skipping PW-5..7');
+}
+
 console.log(`\n${failures === 0 ? `✓ all ${checks} warehouse checks passed` : `✗ ${failures} of ${checks} failed`}\n`);
 process.exit(failures === 0 ? 0 : 1);

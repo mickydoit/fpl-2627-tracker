@@ -31,7 +31,9 @@
     "research:continuity": "node scripts/warehouse/research/squad-continuity.mjs",
     "research:transfers": "node scripts/warehouse/research/transfers.mjs",
     "research:teamstrength": "node scripts/warehouse/research/team-strength.mjs",
-    "research:h2h": "node scripts/warehouse/research/head-to-head.mjs"
+    "research:h2h": "node scripts/warehouse/research/head-to-head.mjs",
+    "prospective": "node scripts/warehouse/research/prospective-report.mjs",
+    "freeze:manifest": "node scripts/warehouse/research/freeze-manifest.mjs"
   },
   "engines": {
     "node": ">=20"
