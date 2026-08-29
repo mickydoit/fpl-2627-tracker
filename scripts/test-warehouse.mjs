@@ -231,7 +231,12 @@ console.log('\nSubstitution fields cannot become evidence');
   };
 
   /* No warehouse module may even mention them — not read, not write, not map. */
-  const warehouseCode = readAll('scripts/warehouse');
+  /* The field registry is the one file that must name these fields: it exists to
+     record that they are REJECTED_SEMANTICS, and a registry that cannot say
+     which fields it rejects would be useless. Exempted deliberately and by
+     exact path, not by pattern. */
+  const REGISTRY = 'scripts/warehouse/field-registry.mjs';
+  const warehouseCode = readAll('scripts/warehouse').filter((f) => path.normalize(f) !== path.normalize(REGISTRY));
   const mentions = warehouseCode.filter((f) => {
     const src = fs.readFileSync(f, 'utf8');
     /* Prose in a comment explaining WHY they are rejected is allowed and
@@ -650,6 +655,115 @@ console.log('\nOpportunity pipeline');
     ok('OPP-10 the incumbent control is scored alongside every candidate',
       !!t?.O0 && !!t?.O0b);
   } else console.log('  – no model results, skipping OPP-8..10');
+}
+
+/* ------------------------------------------------------------------ *
+ * Milestone 4 — same-club control and external-field safety
+ * ------------------------------------------------------------------ */
+console.log('\nMilestone 4');
+{
+  const readIf = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
+  const { FIELD_REGISTRY, isModelSafe, assertModelSafe } = await import('./warehouse/field-registry.mjs');
+  const sc = readIf('data/warehouse/research/same-club-control.json');
+  const oc = readIf('data/warehouse/research/opportunity-cohort.json');
+  const froz = readIf('data/warehouse/research/opportunity-FROZEN.json');
+  const shadow = readIf('data/warehouse/research/shadow-archive.json');
+
+  if (sc?.cohort?.length) {
+    /* M4-1 / M4-2. The control must contain only players who stayed put — a
+       single transfer episode leaking in would contaminate the ceiling the
+       whole milestone rests on. */
+    ok('M4-1 same-club pairs are consecutive eng.1 seasons',
+      sc.cohort.every((r) => r.toSeason === r.fromSeason + 1));
+    ok('M4-1 every same-club pair is labelled as such', sc.cohort.every((r) => r.type === 'SAME_CLUB_EPL'));
+    ok('M4-2 the same-club control contains no club change', sc.cohort.every((r) => typeof r.club === 'string'));
+    /* And it must not overlap the transfer cohorts at all. */
+    if (oc?.cohort?.length) {
+      const transferKeys = new Set(oc.cohort.map((e) => `${e.espnId}|${e.destSeason}`));
+      const leaked = sc.cohort.filter((r) => transferKeys.has(`${r.espnId}|${r.toSeason}`));
+      ok('M4-2 no transfer episode appears in the same-club control', leaked.length === 0, `${leaked.length} leaked`);
+    }
+    /* M4-3. Per-90 needs a real denominator on both sides. */
+    ok('M4-3 every same-club row has positive minutes on both sides',
+      sc.cohort.every((r) => r.srcMin > 0 && r.dstMin > 0));
+  } else console.log('  – no same-club control yet, skipping M4-1..3');
+
+  /* M4-4. The saves trap can never reach goalkeeper modelling. */
+  ok('M4-4 saves is registered REJECTED_SEMANTICS', FIELD_REGISTRY.saves?.status === 'REJECTED_SEMANTICS');
+  ok('M4-4 saves is not model-safe', !isModelSafe('saves'));
+  ok('M4-4 asserting saves throws', (() => {
+    try { assertModelSafe(['saves']); return false; } catch { return true; }
+  })());
+  /* And no research module may consume it. */
+  {
+    const walk = (dir, out = []) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const p2 = path.join(dir, e.name);
+        if (e.isDirectory()) walk(p2, out); else if (e.name.endsWith('.mjs')) out.push(p2);
+      }
+      return out;
+    };
+    /* The dangerous use is `saves` as a PLAYER metric. The identically named
+       team-boxscore field is a genuine team total and is registered separately
+       as `team.saves` — so the check targets player-metric declarations rather
+       than the word, which would flag the legitimate use too. */
+    const research = walk('scripts/warehouse/research');
+    const consuming = research.filter((f) => {
+      const src = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+      const metricLists = src.match(/(?:METRICS|FIELDS|PRODUCTION_METRICS)\s*=\s*\[[^\]]*\]/g) || [];
+      const per90Reads = src.match(/per90\([^)]*['"]saves['"]/g) || [];
+      const rowReads = src.match(/\b(?:src|dst)_saves\b/g) || [];
+      return metricLists.some((l) => /['"]saves['"]/.test(l)) || per90Reads.length || rowReads.length;
+    });
+    ok('M4-4 no research module models saves as a player metric', consuming.length === 0, consuming.join(', '));
+    ok('M4-4 the team boxscore saves is registered separately as team.saves',
+      FIELD_REGISTRY['team.saves']?.status === 'MODEL_SAFE');
+  }
+
+  /* M4-5 / M4-6. Every registered field has a status, and unknown is not safe. */
+  ok('M4-5 every registered field declares a status',
+    Object.values(FIELD_REGISTRY).every((v) => ['MODEL_SAFE', 'RAW_ONLY', 'REJECTED_SEMANTICS', 'UNKNOWN'].includes(v.status)));
+  ok('M4-5 every MODEL_SAFE field states the population it was checked against',
+    Object.entries(FIELD_REGISTRY).filter(([, v]) => v.status === 'MODEL_SAFE')
+      .every(([, v]) => v.population && v.evidence));
+  ok('M4-6 an UNKNOWN field is not model-safe',
+    Object.entries(FIELD_REGISTRY).filter(([, v]) => v.status === 'UNKNOWN').every(([f]) => !isModelSafe(f)));
+  ok('M4-6 an unregistered field is not model-safe', !isModelSafe('someFieldNobodyChecked'));
+
+  /* M4-7 / M4-8. The historical freeze is immutable. */
+  if (froz) {
+    ok('M4-7 the frozen opportunity result records its commit and digest',
+      !!froz.codeCommit && !!froz.warehouse?.coverageDigest);
+    ok('M4-7 frozen candidates record their formula and shrinkage',
+      ['O0b', 'O0c', 'O3'].every((k) => froz.candidates[k]?.formula));
+    ok('M4-7 the frozen verdict names its holdout cohort',
+      froz.cohort?.testSeason === 2025 && froz.cohort?.trainSeason === 2024);
+  }
+  if (shadow) {
+    ok('M4-8 the shadow archive records a capture time and digest',
+      !!shadow.capturedAt && !!shadow.warehouse?.coverageDigest);
+    ok('M4-8 the shadow archive names its first scorable gameweek', Number.isInteger(shadow.firstScorableGW));
+    /* M4-9. No destination-season outcome may appear in a source-only candidate. */
+    ok('M4-9 no shadow candidate carries a destination-season outcome',
+      (shadow.players || []).every((p) => p.destMinutes === undefined && p.destStarts === undefined
+        && p.destAppearances === undefined));
+    ok('M4-9 every shadow candidate is built from source-season evidence',
+      (shadow.players || []).every((p) => Number.isFinite(p.sourceMinutes)));
+  }
+
+  /* M4-10. The whole programme's standing guarantee. */
+  {
+    const jsFiles = [];
+    const walk = (dir) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const p2 = path.join(dir, e.name);
+        if (e.isDirectory()) walk(p2); else if (e.name.endsWith('.js')) jsFiles.push(p2);
+      }
+    };
+    walk('js');
+    const leaking = jsFiles.filter((f) => /research\/|field-registry|shadow-archive|same-club/.test(fs.readFileSync(f, 'utf8')));
+    ok('M4-10 no browser module references warehouse research', leaking.length === 0, leaking.join(', '));
+  }
 }
 
 console.log(`\n${failures === 0 ? `✓ all ${checks} warehouse checks passed` : `✗ ${failures} of ${checks} failed`}\n`);

@@ -25,6 +25,7 @@
 import fs from 'node:fs';
 import { readRows, paths } from '../store.mjs';
 import { COMPETITIONS, seasonsFor } from '../config.mjs';
+import { assertModelSafe } from '../field-registry.mjs';
 
 const OUT = 'data/warehouse/research/production-translation.json';
 const COHORT = 'data/warehouse/research/opportunity-cohort.json';
@@ -33,6 +34,10 @@ const THRESHOLDS = [180, 450, 900, 1800];
    and share a block with a field already proven team-level, so they are left
    out rather than trusted. */
 const METRICS = ['goals', 'assists', 'shots', 'shotsOnTarget', 'keyPasses'];
+/* Executable, not decorative: an unregistered or rejected field fails the run
+   rather than being modelled on the strength of its name. This is what stops a
+   fourth `saves` reaching a model. */
+assertModelSafe(METRICS, 'production translation');
 const TRAIN_SEASON = 2024; const TEST_SEASON = 2025;
 
 /* ---- per-90 rates on both sides of each episode ------------------- */
