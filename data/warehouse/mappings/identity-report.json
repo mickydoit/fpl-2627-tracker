@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-08-28T06:27:54.553Z",
+ "builtAt": "2026-08-29T10:36:34.566Z",
  "teams": {
   "total": 222,
   "withFpl": 20,
@@ -7,17 +7,17 @@
   "problems": 0
  },
  "players": {
-  "fplTotal": 616,
-  "inFplEspnMap": 543,
-  "mappedToFootballData": 520,
+  "fplTotal": 622,
+  "inFplEspnMap": 547,
+  "mappedToFootballData": 524,
   "byMethod": {
-   "dob+full-name": 492,
+   "dob+full-name": 496,
    "dob+surname": 28
   },
   "proposals": 0,
   "unmapped": 23
  },
- "footballDataPlayersSeen": 10092,
+ "footballDataPlayersSeen": 10094,
  "teamProblems": [],
  "proposals": [],
  "unmapped": [
@@ -41,26 +41,6 @@
     {
      "footballDataId": 1299,
      "name": "John"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 231899,
-   "name": "Taylor",
-   "dateOfBirth": "2005-04-12",
-   "candidates": [
-    {
-     "footballDataId": 273415,
-     "name": "Henry Cartwright"
-    },
-    {
-     "footballDataId": 217910,
-     "name": "Giacomo Stabile"
-    },
-    {
-     "footballDataId": 227024,
-     "name": "Luis Fernando"
     }
    ],
    "reason": "date of birth matched but no name did"
@@ -323,6 +303,30 @@
     {
      "footballDataId": 264211,
      "name": "Joseph Kalulu"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 613804,
+   "name": "Diouf",
+   "dateOfBirth": "2004-12-29",
+   "candidates": [
+    {
+     "footballDataId": 214217,
+     "name": "Bradley Stretton"
+    },
+    {
+     "footballDataId": 177023,
+     "name": "Darren Robinson"
+    },
+    {
+     "footballDataId": 189838,
+     "name": "Nathan Asiimwe"
+    },
+    {
+     "footballDataId": 184743,
+     "name": "Jeppe Corfitzen"
     }
    ],
    "reason": "date of birth matched but no name did"
