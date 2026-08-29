@@ -1,0 +1,4380 @@
+{
+ "capturedAt": "2026-08-29T00:50:30.530Z",
+ "status": "FROZEN — PROSPECTIVE FROM FREEZE DATE",
+ "firstScorableGW": 3,
+ "scoringRule": "Only gameweek 3 onward may be quoted as prospective evidence. Gameweeks already played at freeze time are retrospective and must not be scored as a forward test.",
+ "leakage": "Candidates use SOURCE-season evidence only. No 2026/27 EPL starts, minutes, appearances, goals or assists enter them, and the fitted parameters come from the 2024 training cohort.",
+ "liveModelState": "The production model has separately observed the completed 2026/27 gameweeks. That is its own state and is deliberately not mixed into these candidates.",
+ "modelVersion": {
+  "trainSeason": 2024,
+  "testSeason": 2025,
+  "shrinkageK": {
+   "featureRate": 250,
+   "startRate": 5000,
+   "minutesRate": null
+  }
+ },
+ "warehouse": {
+  "schemaVersion": 2,
+  "coverageDigest": "8d72985ccdbffbf4"
+ },
+ "n": 99,
+ "players": [
+  {
+   "name": "Dara O'Shea",
+   "position": "Defence",
+   "espnId": 243440,
+   "footballDataPlayerId": 25650,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 46,
+   "sourceStarts": 46,
+   "sourceMinutes": 4140,
+   "sourceFeatureRate": 1,
+   "sourceStartRate": 1,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.6156,
+    "startRate": 0.4231,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.6156,
+    "startRateGivenFeatured": 0.6872,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 46,
+    "shrinkageWeight": {
+     "featureRate": 0.1554,
+     "startRate": 0.0091,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Matt Grimes",
+   "position": "Midfield",
+   "espnId": 191337,
+   "footballDataPlayerId": 6358,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "COV",
+   "destTeam": "COV",
+   "sourceFixtures": 46,
+   "sourceAppearances": 46,
+   "sourceStarts": 46,
+   "sourceMinutes": 4125,
+   "sourceFeatureRate": 1,
+   "sourceStartRate": 1,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6622,
+    "startRate": 0.4329,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6622,
+    "startRateGivenFeatured": 0.6537,
+    "minsPerStart": 89.7
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 46,
+    "shrinkageWeight": {
+     "featureRate": 0.1554,
+     "startRate": 0.0091,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Azor Matusiwa",
+   "position": "Midfield",
+   "espnId": 246825,
+   "footballDataPlayerId": 7566,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 45,
+   "sourceStarts": 45,
+   "sourceMinutes": 3861,
+   "sourceFeatureRate": 0.9783,
+   "sourceStartRate": 0.9783,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6577,
+    "startRate": 0.4325,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6577,
+    "startRateGivenFeatured": 0.6576,
+    "minsPerStart": 85.8
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 45,
+    "shrinkageWeight": {
+     "featureRate": 0.1525,
+     "startRate": 0.0089,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Elliot Anderson",
+   "position": "Midfield",
+   "espnId": 238472,
+   "footballDataPlayerId": 107330,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "NFO",
+   "destTeam": "MCI",
+   "sourceFixtures": 38,
+   "sourceAppearances": 38,
+   "sourceStarts": 37,
+   "sourceMinutes": 3334,
+   "sourceFeatureRate": 1,
+   "sourceStartRate": 0.9737,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6528,
+    "startRate": 0.4318,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6528,
+    "startRateGivenFeatured": 0.6614,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 38,
+    "shrinkageWeight": {
+     "featureRate": 0.1319,
+     "startRate": 0.0075,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Marcos Senesi",
+   "position": "Defence",
+   "espnId": 233945,
+   "footballDataPlayerId": 46046,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "BOU",
+   "destTeam": "TOT",
+   "sourceFixtures": 38,
+   "sourceAppearances": 37,
+   "sourceStarts": 37,
+   "sourceMinutes": 3290,
+   "sourceFeatureRate": 0.9737,
+   "sourceStartRate": 0.9737,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.6002,
+    "startRate": 0.4218,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.6002,
+    "startRateGivenFeatured": 0.7029,
+    "minsPerStart": 88.9
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 37,
+    "shrinkageWeight": {
+     "featureRate": 0.1289,
+     "startRate": 0.0073,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Mike Penders",
+   "position": "Goalkeeper",
+   "espnId": 332343,
+   "footballDataPlayerId": 191068,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "fra.1",
+   "sourceTeam": "RC ",
+   "destTeam": "CHE",
+   "sourceFixtures": 34,
+   "sourceAppearances": 33,
+   "sourceStarts": 33,
+   "sourceMinutes": 2970,
+   "sourceFeatureRate": 0.9706,
+   "sourceStartRate": 0.9706,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.3028,
+    "startRate": 0.2354,
+    "minutesRate": 21.0985
+   },
+   "candidateO3": {
+    "featureRate": 0.3807,
+    "startRate": 0.2402,
+    "minutesRate": 21.0985
+   },
+   "productionShape": {
+    "featuredRate": 0.3807,
+    "startRateGivenFeatured": 0.6311,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 33,
+    "shrinkageWeight": {
+     "featureRate": 0.1166,
+     "startRate": 0.0066,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Jan Paul van Hecke",
+   "position": "Defence",
+   "espnId": 282583,
+   "footballDataPlayerId": 98566,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "BHA",
+   "destTeam": "TOT",
+   "sourceFixtures": 38,
+   "sourceAppearances": 36,
+   "sourceStarts": 36,
+   "sourceMinutes": 3211,
+   "sourceFeatureRate": 0.9474,
+   "sourceStartRate": 0.9474,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5955,
+    "startRate": 0.4216,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5955,
+    "startRateGivenFeatured": 0.7078,
+    "minsPerStart": 89.2
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 36,
+    "shrinkageWeight": {
+     "featureRate": 0.1259,
+     "startRate": 0.0071,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Darnell Furlong",
+   "position": "Defence",
+   "espnId": 215075,
+   "footballDataPlayerId": 4017,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 43,
+   "sourceStarts": 43,
+   "sourceMinutes": 3795,
+   "sourceFeatureRate": 0.9348,
+   "sourceStartRate": 0.9348,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.6021,
+    "startRate": 0.4222,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.6021,
+    "startRateGivenFeatured": 0.7012,
+    "minsPerStart": 88.3
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 43,
+    "shrinkageWeight": {
+     "featureRate": 0.1468,
+     "startRate": 0.0085,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Martin Dúbravka",
+   "position": "Goalkeeper",
+   "espnId": 126703,
+   "footballDataPlayerId": 7914,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "BUR",
+   "destTeam": "TOT",
+   "sourceFixtures": 38,
+   "sourceAppearances": 35,
+   "sourceStarts": 35,
+   "sourceMinutes": 3150,
+   "sourceFeatureRate": 0.9211,
+   "sourceStartRate": 0.9211,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.3028,
+    "startRate": 0.2354,
+    "minutesRate": 21.0985
+   },
+   "candidateO3": {
+    "featureRate": 0.3787,
+    "startRate": 0.2402,
+    "minutesRate": 21.0985
+   },
+   "productionShape": {
+    "featuredRate": 0.3787,
+    "startRateGivenFeatured": 0.6342,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 35,
+    "shrinkageWeight": {
+     "featureRate": 0.1228,
+     "startRate": 0.007,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Vitor Reis",
+   "position": "Defence",
+   "espnId": 361434,
+   "footballDataPlayerId": 249196,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "esp.1",
+   "sourceTeam": "GIR",
+   "destTeam": "MCI",
+   "sourceFixtures": 38,
+   "sourceAppearances": 36,
+   "sourceStarts": 35,
+   "sourceMinutes": 3138,
+   "sourceFeatureRate": 0.9474,
+   "sourceStartRate": 0.9211,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5955,
+    "startRate": 0.4214,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5955,
+    "startRateGivenFeatured": 0.7075,
+    "minsPerStart": 89.7
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 36,
+    "shrinkageWeight": {
+     "featureRate": 0.1259,
+     "startRate": 0.0071,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Mateus Fernandes",
+   "position": "Midfield",
+   "espnId": 346820,
+   "footballDataPlayerId": 187216,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "WHU",
+   "destTeam": "TOT",
+   "sourceFixtures": 38,
+   "sourceAppearances": 36,
+   "sourceStarts": 35,
+   "sourceMinutes": 3024,
+   "sourceFeatureRate": 0.9474,
+   "sourceStartRate": 0.9211,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6437,
+    "startRate": 0.4312,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6437,
+    "startRateGivenFeatured": 0.6698,
+    "minsPerStart": 86.4
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 36,
+    "shrinkageWeight": {
+     "featureRate": 0.1259,
+     "startRate": 0.0071,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Marco Palestra",
+   "position": "Defence",
+   "espnId": 362486,
+   "footballDataPlayerId": 206136,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ita.1",
+   "sourceTeam": "CAG",
+   "destTeam": "CHE",
+   "sourceFixtures": 38,
+   "sourceAppearances": 37,
+   "sourceStarts": 34,
+   "sourceMinutes": 3084,
+   "sourceFeatureRate": 0.9737,
+   "sourceStartRate": 0.8947,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.6002,
+    "startRate": 0.4213,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.6002,
+    "startRateGivenFeatured": 0.7019,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 37,
+    "shrinkageWeight": {
+     "featureRate": 0.1289,
+     "startRate": 0.0073,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Pascal Struijk",
+   "position": "Defence",
+   "espnId": 246771,
+   "footballDataPlayerId": 4146,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "LEE",
+   "destTeam": "BHA",
+   "sourceFixtures": 38,
+   "sourceAppearances": 34,
+   "sourceStarts": 33,
+   "sourceMinutes": 2937,
+   "sourceFeatureRate": 0.8947,
+   "sourceStartRate": 0.8684,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5868,
+    "startRate": 0.4208,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5868,
+    "startRateGivenFeatured": 0.7172,
+    "minsPerStart": 89
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 34,
+    "shrinkageWeight": {
+     "featureRate": 0.1197,
+     "startRate": 0.0068,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Matt Targett",
+   "position": "Defence",
+   "espnId": 192929,
+   "footballDataPlayerId": 3962,
+   "episodeType": "CHAMPIONSHIP_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "MID",
+   "destTeam": "HUL",
+   "sourceFixtures": 49,
+   "sourceAppearances": 45,
+   "sourceStarts": 42,
+   "sourceMinutes": 3672,
+   "sourceFeatureRate": 0.9184,
+   "sourceStartRate": 0.8571,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.6019,
+    "startRate": 0.4217,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.6019,
+    "startRateGivenFeatured": 0.7006,
+    "minsPerStart": 87.4
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 45,
+    "shrinkageWeight": {
+     "featureRate": 0.1525,
+     "startRate": 0.0089,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Bazoumana Touré",
+   "position": "Offence",
+   "espnId": 359108,
+   "footballDataPlayerId": 249312,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ger.1",
+   "sourceTeam": "TSG",
+   "destTeam": "NEW",
+   "sourceFixtures": 34,
+   "sourceAppearances": 30,
+   "sourceStarts": 29,
+   "sourceMinutes": 2325,
+   "sourceFeatureRate": 0.8824,
+   "sourceStartRate": 0.8529,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.6074,
+    "startRate": 0.3492,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.6074,
+    "startRateGivenFeatured": 0.5749,
+    "minsPerStart": 80.2
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 30,
+    "shrinkageWeight": {
+     "featureRate": 0.1071,
+     "startRate": 0.006,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Anis Mehmeti",
+   "position": "Midfield",
+   "espnId": 308891,
+   "footballDataPlayerId": 152437,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 46,
+   "sourceStarts": 39,
+   "sourceMinutes": 3376,
+   "sourceFeatureRate": 1,
+   "sourceStartRate": 0.8478,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6622,
+    "startRate": 0.4315,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6622,
+    "startRateGivenFeatured": 0.6516,
+    "minsPerStart": 86.6
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 46,
+    "shrinkageWeight": {
+     "featureRate": 0.1554,
+     "startRate": 0.0091,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Harry Wilson",
+   "position": "Offence",
+   "espnId": 194801,
+   "footballDataPlayerId": 11777,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "FUL",
+   "destTeam": "LEE",
+   "sourceFixtures": 38,
+   "sourceAppearances": 36,
+   "sourceStarts": 32,
+   "sourceMinutes": 2691,
+   "sourceFeatureRate": 0.9474,
+   "sourceStartRate": 0.8421,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.6213,
+    "startRate": 0.3497,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.6213,
+    "startRateGivenFeatured": 0.5628,
+    "minsPerStart": 84.1
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 36,
+    "shrinkageWeight": {
+     "featureRate": 0.1259,
+     "startRate": 0.0071,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Sandro Tonali",
+   "position": "Midfield",
+   "espnId": 261047,
+   "footballDataPlayerId": 2563,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "NEW",
+   "destTeam": "TOT",
+   "sourceFixtures": 38,
+   "sourceAppearances": 36,
+   "sourceStarts": 32,
+   "sourceMinutes": 2543,
+   "sourceFeatureRate": 0.9474,
+   "sourceStartRate": 0.8421,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6437,
+    "startRate": 0.4306,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6437,
+    "startRateGivenFeatured": 0.6689,
+    "minsPerStart": 79.5
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 36,
+    "shrinkageWeight": {
+     "featureRate": 0.1259,
+     "startRate": 0.0071,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Jaidon Anthony",
+   "position": "Offence",
+   "espnId": 307657,
+   "footballDataPlayerId": 150778,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "BUR",
+   "destTeam": "BRE",
+   "sourceFixtures": 38,
+   "sourceAppearances": 37,
+   "sourceStarts": 32,
+   "sourceMinutes": 2735,
+   "sourceFeatureRate": 0.9737,
+   "sourceStartRate": 0.8421,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.6259,
+    "startRate": 0.3498,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.6259,
+    "startRateGivenFeatured": 0.5589,
+    "minsPerStart": 85.5
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 37,
+    "shrinkageWeight": {
+     "featureRate": 0.1289,
+     "startRate": 0.0073,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Tarik Muharemović",
+   "position": "Defence",
+   "espnId": 318390,
+   "footballDataPlayerId": 189153,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ita.1",
+   "sourceTeam": "SAS",
+   "destTeam": "LEE",
+   "sourceFixtures": 38,
+   "sourceAppearances": 32,
+   "sourceStarts": 32,
+   "sourceMinutes": 2835,
+   "sourceFeatureRate": 0.8421,
+   "sourceStartRate": 0.8421,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5786,
+    "startRate": 0.4205,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5786,
+    "startRateGivenFeatured": 0.7267,
+    "minsPerStart": 88.6
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 32,
+    "shrinkageWeight": {
+     "featureRate": 0.1135,
+     "startRate": 0.0064,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Víctor Muñoz",
+   "position": "Offence",
+   "espnId": 397545,
+   "footballDataPlayerId": 273423,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "esp.1",
+   "sourceTeam": "OSA",
+   "destTeam": "LIV",
+   "sourceFixtures": 38,
+   "sourceAppearances": 34,
+   "sourceStarts": 31,
+   "sourceMinutes": 2668,
+   "sourceFeatureRate": 0.8947,
+   "sourceStartRate": 0.8158,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.6127,
+    "startRate": 0.3493,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.6127,
+    "startRateGivenFeatured": 0.5701,
+    "minsPerStart": 86.1
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 34,
+    "shrinkageWeight": {
+     "featureRate": 0.1197,
+     "startRate": 0.0068,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Luka Vušković",
+   "position": "Defence",
+   "espnId": 364962,
+   "footballDataPlayerId": 216835,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ger.1",
+   "sourceTeam": "HSV",
+   "destTeam": "BHA",
+   "sourceFixtures": 34,
+   "sourceAppearances": 28,
+   "sourceStarts": 27,
+   "sourceMinutes": 2441,
+   "sourceFeatureRate": 0.8235,
+   "sourceStartRate": 0.7941,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5729,
+    "startRate": 0.4199,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5729,
+    "startRateGivenFeatured": 0.7328,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 28,
+    "shrinkageWeight": {
+     "featureRate": 0.1007,
+     "startRate": 0.0056,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Christian Walton",
+   "position": "Goalkeeper",
+   "espnId": 168746,
+   "footballDataPlayerId": 4867,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 37,
+   "sourceStarts": 36,
+   "sourceMinutes": 3306,
+   "sourceFeatureRate": 0.8043,
+   "sourceStartRate": 0.7826,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.3028,
+    "startRate": 0.2354,
+    "minutesRate": 21.0985
+   },
+   "candidateO3": {
+    "featureRate": 0.3674,
+    "startRate": 0.2394,
+    "minutesRate": 21.0985
+   },
+   "productionShape": {
+    "featuredRate": 0.3674,
+    "startRateGivenFeatured": 0.6516,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 37,
+    "shrinkageWeight": {
+     "featureRate": 0.1289,
+     "startRate": 0.0073,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Hayden Hackney",
+   "position": "Midfield",
+   "espnId": 282978,
+   "footballDataPlayerId": 136284,
+   "episodeType": "CHAMPIONSHIP_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "MID",
+   "destTeam": "EVE",
+   "sourceFixtures": 49,
+   "sourceAppearances": 39,
+   "sourceStarts": 38,
+   "sourceMinutes": 3334,
+   "sourceFeatureRate": 0.7959,
+   "sourceStartRate": 0.7755,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6265,
+    "startRate": 0.4303,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6265,
+    "startRateGivenFeatured": 0.6869,
+    "minsPerStart": 87.7
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 39,
+    "shrinkageWeight": {
+     "featureRate": 0.1349,
+     "startRate": 0.0077,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Johan Manzambi",
+   "position": "Midfield",
+   "espnId": 386992,
+   "footballDataPlayerId": 212309,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ger.1",
+   "sourceTeam": "SCF",
+   "destTeam": "AVL",
+   "sourceFixtures": 34,
+   "sourceAppearances": 27,
+   "sourceStarts": 26,
+   "sourceMinutes": 2094,
+   "sourceFeatureRate": 0.7941,
+   "sourceStartRate": 0.7647,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6189,
+    "startRate": 0.4294,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6189,
+    "startRateGivenFeatured": 0.6938,
+    "minsPerStart": 80.5
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 27,
+    "shrinkageWeight": {
+     "featureRate": 0.0975,
+     "startRate": 0.0054,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Leif Davis",
+   "position": "Defence",
+   "espnId": 283086,
+   "footballDataPlayerId": 99120,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 37,
+   "sourceStarts": 35,
+   "sourceMinutes": 3167,
+   "sourceFeatureRate": 0.8043,
+   "sourceStartRate": 0.7609,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5783,
+    "startRate": 0.4203,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5783,
+    "startRateGivenFeatured": 0.7267,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 37,
+    "shrinkageWeight": {
+     "featureRate": 0.1289,
+     "startRate": 0.0073,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Fabio Vieira",
+   "position": "Midfield",
+   "espnId": 88865,
+   "footballDataPlayerId": 112948,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ger.1",
+   "sourceTeam": "HSV",
+   "destTeam": "ARS",
+   "sourceFixtures": 34,
+   "sourceAppearances": 29,
+   "sourceStarts": 25,
+   "sourceMinutes": 2215,
+   "sourceFeatureRate": 0.8529,
+   "sourceStartRate": 0.7353,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6263,
+    "startRate": 0.4294,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6263,
+    "startRateGivenFeatured": 0.6856,
+    "minsPerStart": 88.6
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 29,
+    "shrinkageWeight": {
+     "featureRate": 0.1039,
+     "startRate": 0.0058,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Hidemasa Morita",
+   "position": "Midfield",
+   "espnId": 270752,
+   "footballDataPlayerId": 49092,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "por.1",
+   "sourceTeam": "SPO",
+   "destTeam": "HUL",
+   "sourceFixtures": 34,
+   "sourceAppearances": 31,
+   "sourceStarts": 23,
+   "sourceMinutes": 1834,
+   "sourceFeatureRate": 0.9118,
+   "sourceStartRate": 0.6765,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6344,
+    "startRate": 0.4292,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6344,
+    "startRateGivenFeatured": 0.6765,
+    "minsPerStart": 79.7
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 31,
+    "shrinkageWeight": {
+     "featureRate": 0.1103,
+     "startRate": 0.0062,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Ryan John Giles",
+   "position": "Defence",
+   "espnId": 243576,
+   "footballDataPlayerId": 82148,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "HUL",
+   "destTeam": "HUL",
+   "sourceFixtures": 49,
+   "sourceAppearances": 35,
+   "sourceStarts": 33,
+   "sourceMinutes": 2735,
+   "sourceFeatureRate": 0.7143,
+   "sourceStartRate": 0.6735,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5657,
+    "startRate": 0.4195,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5657,
+    "startRateGivenFeatured": 0.7417,
+    "minsPerStart": 82.9
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 35,
+    "shrinkageWeight": {
+     "featureRate": 0.1228,
+     "startRate": 0.007,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Alvaro Rodriguez",
+   "position": "Offence",
+   "espnId": 353151,
+   "footballDataPlayerId": 189369,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "esp.1",
+   "sourceTeam": "ELC",
+   "destTeam": "BOU",
+   "sourceFixtures": 38,
+   "sourceAppearances": 34,
+   "sourceStarts": 24,
+   "sourceMinutes": 2200,
+   "sourceFeatureRate": 0.8947,
+   "sourceStartRate": 0.6316,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.6127,
+    "startRate": 0.3481,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.6127,
+    "startRateGivenFeatured": 0.5681,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 34,
+    "shrinkageWeight": {
+     "featureRate": 0.1197,
+     "startRate": 0.0068,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Cédric Kipré",
+   "position": "Defence",
+   "espnId": 243648,
+   "footballDataPlayerId": 34871,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 32,
+   "sourceStarts": 29,
+   "sourceMinutes": 2589,
+   "sourceFeatureRate": 0.6957,
+   "sourceStartRate": 0.6304,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.562,
+    "startRate": 0.4191,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.562,
+    "startRateGivenFeatured": 0.7458,
+    "minsPerStart": 89.3
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 32,
+    "shrinkageWeight": {
+     "featureRate": 0.1135,
+     "startRate": 0.0064,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Thomas Meunier",
+   "position": "Defence",
+   "espnId": 166473,
+   "footballDataPlayerId": 3650,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "fra.1",
+   "sourceTeam": "LIL",
+   "destTeam": "SUN",
+   "sourceFixtures": 34,
+   "sourceAppearances": 25,
+   "sourceStarts": 21,
+   "sourceMinutes": 1910,
+   "sourceFeatureRate": 0.7353,
+   "sourceStartRate": 0.6176,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5622,
+    "startRate": 0.4188,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5622,
+    "startRateGivenFeatured": 0.7449,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 25,
+    "shrinkageWeight": {
+     "featureRate": 0.0909,
+     "startRate": 0.005,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Xaver Schlager",
+   "position": "Midfield",
+   "espnId": 238886,
+   "footballDataPlayerId": 16344,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ger.1",
+   "sourceTeam": "RBL",
+   "destTeam": "NFO",
+   "sourceFixtures": 34,
+   "sourceAppearances": 26,
+   "sourceStarts": 21,
+   "sourceMinutes": 1837,
+   "sourceFeatureRate": 0.7647,
+   "sourceStartRate": 0.6176,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6155,
+    "startRate": 0.4286,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6155,
+    "startRateGivenFeatured": 0.6963,
+    "minsPerStart": 87.5
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 26,
+    "shrinkageWeight": {
+     "featureRate": 0.0942,
+     "startRate": 0.0052,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Juanlu",
+   "position": "Defence",
+   "espnId": 303804,
+   "footballDataPlayerId": 180038,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "esp.1",
+   "sourceTeam": "SEV",
+   "destTeam": "BOU",
+   "sourceFixtures": 38,
+   "sourceAppearances": 32,
+   "sourceStarts": 23,
+   "sourceMinutes": 1993,
+   "sourceFeatureRate": 0.8421,
+   "sourceStartRate": 0.6053,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5786,
+    "startRate": 0.419,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5786,
+    "startRateGivenFeatured": 0.7241,
+    "minsPerStart": 86.7
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 32,
+    "shrinkageWeight": {
+     "featureRate": 0.1135,
+     "startRate": 0.0064,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Karl Darlow",
+   "position": "Goalkeeper",
+   "espnId": 130877,
+   "footballDataPlayerId": 7913,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "LEE",
+   "destTeam": "MUN",
+   "sourceFixtures": 38,
+   "sourceAppearances": 22,
+   "sourceStarts": 22,
+   "sourceMinutes": 1980,
+   "sourceFeatureRate": 0.5789,
+   "sourceStartRate": 0.5789,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.3028,
+    "startRate": 0.2354,
+    "minutesRate": 21.0985
+   },
+   "candidateO3": {
+    "featureRate": 0.3251,
+    "startRate": 0.2369,
+    "minutesRate": 21.0985
+   },
+   "productionShape": {
+    "featuredRate": 0.3251,
+    "startRateGivenFeatured": 0.7287,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 22,
+    "shrinkageWeight": {
+     "featureRate": 0.0809,
+     "startRate": 0.0044,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Issa Kaboré",
+   "position": "Defence",
+   "espnId": 294427,
+   "footballDataPlayerId": 123574,
+   "episodeType": "CHAMPIONSHIP_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "WRE",
+   "destTeam": "MCI",
+   "sourceFixtures": 46,
+   "sourceAppearances": 30,
+   "sourceStarts": 26,
+   "sourceMinutes": 2201,
+   "sourceFeatureRate": 0.6522,
+   "sourceStartRate": 0.5652,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5564,
+    "startRate": 0.4186,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5564,
+    "startRateGivenFeatured": 0.7524,
+    "minsPerStart": 84.7
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 30,
+    "shrinkageWeight": {
+     "featureRate": 0.1071,
+     "startRate": 0.006,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Vítězslav Jaroš",
+   "position": "Goalkeeper",
+   "espnId": 289840,
+   "footballDataPlayerId": 152579,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ned.1",
+   "sourceTeam": "AJA",
+   "destTeam": "LIV",
+   "sourceFixtures": 34,
+   "sourceAppearances": 19,
+   "sourceStarts": 19,
+   "sourceMinutes": 1710,
+   "sourceFeatureRate": 0.5588,
+   "sourceStartRate": 0.5588,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.3028,
+    "startRate": 0.2354,
+    "minutesRate": 21.0985
+   },
+   "candidateO3": {
+    "featureRate": 0.3209,
+    "startRate": 0.2366,
+    "minutesRate": 21.0985
+   },
+   "productionShape": {
+    "featuredRate": 0.3209,
+    "startRateGivenFeatured": 0.7375,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 19,
+    "shrinkageWeight": {
+     "featureRate": 0.0706,
+     "startRate": 0.0038,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Jeremy Jacquet",
+   "position": "Defence",
+   "espnId": 355980,
+   "footballDataPlayerId": 206127,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "fra.1",
+   "sourceTeam": "REN",
+   "destTeam": "LIV",
+   "sourceFixtures": 34,
+   "sourceAppearances": 19,
+   "sourceStarts": 19,
+   "sourceMinutes": 1673,
+   "sourceFeatureRate": 0.5588,
+   "sourceStartRate": 0.5588,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5459,
+    "startRate": 0.4183,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5459,
+    "startRateGivenFeatured": 0.7663,
+    "minsPerStart": 88.1
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 19,
+    "shrinkageWeight": {
+     "featureRate": 0.0706,
+     "startRate": 0.0038,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Emersonn",
+   "position": "Offence",
+   "espnId": 322654,
+   "footballDataPlayerId": 176628,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "fra.1",
+   "sourceTeam": "TOU",
+   "destTeam": "IPS",
+   "sourceFixtures": 34,
+   "sourceAppearances": 28,
+   "sourceStarts": 19,
+   "sourceMinutes": 1526,
+   "sourceFeatureRate": 0.8235,
+   "sourceStartRate": 0.5588,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5995,
+    "startRate": 0.3473,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5995,
+    "startRateGivenFeatured": 0.5794,
+    "minsPerStart": 80.3
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 28,
+    "shrinkageWeight": {
+     "featureRate": 0.1007,
+     "startRate": 0.0056,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Youri Tielemans",
+   "position": "Midfield",
+   "espnId": 193297,
+   "footballDataPlayerId": 3658,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "AVL",
+   "destTeam": "MUN",
+   "sourceFixtures": 38,
+   "sourceAppearances": 25,
+   "sourceStarts": 21,
+   "sourceMinutes": 1862,
+   "sourceFeatureRate": 0.6579,
+   "sourceStartRate": 0.5526,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6053,
+    "startRate": 0.4283,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6053,
+    "startRateGivenFeatured": 0.7075,
+    "minsPerStart": 88.7
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 25,
+    "shrinkageWeight": {
+     "featureRate": 0.0909,
+     "startRate": 0.005,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Óscar Mingueza",
+   "position": "Defence",
+   "espnId": 276546,
+   "footballDataPlayerId": 146986,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "esp.1",
+   "sourceTeam": "CEL",
+   "destTeam": "CRY",
+   "sourceFixtures": 38,
+   "sourceAppearances": 34,
+   "sourceStarts": 21,
+   "sourceMinutes": 1967,
+   "sourceFeatureRate": 0.8947,
+   "sourceStartRate": 0.5526,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5868,
+    "startRate": 0.4187,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5868,
+    "startRateGivenFeatured": 0.7135,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 34,
+    "shrinkageWeight": {
+     "featureRate": 0.1197,
+     "startRate": 0.0068,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Alan Browne",
+   "position": "Midfield",
+   "espnId": 197627,
+   "footballDataPlayerId": 11362,
+   "episodeType": "CHAMPIONSHIP_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "MID",
+   "destTeam": "SUN",
+   "sourceFixtures": 49,
+   "sourceAppearances": 41,
+   "sourceStarts": 27,
+   "sourceMinutes": 2622,
+   "sourceFeatureRate": 0.8367,
+   "sourceStartRate": 0.551,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6334,
+    "startRate": 0.4286,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6334,
+    "startRateGivenFeatured": 0.6767,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 41,
+    "shrinkageWeight": {
+     "featureRate": 0.1409,
+     "startRate": 0.0081,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "George Hirst",
+   "position": "Offence",
+   "espnId": 241325,
+   "footballDataPlayerId": 25606,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 42,
+   "sourceStarts": 25,
+   "sourceMinutes": 2111,
+   "sourceFeatureRate": 0.913,
+   "sourceStartRate": 0.5435,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.6231,
+    "startRate": 0.3478,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.6231,
+    "startRateGivenFeatured": 0.5582,
+    "minsPerStart": 84.4
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 42,
+    "shrinkageWeight": {
+     "featureRate": 0.1438,
+     "startRate": 0.0083,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Marcelino Núñez",
+   "position": "Midfield",
+   "espnId": 301554,
+   "footballDataPlayerId": 140245,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 38,
+   "sourceStarts": 25,
+   "sourceMinutes": 2233,
+   "sourceFeatureRate": 0.8261,
+   "sourceStartRate": 0.5435,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6299,
+    "startRate": 0.4285,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6299,
+    "startRateGivenFeatured": 0.6803,
+    "minsPerStart": 89.3
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 38,
+    "shrinkageWeight": {
+     "featureRate": 0.1319,
+     "startRate": 0.0075,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Aurele Amenda",
+   "position": "Defence",
+   "espnId": 319404,
+   "footballDataPlayerId": 169297,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ger.1",
+   "sourceTeam": "SGE",
+   "destTeam": "COV",
+   "sourceFixtures": 34,
+   "sourceAppearances": 24,
+   "sourceStarts": 18,
+   "sourceMinutes": 1676,
+   "sourceFeatureRate": 0.7059,
+   "sourceStartRate": 0.5294,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.559,
+    "startRate": 0.4183,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.559,
+    "startRateGivenFeatured": 0.7483,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 24,
+    "shrinkageWeight": {
+     "featureRate": 0.0876,
+     "startRate": 0.0048,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Liam Millar",
+   "position": "Offence",
+   "espnId": 271879,
+   "footballDataPlayerId": 110807,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "HUL",
+   "destTeam": "HUL",
+   "sourceFixtures": 49,
+   "sourceAppearances": 36,
+   "sourceStarts": 25,
+   "sourceMinutes": 2058,
+   "sourceFeatureRate": 0.7347,
+   "sourceStartRate": 0.5102,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5946,
+    "startRate": 0.3473,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5946,
+    "startRateGivenFeatured": 0.5841,
+    "minsPerStart": 82.3
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 36,
+    "shrinkageWeight": {
+     "featureRate": 0.1259,
+     "startRate": 0.0071,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Jacob Greaves",
+   "position": "Defence",
+   "espnId": 291174,
+   "footballDataPlayerId": 125651,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 24,
+   "sourceStarts": 23,
+   "sourceMinutes": 2048,
+   "sourceFeatureRate": 0.5217,
+   "sourceStartRate": 0.5,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5429,
+    "startRate": 0.4182,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5429,
+    "startRateGivenFeatured": 0.7703,
+    "minsPerStart": 89
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 24,
+    "shrinkageWeight": {
+     "featureRate": 0.0876,
+     "startRate": 0.0048,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Jack Clarke",
+   "position": "Offence",
+   "espnId": 269343,
+   "footballDataPlayerId": 4158,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 46,
+   "sourceStarts": 23,
+   "sourceMinutes": 2380,
+   "sourceFeatureRate": 1,
+   "sourceStartRate": 0.5,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.6405,
+    "startRate": 0.3475,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.6405,
+    "startRateGivenFeatured": 0.5426,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 46,
+    "shrinkageWeight": {
+     "featureRate": 0.1554,
+     "startRate": 0.0091,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Arnaud Kalimuendo",
+   "position": "Offence",
+   "espnId": 296321,
+   "footballDataPlayerId": 130668,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ger.1",
+   "sourceTeam": "SGE",
+   "destTeam": "NFO",
+   "sourceFixtures": 34,
+   "sourceAppearances": 19,
+   "sourceStarts": 17,
+   "sourceMinutes": 1420,
+   "sourceFeatureRate": 0.5588,
+   "sourceStartRate": 0.5,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5733,
+    "startRate": 0.3467,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5733,
+    "startRateGivenFeatured": 0.6048,
+    "minsPerStart": 83.5
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 19,
+    "shrinkageWeight": {
+     "featureRate": 0.0706,
+     "startRate": 0.0038,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Jack Grealish",
+   "position": "Offence",
+   "espnId": 172850,
+   "footballDataPlayerId": 3895,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "EVE",
+   "destTeam": "MCI",
+   "sourceFixtures": 38,
+   "sourceAppearances": 20,
+   "sourceStarts": 18,
+   "sourceMinutes": 1631,
+   "sourceFeatureRate": 0.5263,
+   "sourceStartRate": 0.4737,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5708,
+    "startRate": 0.3466,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5708,
+    "startRateGivenFeatured": 0.6073,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 20,
+    "shrinkageWeight": {
+     "featureRate": 0.0741,
+     "startRate": 0.004,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Marcus Rashford",
+   "position": "Offence",
+   "espnId": 230945,
+   "footballDataPlayerId": 3331,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "esp.1",
+   "sourceTeam": "FCB",
+   "destTeam": "MUN",
+   "sourceFixtures": 38,
+   "sourceAppearances": 32,
+   "sourceStarts": 18,
+   "sourceMinutes": 1761,
+   "sourceFeatureRate": 0.8421,
+   "sourceStartRate": 0.4737,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.6048,
+    "startRate": 0.347,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.6048,
+    "startRateGivenFeatured": 0.5737,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 32,
+    "shrinkageWeight": {
+     "featureRate": 0.1135,
+     "startRate": 0.0064,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Harry Amass",
+   "position": "Defence",
+   "espnId": 356940,
+   "footballDataPlayerId": 210150,
+   "episodeType": "CHAMPIONSHIP_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "NOR",
+   "destTeam": "MUN",
+   "sourceFixtures": 46,
+   "sourceAppearances": 22,
+   "sourceStarts": 21,
+   "sourceMinutes": 1881,
+   "sourceFeatureRate": 0.4783,
+   "sourceStartRate": 0.4565,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5395,
+    "startRate": 0.4179,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5395,
+    "startRateGivenFeatured": 0.7747,
+    "minsPerStart": 89.6
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 22,
+    "shrinkageWeight": {
+     "featureRate": 0.0809,
+     "startRate": 0.0044,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Brandon Thomas-Asante",
+   "position": "Offence",
+   "espnId": 240495,
+   "footballDataPlayerId": 6389,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "COV",
+   "destTeam": "COV",
+   "sourceFixtures": 46,
+   "sourceAppearances": 32,
+   "sourceStarts": 21,
+   "sourceMinutes": 1864,
+   "sourceFeatureRate": 0.6957,
+   "sourceStartRate": 0.4565,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5881,
+    "startRate": 0.3468,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5881,
+    "startRateGivenFeatured": 0.5897,
+    "minsPerStart": 88.8
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 32,
+    "shrinkageWeight": {
+     "featureRate": 0.1135,
+     "startRate": 0.0064,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Sean Steur",
+   "position": "Midfield",
+   "espnId": 384372,
+   "footballDataPlayerId": 251265,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ned.1",
+   "sourceTeam": "AJA",
+   "destTeam": "NEW",
+   "sourceFixtures": 34,
+   "sourceAppearances": 21,
+   "sourceStarts": 15,
+   "sourceMinutes": 1263,
+   "sourceFeatureRate": 0.6176,
+   "sourceStartRate": 0.4412,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6014,
+    "startRate": 0.4277,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6014,
+    "startRateGivenFeatured": 0.7112,
+    "minsPerStart": 84.2
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 21,
+    "shrinkageWeight": {
+     "featureRate": 0.0775,
+     "startRate": 0.0042,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Eiran Cashin",
+   "position": "Defence",
+   "espnId": 318359,
+   "footballDataPlayerId": 167657,
+   "episodeType": "CHAMPIONSHIP_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "BLA",
+   "destTeam": "BHA",
+   "sourceFixtures": 46,
+   "sourceAppearances": 29,
+   "sourceStarts": 20,
+   "sourceMinutes": 1958,
+   "sourceFeatureRate": 0.6304,
+   "sourceStartRate": 0.4348,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5538,
+    "startRate": 0.4179,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5538,
+    "startRateGivenFeatured": 0.7546,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 29,
+    "shrinkageWeight": {
+     "featureRate": 0.1039,
+     "startRate": 0.0058,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Lucas Gourna-Douath",
+   "position": "Midfield",
+   "espnId": 303338,
+   "footballDataPlayerId": 179603,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "fra.1",
+   "sourceTeam": "HAC",
+   "destTeam": "HUL",
+   "sourceFixtures": 34,
+   "sourceAppearances": 15,
+   "sourceStarts": 14,
+   "sourceMinutes": 1275,
+   "sourceFeatureRate": 0.4412,
+   "sourceStartRate": 0.4118,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.591,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.591,
+    "startRateGivenFeatured": 0.7235,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 15,
+    "shrinkageWeight": {
+     "featureRate": 0.0566,
+     "startRate": 0.003,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Semi Ajayi",
+   "position": "Defence",
+   "espnId": 178051,
+   "footballDataPlayerId": 6451,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "HUL",
+   "destTeam": "HUL",
+   "sourceFixtures": 49,
+   "sourceAppearances": 24,
+   "sourceStarts": 20,
+   "sourceMinutes": 1833,
+   "sourceFeatureRate": 0.4898,
+   "sourceStartRate": 0.4082,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5401,
+    "startRate": 0.4177,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5401,
+    "startRateGivenFeatured": 0.7735,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 24,
+    "shrinkageWeight": {
+     "featureRate": 0.0876,
+     "startRate": 0.0048,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Axel Disasi",
+   "position": "Defence",
+   "espnId": 231718,
+   "footballDataPlayerId": 813,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "WHU",
+   "destTeam": "CHE",
+   "sourceFixtures": 38,
+   "sourceAppearances": 14,
+   "sourceStarts": 14,
+   "sourceMinutes": 1255,
+   "sourceFeatureRate": 0.3684,
+   "sourceStartRate": 0.3684,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5355,
+    "startRate": 0.4176,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5355,
+    "startRateGivenFeatured": 0.7798,
+    "minsPerStart": 89.6
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 14,
+    "shrinkageWeight": {
+     "featureRate": 0.053,
+     "startRate": 0.0028,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Loum Tchaouna",
+   "position": "Offence",
+   "espnId": 324541,
+   "footballDataPlayerId": 170394,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "BUR",
+   "destTeam": "COV",
+   "sourceFixtures": 38,
+   "sourceAppearances": 29,
+   "sourceStarts": 14,
+   "sourceMinutes": 1270,
+   "sourceFeatureRate": 0.7632,
+   "sourceStartRate": 0.3684,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.594,
+    "startRate": 0.3463,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.594,
+    "startRateGivenFeatured": 0.5829,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 29,
+    "shrinkageWeight": {
+     "featureRate": 0.1039,
+     "startRate": 0.0058,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Nicolas Jackson",
+   "position": "Offence",
+   "espnId": 308524,
+   "footballDataPlayerId": 152515,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ger.1",
+   "sourceTeam": "FCB",
+   "destTeam": "CHE",
+   "sourceFixtures": 34,
+   "sourceAppearances": 23,
+   "sourceStarts": 12,
+   "sourceMinutes": 1004,
+   "sourceFeatureRate": 0.6765,
+   "sourceStartRate": 0.3529,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.583,
+    "startRate": 0.3462,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.583,
+    "startRateGivenFeatured": 0.5938,
+    "minsPerStart": 83.7
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 23,
+    "shrinkageWeight": {
+     "featureRate": 0.0842,
+     "startRate": 0.0046,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Cody Drameh",
+   "position": "Defence",
+   "espnId": 279786,
+   "footballDataPlayerId": 147780,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "HUL",
+   "destTeam": "HUL",
+   "sourceFixtures": 49,
+   "sourceAppearances": 24,
+   "sourceStarts": 17,
+   "sourceMinutes": 1447,
+   "sourceFeatureRate": 0.4898,
+   "sourceStartRate": 0.3469,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5401,
+    "startRate": 0.4174,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5401,
+    "startRateGivenFeatured": 0.7729,
+    "minsPerStart": 85.1
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 24,
+    "shrinkageWeight": {
+     "featureRate": 0.0876,
+     "startRate": 0.0048,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Andrey Santos",
+   "position": "Midfield",
+   "espnId": 314858,
+   "footballDataPlayerId": 166366,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "CHE",
+   "destTeam": "MUN",
+   "sourceFixtures": 38,
+   "sourceAppearances": 27,
+   "sourceStarts": 13,
+   "sourceMinutes": 1255,
+   "sourceFeatureRate": 0.7105,
+   "sourceStartRate": 0.3421,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.6108,
+    "startRate": 0.4272,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.6108,
+    "startRateGivenFeatured": 0.6994,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 27,
+    "shrinkageWeight": {
+     "featureRate": 0.0975,
+     "startRate": 0.0054,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Simon Adingra",
+   "position": "Offence",
+   "espnId": 317404,
+   "footballDataPlayerId": 166249,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "fra.1",
+   "sourceTeam": "ASM",
+   "destTeam": "SUN",
+   "sourceFixtures": 34,
+   "sourceAppearances": 14,
+   "sourceStarts": 10,
+   "sourceMinutes": 861,
+   "sourceFeatureRate": 0.4118,
+   "sourceStartRate": 0.2941,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5658,
+    "startRate": 0.346,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5658,
+    "startRateGivenFeatured": 0.6116,
+    "minsPerStart": 86.1
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 14,
+    "shrinkageWeight": {
+     "featureRate": 0.053,
+     "startRate": 0.0028,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Aladji Bamba",
+   "position": "Midfield",
+   "espnId": 396630,
+   "footballDataPlayerId": 272943,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "fra.1",
+   "sourceTeam": "ASM",
+   "destTeam": "NEW",
+   "sourceFixtures": 34,
+   "sourceAppearances": 18,
+   "sourceStarts": 10,
+   "sourceMinutes": 815,
+   "sourceFeatureRate": 0.5294,
+   "sourceStartRate": 0.2941,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.5953,
+    "startRate": 0.4272,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.5953,
+    "startRateGivenFeatured": 0.7176,
+    "minsPerStart": 81.5
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 18,
+    "shrinkageWeight": {
+     "featureRate": 0.0672,
+     "startRate": 0.0036,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Andrew Robertson",
+   "position": "Defence",
+   "espnId": 104943,
+   "footballDataPlayerId": 7868,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "LIV",
+   "destTeam": "TOT",
+   "sourceFixtures": 38,
+   "sourceAppearances": 24,
+   "sourceStarts": 11,
+   "sourceMinutes": 1172,
+   "sourceFeatureRate": 0.6316,
+   "sourceStartRate": 0.2895,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5525,
+    "startRate": 0.4172,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5525,
+    "startRateGivenFeatured": 0.7551,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 24,
+    "shrinkageWeight": {
+     "featureRate": 0.0876,
+     "startRate": 0.0048,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Callum Wilson",
+   "position": "Offence",
+   "espnId": 138924,
+   "footballDataPlayerId": 8251,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "WHU",
+   "destTeam": "BRE",
+   "sourceFixtures": 38,
+   "sourceAppearances": 32,
+   "sourceStarts": 11,
+   "sourceMinutes": 1243,
+   "sourceFeatureRate": 0.8421,
+   "sourceStartRate": 0.2895,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.6048,
+    "startRate": 0.3458,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.6048,
+    "startRateGivenFeatured": 0.5718,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 32,
+    "shrinkageWeight": {
+     "featureRate": 0.1135,
+     "startRate": 0.0064,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Largie Ramazani",
+   "position": "Offence",
+   "espnId": 291435,
+   "footballDataPlayerId": 136349,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "esp.1",
+   "sourceTeam": "VAL",
+   "destTeam": "LEE",
+   "sourceFixtures": 38,
+   "sourceAppearances": 27,
+   "sourceStarts": 11,
+   "sourceMinutes": 1224,
+   "sourceFeatureRate": 0.7105,
+   "sourceStartRate": 0.2895,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5877,
+    "startRate": 0.3458,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5877,
+    "startRateGivenFeatured": 0.5885,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 27,
+    "shrinkageWeight": {
+     "featureRate": 0.0975,
+     "startRate": 0.0054,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Frank Onyeka",
+   "position": "Midfield",
+   "espnId": 258491,
+   "footballDataPlayerId": 24210,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "COV",
+   "destTeam": "COV",
+   "sourceFixtures": 46,
+   "sourceAppearances": 14,
+   "sourceStarts": 13,
+   "sourceMinutes": 1024,
+   "sourceFeatureRate": 0.3043,
+   "sourceStartRate": 0.2826,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.5843,
+    "startRate": 0.4272,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.5843,
+    "startRateGivenFeatured": 0.7311,
+    "minsPerStart": 78.8
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 14,
+    "shrinkageWeight": {
+     "featureRate": 0.053,
+     "startRate": 0.0028,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Jack Harrison",
+   "position": "Offence",
+   "espnId": 199850,
+   "footballDataPlayerId": 4220,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ita.1",
+   "sourceTeam": "FIO",
+   "destTeam": "LEE",
+   "sourceFixtures": 38,
+   "sourceAppearances": 15,
+   "sourceStarts": 10,
+   "sourceMinutes": 979,
+   "sourceFeatureRate": 0.3947,
+   "sourceStartRate": 0.2632,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5642,
+    "startRate": 0.3459,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5642,
+    "startRateGivenFeatured": 0.613,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 15,
+    "shrinkageWeight": {
+     "featureRate": 0.0566,
+     "startRate": 0.003,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Evan Ferguson",
+   "position": "Offence",
+   "espnId": 289645,
+   "footballDataPlayerId": 130809,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ita.1",
+   "sourceTeam": "ROM",
+   "destTeam": "BHA",
+   "sourceFixtures": 38,
+   "sourceAppearances": 16,
+   "sourceStarts": 10,
+   "sourceMinutes": 776,
+   "sourceFeatureRate": 0.4211,
+   "sourceStartRate": 0.2632,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5652,
+    "startRate": 0.3459,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5652,
+    "startRateGivenFeatured": 0.612,
+    "minsPerStart": 77.6
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 16,
+    "shrinkageWeight": {
+     "featureRate": 0.0602,
+     "startRate": 0.0032,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Alex Palmer",
+   "position": "Goalkeeper",
+   "espnId": 219390,
+   "footballDataPlayerId": 8011,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 11,
+   "sourceStarts": 11,
+   "sourceMinutes": 834,
+   "sourceFeatureRate": 0.2391,
+   "sourceStartRate": 0.2391,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.3028,
+    "startRate": 0.2354,
+    "minutesRate": 21.0985
+   },
+   "candidateO3": {
+    "featureRate": 0.3001,
+    "startRate": 0.2354,
+    "minutesRate": 21.0985
+   },
+   "productionShape": {
+    "featuredRate": 0.3001,
+    "startRateGivenFeatured": 0.7845,
+    "minsPerStart": 75.8
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 11,
+    "shrinkageWeight": {
+     "featureRate": 0.0421,
+     "startRate": 0.0022,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Luke Woolfenden",
+   "position": "Defence",
+   "espnId": 261083,
+   "footballDataPlayerId": 4235,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "COV",
+   "destTeam": "COV",
+   "sourceFixtures": 46,
+   "sourceAppearances": 17,
+   "sourceStarts": 11,
+   "sourceMinutes": 1072,
+   "sourceFeatureRate": 0.3696,
+   "sourceStartRate": 0.2391,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5337,
+    "startRate": 0.4172,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5337,
+    "startRateGivenFeatured": 0.7816,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 17,
+    "shrinkageWeight": {
+     "featureRate": 0.0637,
+     "startRate": 0.0034,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Gonzalo García",
+   "position": "Offence",
+   "espnId": 87297,
+   "footballDataPlayerId": 217658,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "esp.1",
+   "sourceTeam": "RMA",
+   "destTeam": "FUL",
+   "sourceFixtures": 38,
+   "sourceAppearances": 30,
+   "sourceStarts": 9,
+   "sourceMinutes": 952,
+   "sourceFeatureRate": 0.7895,
+   "sourceStartRate": 0.2368,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5974,
+    "startRate": 0.3455,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5974,
+    "startRateGivenFeatured": 0.5783,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 30,
+    "shrinkageWeight": {
+     "featureRate": 0.1071,
+     "startRate": 0.006,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Omar Richards",
+   "position": "Defence",
+   "espnId": 243754,
+   "footballDataPlayerId": 4266,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "por.1",
+   "sourceTeam": "RIO",
+   "destTeam": "NFO",
+   "sourceFixtures": 34,
+   "sourceAppearances": 14,
+   "sourceStarts": 8,
+   "sourceMinutes": 702,
+   "sourceFeatureRate": 0.4118,
+   "sourceStartRate": 0.2353,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5378,
+    "startRate": 0.4173,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5378,
+    "startRateGivenFeatured": 0.7758,
+    "minsPerStart": 87.8
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 14,
+    "shrinkageWeight": {
+     "featureRate": 0.053,
+     "startRate": 0.0028,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Luís Semedo",
+   "position": "Offence",
+   "espnId": 364591,
+   "footballDataPlayerId": 211818,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "por.1",
+   "sourceTeam": "MOR",
+   "destTeam": "SUN",
+   "sourceFixtures": 34,
+   "sourceAppearances": 21,
+   "sourceStarts": 8,
+   "sourceMinutes": 989,
+   "sourceFeatureRate": 0.6176,
+   "sourceStartRate": 0.2353,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5777,
+    "startRate": 0.3457,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5777,
+    "startRateGivenFeatured": 0.5983,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 21,
+    "shrinkageWeight": {
+     "featureRate": 0.0775,
+     "startRate": 0.0042,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Min-hyuk Yang",
+   "position": "Offence",
+   "espnId": 371578,
+   "footballDataPlayerId": 254718,
+   "episodeType": "CHAMPIONSHIP_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "COV",
+   "destTeam": "TOT",
+   "sourceFixtures": 46,
+   "sourceAppearances": 19,
+   "sourceStarts": 10,
+   "sourceMinutes": 703,
+   "sourceFeatureRate": 0.413,
+   "sourceStartRate": 0.2174,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.563,
+    "startRate": 0.3457,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.563,
+    "startRateGivenFeatured": 0.614,
+    "minsPerStart": 70.3
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 19,
+    "shrinkageWeight": {
+     "featureRate": 0.0706,
+     "startRate": 0.0038,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Geovany Quenda",
+   "position": "Offence",
+   "espnId": 376274,
+   "footballDataPlayerId": 229421,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "por.1",
+   "sourceTeam": "SPO",
+   "destTeam": "CHE",
+   "sourceFixtures": 34,
+   "sourceAppearances": 20,
+   "sourceStarts": 7,
+   "sourceMinutes": 873,
+   "sourceFeatureRate": 0.5882,
+   "sourceStartRate": 0.2059,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5754,
+    "startRate": 0.3456,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5754,
+    "startRateGivenFeatured": 0.6006,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 20,
+    "shrinkageWeight": {
+     "featureRate": 0.0741,
+     "startRate": 0.004,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Ben Johnson",
+   "position": "Defence",
+   "espnId": 9426,
+   "footballDataPlayerId": 8224,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 17,
+   "sourceStarts": 9,
+   "sourceMinutes": 843,
+   "sourceFeatureRate": 0.3696,
+   "sourceStartRate": 0.1957,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5337,
+    "startRate": 0.417,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5337,
+    "startRateGivenFeatured": 0.7813,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 17,
+    "shrinkageWeight": {
+     "featureRate": 0.0637,
+     "startRate": 0.0034,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Wes Burns",
+   "position": "Midfield",
+   "espnId": 181516,
+   "footballDataPlayerId": 5332,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 18,
+   "sourceStarts": 9,
+   "sourceMinutes": 798,
+   "sourceFeatureRate": 0.3913,
+   "sourceStartRate": 0.1957,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.586,
+    "startRate": 0.4268,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.586,
+    "startRateGivenFeatured": 0.7283,
+    "minsPerStart": 88.7
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 18,
+    "shrinkageWeight": {
+     "featureRate": 0.0672,
+     "startRate": 0.0036,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Isaac Schmidt",
+   "position": "Defence",
+   "espnId": 307242,
+   "footballDataPlayerId": 122231,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ger.1",
+   "sourceTeam": "SVW",
+   "destTeam": "LEE",
+   "sourceFixtures": 34,
+   "sourceAppearances": 19,
+   "sourceStarts": 6,
+   "sourceMinutes": 677,
+   "sourceFeatureRate": 0.5588,
+   "sourceStartRate": 0.1765,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5459,
+    "startRate": 0.4169,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5459,
+    "startRateGivenFeatured": 0.7637,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 19,
+    "shrinkageWeight": {
+     "featureRate": 0.0706,
+     "startRate": 0.0038,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Jesurun Rak-Sakyi",
+   "position": "Offence",
+   "espnId": 317718,
+   "footballDataPlayerId": 179712,
+   "episodeType": "CHAMPIONSHIP_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "STK",
+   "destTeam": "CRY",
+   "sourceFixtures": 46,
+   "sourceAppearances": 15,
+   "sourceStarts": 8,
+   "sourceMinutes": 801,
+   "sourceFeatureRate": 0.3261,
+   "sourceStartRate": 0.1739,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5603,
+    "startRate": 0.3456,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5603,
+    "startRateGivenFeatured": 0.6168,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 15,
+    "shrinkageWeight": {
+     "featureRate": 0.0566,
+     "startRate": 0.003,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Kostas Tsimikas",
+   "position": "Defence",
+   "espnId": 226177,
+   "footballDataPlayerId": 7383,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ita.1",
+   "sourceTeam": "ROM",
+   "destTeam": "LIV",
+   "sourceFixtures": 38,
+   "sourceAppearances": 18,
+   "sourceStarts": 6,
+   "sourceMinutes": 637,
+   "sourceFeatureRate": 0.4737,
+   "sourceStartRate": 0.1579,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5401,
+    "startRate": 0.4168,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5401,
+    "startRateGivenFeatured": 0.7718,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 18,
+    "shrinkageWeight": {
+     "featureRate": 0.0672,
+     "startRate": 0.0036,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Chuba Akpom",
+   "position": "Offence",
+   "espnId": 181092,
+   "footballDataPlayerId": 9053,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "IPS",
+   "destTeam": "IPS",
+   "sourceFixtures": 46,
+   "sourceAppearances": 29,
+   "sourceStarts": 7,
+   "sourceMinutes": 886,
+   "sourceFeatureRate": 0.6304,
+   "sourceStartRate": 0.1522,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5802,
+    "startRate": 0.345,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5802,
+    "startRateGivenFeatured": 0.5946,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 29,
+    "shrinkageWeight": {
+     "featureRate": 0.1039,
+     "startRate": 0.0058,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Claudio Echeverri",
+   "position": "Midfield",
+   "espnId": 361355,
+   "footballDataPlayerId": 206908,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "esp.1",
+   "sourceTeam": "GIR",
+   "destTeam": "MCI",
+   "sourceFixtures": 38,
+   "sourceAppearances": 17,
+   "sourceStarts": 5,
+   "sourceMinutes": 618,
+   "sourceFeatureRate": 0.4474,
+   "sourceStartRate": 0.1316,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.5903,
+    "startRate": 0.4266,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.5903,
+    "startRateGivenFeatured": 0.7227,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 17,
+    "shrinkageWeight": {
+     "featureRate": 0.0637,
+     "startRate": 0.0034,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Emanuel Emegha",
+   "position": "Offence",
+   "espnId": 304871,
+   "footballDataPlayerId": 150599,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "fra.1",
+   "sourceTeam": "RC ",
+   "destTeam": "CHE",
+   "sourceFixtures": 34,
+   "sourceAppearances": 10,
+   "sourceStarts": 4,
+   "sourceMinutes": 440,
+   "sourceFeatureRate": 0.2941,
+   "sourceStartRate": 0.1176,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5636,
+    "startRate": 0.3457,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5636,
+    "startRateGivenFeatured": 0.6133,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 10,
+    "shrinkageWeight": {
+     "featureRate": 0.0385,
+     "startRate": 0.002,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Kaine Kesler",
+   "position": "Defence",
+   "espnId": 294308,
+   "footballDataPlayerId": 171509,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "COV",
+   "destTeam": "COV",
+   "sourceFixtures": 46,
+   "sourceAppearances": 22,
+   "sourceStarts": 5,
+   "sourceMinutes": 585,
+   "sourceFeatureRate": 0.4783,
+   "sourceStartRate": 0.1087,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5395,
+    "startRate": 0.4164,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5395,
+    "startRateGivenFeatured": 0.7719,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 22,
+    "shrinkageWeight": {
+     "featureRate": 0.0809,
+     "startRate": 0.0044,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Chiedozie Ogbene",
+   "position": "Offence",
+   "espnId": 238192,
+   "footballDataPlayerId": 4440,
+   "episodeType": "CHAMPIONSHIP_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "SHW",
+   "destTeam": "IPS",
+   "sourceFixtures": 92,
+   "sourceAppearances": 15,
+   "sourceStarts": 10,
+   "sourceMinutes": 867,
+   "sourceFeatureRate": 0.163,
+   "sourceStartRate": 0.1087,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5511,
+    "startRate": 0.3454,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5511,
+    "startRateGivenFeatured": 0.6268,
+    "minsPerStart": 86.7
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 15,
+    "shrinkageWeight": {
+     "featureRate": 0.0566,
+     "startRate": 0.003,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Ethan Nwaneri",
+   "position": "Midfield",
+   "espnId": 349733,
+   "footballDataPlayerId": 188476,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "fra.1",
+   "sourceTeam": "MAR",
+   "destTeam": "ARS",
+   "sourceFixtures": 34,
+   "sourceAppearances": 9,
+   "sourceStarts": 3,
+   "sourceMinutes": 322,
+   "sourceFeatureRate": 0.2647,
+   "sourceStartRate": 0.0882,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.5884,
+    "startRate": 0.427,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.5884,
+    "startRateGivenFeatured": 0.7258,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 9,
+    "shrinkageWeight": {
+     "featureRate": 0.0347,
+     "startRate": 0.0018,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Kosta Nedeljković",
+   "position": "Defence",
+   "espnId": 365367,
+   "footballDataPlayerId": 217929,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ger.1",
+   "sourceTeam": "RBL",
+   "destTeam": "AVL",
+   "sourceFixtures": 34,
+   "sourceAppearances": 5,
+   "sourceStarts": 3,
+   "sourceMinutes": 252,
+   "sourceFeatureRate": 0.1471,
+   "sourceStartRate": 0.0882,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5371,
+    "startRate": 0.4174,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5371,
+    "startRateGivenFeatured": 0.7772,
+    "minsPerStart": 84
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 5,
+    "shrinkageWeight": {
+     "featureRate": 0.0196,
+     "startRate": 0.001,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Arthur Masuaku",
+   "position": "Defence",
+   "espnId": 165892,
+   "footballDataPlayerId": 8204,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "fra.1",
+   "sourceTeam": "RCL",
+   "destTeam": "SUN",
+   "sourceFixtures": 34,
+   "sourceAppearances": 4,
+   "sourceStarts": 3,
+   "sourceMinutes": 229,
+   "sourceFeatureRate": 0.1176,
+   "sourceStartRate": 0.0882,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5382,
+    "startRate": 0.4175,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5382,
+    "startRateGivenFeatured": 0.7758,
+    "minsPerStart": 76.3
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 4,
+    "shrinkageWeight": {
+     "featureRate": 0.0157,
+     "startRate": 0.0008,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Kota Takai",
+   "position": "Defence",
+   "espnId": 328492,
+   "footballDataPlayerId": 181193,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ger.1",
+   "sourceTeam": "BMG",
+   "destTeam": "TOT",
+   "sourceFixtures": 34,
+   "sourceAppearances": 8,
+   "sourceStarts": 3,
+   "sourceMinutes": 339,
+   "sourceFeatureRate": 0.2353,
+   "sourceStartRate": 0.0882,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5353,
+    "startRate": 0.4172,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5353,
+    "startRateGivenFeatured": 0.7795,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 8,
+    "shrinkageWeight": {
+     "featureRate": 0.031,
+     "startRate": 0.0016,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Toby Collyer",
+   "position": "Midfield",
+   "espnId": 308778,
+   "footballDataPlayerId": 248734,
+   "episodeType": "CHAMPIONSHIP_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.2",
+   "sourceTeam": "HUL",
+   "destTeam": "MUN",
+   "sourceFixtures": 49,
+   "sourceAppearances": 17,
+   "sourceStarts": 4,
+   "sourceMinutes": 357,
+   "sourceFeatureRate": 0.3469,
+   "sourceStartRate": 0.0816,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.5839,
+    "startRate": 0.4265,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.5839,
+    "startRateGivenFeatured": 0.7304,
+    "minsPerStart": 89.3
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 17,
+    "shrinkageWeight": {
+     "featureRate": 0.0637,
+     "startRate": 0.0034,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Takehiro Tomiyasu",
+   "position": "Defence",
+   "espnId": 238004,
+   "footballDataPlayerId": 9034,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ned.1",
+   "sourceTeam": "AJA",
+   "destTeam": "CRY",
+   "sourceFixtures": 34,
+   "sourceAppearances": 9,
+   "sourceStarts": 2,
+   "sourceMinutes": 236,
+   "sourceFeatureRate": 0.2647,
+   "sourceStartRate": 0.0588,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5351,
+    "startRate": 0.4171,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5351,
+    "startRateGivenFeatured": 0.7795,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 9,
+    "shrinkageWeight": {
+     "featureRate": 0.0347,
+     "startRate": 0.0018,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Steven Benda",
+   "position": "Goalkeeper",
+   "espnId": 266846,
+   "footballDataPlayerId": 81055,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "ned.1",
+   "sourceTeam": "FEY",
+   "destTeam": "NFO",
+   "sourceFixtures": 34,
+   "sourceAppearances": 1,
+   "sourceStarts": 1,
+   "sourceMinutes": 90,
+   "sourceFeatureRate": 0.0294,
+   "sourceStartRate": 0.0294,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.3028,
+    "startRate": 0.2354,
+    "minutesRate": 21.0985
+   },
+   "candidateO3": {
+    "featureRate": 0.3017,
+    "startRate": 0.2354,
+    "minutesRate": 21.0985
+   },
+   "productionShape": {
+    "featuredRate": 0.3017,
+    "startRateGivenFeatured": 0.7802,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 1,
+    "shrinkageWeight": {
+     "featureRate": 0.004,
+     "startRate": 0.0002,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Harvey Elliott",
+   "position": "Midfield",
+   "espnId": 280806,
+   "footballDataPlayerId": 124824,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "AVL",
+   "destTeam": "LIV",
+   "sourceFixtures": 38,
+   "sourceAppearances": 5,
+   "sourceStarts": 1,
+   "sourceMinutes": 110,
+   "sourceFeatureRate": 0.1316,
+   "sourceStartRate": 0.0263,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.5908,
+    "startRate": 0.4272,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.5908,
+    "startRateGivenFeatured": 0.7231,
+    "minsPerStart": 90
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 5,
+    "shrinkageWeight": {
+     "featureRate": 0.0196,
+     "startRate": 0.001,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Reiss Nelson",
+   "position": "Offence",
+   "espnId": 227794,
+   "footballDataPlayerId": 7799,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "BRE",
+   "destTeam": "ARS",
+   "sourceFixtures": 38,
+   "sourceAppearances": 10,
+   "sourceStarts": 0,
+   "sourceMinutes": 118,
+   "sourceFeatureRate": 0.2632,
+   "sourceStartRate": 0,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5744,
+    "startRate": 0.3461,
+    "minutesRate": 31.8566
+   },
+   "candidateO3": {
+    "featureRate": 0.5624,
+    "startRate": 0.3454,
+    "minutesRate": 31.8566
+   },
+   "productionShape": {
+    "featuredRate": 0.5624,
+    "startRateGivenFeatured": 0.6142,
+    "minsPerStart": null
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 10,
+    "shrinkageWeight": {
+     "featureRate": 0.0385,
+     "startRate": 0.002,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Aaron Anselmino",
+   "position": "Defence",
+   "espnId": 363218,
+   "footballDataPlayerId": 209148,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "fra.1",
+   "sourceTeam": "RC ",
+   "destTeam": "CHE",
+   "sourceFixtures": 34,
+   "sourceAppearances": 3,
+   "sourceStarts": 0,
+   "sourceMinutes": 15,
+   "sourceFeatureRate": 0.0882,
+   "sourceStartRate": 0,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.5449,
+    "startRate": 0.4178,
+    "minutesRate": 37.8804
+   },
+   "candidateO3": {
+    "featureRate": 0.5395,
+    "startRate": 0.4175,
+    "minutesRate": 37.8804
+   },
+   "productionShape": {
+    "featuredRate": 0.5395,
+    "startRateGivenFeatured": 0.7739,
+    "minsPerStart": null
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 3,
+    "shrinkageWeight": {
+     "featureRate": 0.0119,
+     "startRate": 0.0006,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "Illan Meslier",
+   "position": "Goalkeeper",
+   "espnId": 265921,
+   "footballDataPlayerId": 74831,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "sourceCompetition": "eng.1",
+   "sourceTeam": "LEE",
+   "destTeam": "ARS",
+   "sourceFixtures": 38,
+   "sourceAppearances": 0,
+   "sourceStarts": 0,
+   "sourceMinutes": 0,
+   "sourceFeatureRate": 0,
+   "sourceStartRate": 0,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.3028,
+    "startRate": 0.2354,
+    "minutesRate": 21.0985
+   },
+   "candidateO3": {
+    "featureRate": 0.3028,
+    "startRate": 0.2354,
+    "minutesRate": 21.0985
+   },
+   "productionShape": {
+    "featuredRate": 0.3028,
+    "startRateGivenFeatured": 0.7775,
+    "minsPerStart": null
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 0,
+    "shrinkageWeight": {
+     "featureRate": 0,
+     "startRate": 0,
+     "minutesRate": 0
+    }
+   }
+  },
+  {
+   "name": "César Palacios",
+   "position": "Midfield",
+   "espnId": 12172,
+   "footballDataPlayerId": 290848,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "sourceCompetition": "esp.1",
+   "sourceTeam": "RMA",
+   "destTeam": "FUL",
+   "sourceFixtures": 38,
+   "sourceAppearances": 5,
+   "sourceStarts": 0,
+   "sourceMinutes": 81,
+   "sourceFeatureRate": 0.1316,
+   "sourceStartRate": 0,
+   "baselineO0b": {
+    "featureRate": 0.5174,
+    "startRate": 0.3625,
+    "minutesRate": 32.6582
+   },
+   "baselineO0c": {
+    "featureRate": 0.6,
+    "startRate": 0.4276,
+    "minutesRate": 37.1843
+   },
+   "candidateO3": {
+    "featureRate": 0.5908,
+    "startRate": 0.4272,
+    "minutesRate": 37.1843
+   },
+   "productionShape": {
+    "featuredRate": 0.5908,
+    "startRateGivenFeatured": 0.723,
+    "minsPerStart": null
+   },
+   "evidenceStrength": {
+    "sourceAppearances": 5,
+    "shrinkageWeight": {
+     "featureRate": 0.0196,
+     "startRate": 0.001,
+     "minutesRate": 0
+    }
+   }
+  }
+ ]
+}

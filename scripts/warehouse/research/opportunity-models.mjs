@@ -75,6 +75,7 @@ function incumbent(e) {
 /** Evidence-weighted shrink of a source rate toward a prior level. */
 const shrink = (rate, appearances, prior, k) => {
   if (rate == null) return prior;
+  if (!Number.isFinite(k)) return prior;          // k = Infinity: the prior itself
   const w = appearances / (appearances + k);
   return w * rate + (1 - w) * prior;
 };
@@ -112,13 +113,19 @@ function fit(trainSet, opts = {}) {
   /* Shrinkage strength, swept on TRAINING only. */
   for (const t of TARGETS) {
     const srcKey = t === 'minutesRate' ? 'srcMinutesRate' : t === 'startRate' ? 'srcStartRate' : 'srcFeatureRate';
-    let best = { k: 10, mae: Infinity };
-    for (const k of [1, 2, 3, 5, 8, 12, 20, 30, 50, 75, 100, 150, 250, 500]) {
+    /* k = Infinity is the no-player-evidence prior. Including it makes the
+       question explicit: does loss keep improving toward total shrinkage, or is
+       there a finite optimum? If the answer is Infinity, source evidence
+       contributes no useful LEVEL information under this target. */
+    let best = { k: 10, mae: Infinity }; const curve = [];
+    for (const k of [1, 2, 3, 5, 8, 12, 20, 30, 50, 75, 100, 150, 250, 500, 1000, 5000, Infinity]) {
       const errs = trainSet.map((e) => Math.abs(shrink(e[srcKey], e.srcAppearances ?? 0, params.global[t], k) - e[t]));
       const mae = errs.reduce((a, b) => a + b, 0) / (errs.length || 1);
+      curve.push({ k: k === Infinity ? 'Inf' : k, mae: +mae.toFixed(5) });
       if (mae < best.mae) best = { k, mae };
     }
     params.k[t] = best.k;
+    (params.curve ??= {})[t] = curve;
   }
   return params;
 }
@@ -135,6 +142,14 @@ const CANDIDATES = {
    * the first as the second would be the central error available here. */
   O0b: { label: 'generic new-player prior (training mean, NO source evidence)',
     predict: (e, p) => ({ featureRate: p.global.featureRate, startRate: p.global.startRate, minutesRate: p.global.minutesRate }) },
+  /* Position means only — no player source evidence at all. This separates
+     "position fixed the level" from "source role adds information", which is
+     the distinction O3 alone cannot settle. */
+  O0c: { label: 'position means only (NO source evidence)',
+    predict: (e, p) => {
+      const lvl = p.byPosition[e.position] ?? p.global;
+      return Object.fromEntries(TARGETS.map((t) => [t, lvl[t] ?? p.global[t]]));
+    } },
   O1: {
     label: 'source feature rate, shrunk',
     predict: (e, p) => {
@@ -187,6 +202,14 @@ const CANDIDATES = {
  * ------------------------------------------------------------------ */
 function spearman(pairs) {
   const n = pairs.length; if (n < 4) return null;
+  /* A constant predictor has no ranking to correlate. The first version of this
+     returned a small arbitrary number (-0.015 for O0b) because the rank helper
+     assigns distinct ranks to tied values by sort order, so the "correlation"
+     was measuring the tie-break, not the model. Zero variance on either axis is
+     UNDEFINED and must say so. */
+  const varOf = (v) => { const m = v.reduce((a, b) => a + b, 0) / v.length;
+    return v.reduce((a, b) => a + (b - m) ** 2, 0); };
+  if (varOf(pairs.map((p) => p[0])) < 1e-12 || varOf(pairs.map((p) => p[1])) < 1e-12) return null;
   const rank = (vals) => {
     const idx = vals.map((v, i) => [v, i]).sort((a, b) => a[0] - b[0]);
     const r = new Array(n);
@@ -270,6 +293,17 @@ for (const t of TARGETS) {
     results.targets[t].scores[name] = score(test, preds[name], t);
     if (name !== 'O0') results.targets[t].vsControl[name] = bootstrapDelta(test, preds[name], preds.O0, t);
   }
+  /* The comparison that actually answers the question. Beating the incumbent
+     is mostly level correction; the scientific question is whether source
+     evidence adds anything over a correctly-levelled baseline carrying no
+     player information at all. */
+  results.targets[t].vsNoEvidence = {};
+  for (const base of ['O0b', 'O0c']) {
+    for (const cand of ['O1', 'O3']) {
+      results.targets[t].vsNoEvidence[`${cand} vs ${base}`] = bootstrapDelta(test, preds[cand], preds[base], t);
+    }
+  }
+
   if (t !== 'minutesRate') {
     const kKey = t === 'startRate' ? 'destStarts' : 'destAppearances';
     for (const [name] of Object.entries(CANDIDATES)) {
@@ -279,7 +313,38 @@ for (const t of TARGETS) {
   }
 }
 
+/* ---- item 10: does shrinkage preserve ranking with THIS formula? ---- */
+results.shrinkageRanking = {};
+for (const t of TARGETS) {
+  const srcKey = t === 'minutesRate' ? 'srcMinutesRate' : t === 'startRate' ? 'srcStartRate' : 'srcFeatureRate';
+  const rows = test.filter((e) => e[srcKey] != null && Number.isFinite(e[t]));
+  const rawRho = spearman(rows.map((e) => [e[srcKey], e[t]]));
+  const ks = [1, 10, 50, 250, 1000];
+  const shrunkRho = {}; const orderChanged = {};
+  const byRaw = [...rows].sort((a, b) => a[srcKey] - b[srcKey]).map((e) => e.espnId);
+  for (const k of ks) {
+    const f = (e) => shrink(e[srcKey], e.srcAppearances ?? 0, params.global[t], k);
+    shrunkRho[k] = spearman(rows.map((e) => [f(e), e[t]]));
+    const byShrunk = [...rows].sort((a, b) => f(a) - f(b)).map((e) => e.espnId);
+    orderChanged[k] = byRaw.some((id, i) => id !== byShrunk[i]);
+  }
+  results.shrinkageRanking[t] = { n: rows.length, rawRho, shrunkRho, orderChanged };
+}
+
 fs.writeFileSync(OUT, JSON.stringify(results, null, 1));
+
+console.log('\n── item 10: does shrinkage preserve ranking? ──');
+console.log('  w = appearances / (appearances + k) varies BY PLAYER, so the transform is NOT');
+console.log('  common across players and rank order is not guaranteed to survive.');
+for (const [t, r] of Object.entries(results.shrinkageRanking)) {
+  console.log('  ' + t.padEnd(12) + 'n=' + String(r.n).padStart(4) + '  raw rho ' + String(r.rawRho).padStart(7)
+    + '   shrunk ' + Object.entries(r.shrunkRho).map(([k, v]) => 'k' + k + '=' + v).join(' '));
+  console.log(' '.repeat(14) + 'order changed: ' + Object.entries(r.orderChanged).map(([k, v]) => 'k' + k + ':' + (v ? 'YES' : 'no')).join('  '));
+}
+console.log('\n── shrinkage curve (MAE by k, fitted on TRAINING only) ──');
+for (const [t, curve] of Object.entries(params.curve || {})) {
+  console.log('  ' + t.padEnd(12) + curve.map((c) => c.k + '=' + c.mae).join('  '));
+}
 
 /* ---- console ------------------------------------------------------ */
 console.log('OPPORTUNITY TRANSLATION — chronological, frozen before scoring\n');
@@ -300,7 +365,17 @@ for (const t of TARGETS) {
       + String(d ?? '-').padStart(7)
       + (name === 'O0' ? '   <= control' : ''));
   }
-  console.log('  bootstrap vs control (positive dMAE = candidate better):');
+  console.log('  vs NO-PLAYER-EVIDENCE baselines (positive dMAE = source evidence better):');
+  for (const [name, b] of Object.entries(results.targets[t].vsNoEvidence)) {
+    if (!b) continue;
+    const [ca, , cb] = name.split(' ');
+    const rhoA = results.targets[t].scores[ca]?.spearman;
+    const rhoB = results.targets[t].scores[cb]?.spearman;
+    console.log('    ' + name.padEnd(14) + 'dMAE ' + String(b.deltaMAE).padStart(8)
+      + '  95% [' + b.ci95[0] + ', ' + b.ci95[1] + ']  P ' + String(b.pBetter).padStart(5)
+      + '   rho ' + String(rhoB ?? 'NA').padStart(6) + ' -> ' + String(rhoA ?? 'NA'));
+  }
+  console.log('  bootstrap vs incumbent (positive dMAE = candidate better):');
   for (const [name, b] of Object.entries(results.targets[t].vsControl)) {
     if (!b) continue;
     console.log('    ' + name.padEnd(5) + 'dMAE ' + String(b.deltaMAE).padStart(8)
