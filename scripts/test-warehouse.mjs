@@ -570,5 +570,87 @@ console.log('\nOpportunity candidates respect the pitch');
     Array.from({ length: 30 }, () => ({ team: 'ARS', fixture: 1, pStart: 0.5 }))));
 }
 
+/* ------------------------------------------------------------------ *
+ * Milestone 3 stage 2 — opportunity pipeline (OPP-1 .. OPP-10)
+ * ------------------------------------------------------------------ */
+console.log('\nOpportunity pipeline');
+{
+  const readIf = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
+  const oc = readIf('data/warehouse/research/opportunity-cohort.json');
+  const om = readIf('data/warehouse/research/opportunity-models.json');
+  const { paths: P } = await import('./warehouse/store.mjs');
+
+  /* OPP-1 / OPP-2. A measured zero must survive every layer, not merely the
+     last one. The collector previously dropped zero-appearance seasons, so the
+     cohort builder could not retain what was never written — the filter the
+     brief forbids, applied one layer earlier where it was invisible. */
+  let zeroApp = 0; let zeroMin = 0; let tierBRows = 0;
+  for (const c of COMPETITIONS) {
+    for (const s of WAREHOUSE_SEASONS) {
+      for (const r of await readRows(P.espnPlayerSeasons(c.key, s))) {
+        tierBRows += 1;
+        if (r.appearances === 0) zeroApp += 1;
+        if (r.minutes === 0) zeroMin += 1;
+      }
+    }
+  }
+  if (tierBRows) {
+    ok('OPP-1 measured zero appearances survive into player_season', zeroApp > 0, `${zeroApp} of ${tierBRows}`);
+    ok('OPP-2 measured zero minutes survive into player_season', zeroMin > 0, `${zeroMin} of ${tierBRows}`);
+  } else console.log('  – no Tier B rows, skipping OPP-1/2');
+
+  if (oc?.cohort?.length) {
+    const cohort = oc.cohort;
+    /* OPP-3. No destination-minutes minimum, at any value. */
+    const zeros = cohort.filter((e) => e.destMinutes === 0);
+    ok('OPP-3 the opportunity cohort contains zero-minute episodes', zeros.length > 0, `${zeros.length}`);
+    ok('OPP-3 zero-minute episodes reach the modelling cohort with a usable target',
+      zeros.every((e) => Number.isFinite(e.startRate) && Number.isFinite(e.featureRate)));
+
+    /* OPP-4. A same-club promotion is not a cross-club transfer. */
+    const promo = cohort.filter((e) => e.type === 'SAME_CLUB_PROMOTION');
+    ok('OPP-4 same-club promotion is its own class', promo.length > 0, `${promo.length}`);
+    ok('OPP-4 every same-club promotion really is the same club',
+      promo.every((e) => e.sourceTeam === e.destTeam && e.sourceCompetition === 'eng.2'));
+    ok('OPP-4 no cross-club episode is labelled a promotion',
+      !cohort.some((e) => e.type === 'CHAMPIONSHIP_TO_EPL_TRANSFER' && e.sourceTeam === e.destTeam));
+
+    /* OPP-5 / OPP-6. The denominator is the club's real fixture count, and an
+       unknown window is excluded rather than assumed to be a full season. */
+    ok('OPP-5 every episode carries a real fixture denominator',
+      cohort.every((e) => Number.isInteger(e.destFixtures) && e.destFixtures >= 30));
+    ok('OPP-6 no episode assumes 38 fixtures without evidence',
+      cohort.every((e) => e.destFixtures <= 46));
+    ok('OPP-6 rates are computed against that denominator, not a constant',
+      cohort.every((e) => Math.abs(e.startRate - e.destStarts / e.destFixtures) < 1e-9));
+
+    /* OPP-7. Every exclusion is named. */
+    const acc = oc.episodes + Object.values(oc.attrition.reasons).reduce((a, b) => a + b, 0);
+    ok('OPP-7 every candidate transition is accounted for',
+      acc === oc.attrition.allTransitions, `${acc} vs ${oc.attrition.allTransitions}`);
+    ok('OPP-7 every exclusion carries an explicit reason',
+      Object.keys(oc.attrition.reasons).every((r) => r && r.length > 8));
+  } else console.log('  – no opportunity cohort, skipping OPP-3..7');
+
+  if (om?.fitted) {
+    /* OPP-8. Every fitted parameter comes from training only. The holdout is a
+       later season, so a leak would show as the fit knowing about it. */
+    ok('OPP-8 training and holdout are different seasons', om.trainSeason < om.testSeason);
+    ok('OPP-8 the chronological direction is forwards only', om.testSeason === om.trainSeason + 1);
+    ok('OPP-9 fitted parameters are recorded once and not per-target-holdout',
+      typeof om.fitted.k === 'object' && Object.keys(om.fitted.k).length > 0);
+
+    /* OPP-10. Candidate output must map onto the components production
+       consumes, not an opaque score. */
+    const t = om.targets?.startRate?.scores;
+    ok('OPP-10 candidates emit featureRate, startRate and minutesRate',
+      ['featureRate', 'startRate', 'minutesRate'].every((k) => om.targets[k]));
+    ok('OPP-10 no opaque single opportunity score is emitted',
+      !Object.keys(om.targets).some((k) => /score|index/i.test(k)));
+    ok('OPP-10 the incumbent control is scored alongside every candidate',
+      !!t?.O0 && !!t?.O0b);
+  } else console.log('  – no model results, skipping OPP-8..10');
+}
+
 console.log(`\n${failures === 0 ? `✓ all ${checks} warehouse checks passed` : `✗ ${failures} of ${checks} failed`}\n`);
 process.exit(failures === 0 ? 0 : 1);

@@ -1,12 +1,12 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-29T00:10:45.573Z",
-  "coverageDigest": "36c2635718f6d2ea",
+  "generatedAt": "2026-08-29T00:27:18.556Z",
+  "coverageDigest": "6029f0bf5926d057",
   "entities": {
    "structural_match": 12182,
    "team_match": 1716,
-   "player_season": 24663,
+   "player_season": 24919,
    "teams": 222,
    "players": 543,
    "transfers": 2566
@@ -20,7 +20,7 @@
    "espn": {
     "minSeason": 2021,
     "competitionSeasons": 40,
-    "rows": 25521
+    "rows": 25777
    }
   },
   "seasonWindows": {
@@ -47,13 +47,13 @@
     2026
    ]
   },
-  "files": 181
+  "files": 183
  },
- "builtAt": "2026-08-29T00:10:45.574Z",
+ "builtAt": "2026-08-29T00:27:18.557Z",
  "footprint": {
-  "files": 181,
-  "bytes": 3242725,
-  "mb": 3.24
+  "files": 183,
+  "bytes": 3436628,
+  "mb": 3.44
  },
  "competitions": [
   {
@@ -184,9 +184,9 @@
    "joinRatePct": 100,
    "teams": 20,
    "fdSquadPlayers": 657,
-   "playerSeasonRows": 990,
+   "playerSeasonRows": 1010,
    "playerSeasonTierA": 611,
-   "playerSeasonTierB": 379,
+   "playerSeasonTierB": 399,
    "cov": {
     "startingLineup": 100,
     "formation": 100,
@@ -196,11 +196,11 @@
     "corners": 100,
     "passAccuracy": 100,
     "saves": 100,
-    "playerMinutes": 38.3,
-    "playerStarts": 38.3,
-    "playerAppearances": 87.1,
-    "playerPosition": 100,
-    "playerDateOfBirth": 100,
+    "playerMinutes": 39.5,
+    "playerStarts": 39.5,
+    "playerAppearances": 87.3,
+    "playerPosition": 98,
+    "playerDateOfBirth": 98,
     "manager": 0,
     "xg": 0,
     "xa": 0
@@ -222,9 +222,9 @@
    "joinRatePct": 100,
    "teams": 20,
    "fdSquadPlayers": 661,
-   "playerSeasonRows": 1045,
+   "playerSeasonRows": 1061,
    "playerSeasonTierA": 628,
-   "playerSeasonTierB": 417,
+   "playerSeasonTierB": 433,
    "cov": {
     "startingLineup": 100,
     "formation": 100,
@@ -234,11 +234,11 @@
     "corners": 100,
     "passAccuracy": 100,
     "saves": 100,
-    "playerMinutes": 39.9,
-    "playerStarts": 39.9,
-    "playerAppearances": 88.7,
-    "playerPosition": 100,
-    "playerDateOfBirth": 100,
+    "playerMinutes": 40.8,
+    "playerStarts": 40.8,
+    "playerAppearances": 88.9,
+    "playerPosition": 98.5,
+    "playerDateOfBirth": 98.5,
     "manager": 0,
     "xg": 0,
     "xa": 0
@@ -374,9 +374,9 @@
    "joinRatePct": 100,
    "teams": 24,
    "fdSquadPlayers": 767,
-   "playerSeasonRows": 1027,
+   "playerSeasonRows": 1115,
    "playerSeasonTierA": 675,
-   "playerSeasonTierB": 352,
+   "playerSeasonTierB": 440,
    "cov": {
     "startingLineup": 100,
     "formation": 100,
@@ -386,11 +386,11 @@
     "corners": 100,
     "passAccuracy": 100,
     "saves": 100,
-    "playerMinutes": 34.3,
-    "playerStarts": 34.3,
-    "playerAppearances": 75.7,
-    "playerPosition": 100,
-    "playerDateOfBirth": 99.8,
+    "playerMinutes": 39.5,
+    "playerStarts": 39.5,
+    "playerAppearances": 77.6,
+    "playerPosition": 98.7,
+    "playerDateOfBirth": 98.5,
     "manager": 0,
     "xg": 0,
     "xa": 0
@@ -412,9 +412,9 @@
    "joinRatePct": 0,
    "teams": 24,
    "fdSquadPlayers": 827,
-   "playerSeasonRows": 986,
+   "playerSeasonRows": 1118,
    "playerSeasonTierA": 563,
-   "playerSeasonTierB": 423,
+   "playerSeasonTierB": 555,
    "cov": {
     "startingLineup": 0,
     "formation": 0,
@@ -424,11 +424,11 @@
     "corners": 0,
     "passAccuracy": 0,
     "saves": 0,
-    "playerMinutes": 42.9,
-    "playerStarts": 42.9,
-    "playerAppearances": 96.6,
-    "playerPosition": 100,
-    "playerDateOfBirth": 99.2,
+    "playerMinutes": 49.6,
+    "playerStarts": 49.6,
+    "playerAppearances": 97,
+    "playerPosition": 97.7,
+    "playerDateOfBirth": 96.4,
     "manager": 0,
     "xg": 0,
     "xa": 0
@@ -2006,7 +2006,7 @@
   "unmappedDeparted": 45,
   "historyByCompetition": {
    "eng.1": 448,
-   "eng.2": 74,
+   "eng.2": 94,
    "esp.1": 36,
    "ger.1": 53,
    "ita.1": 33,

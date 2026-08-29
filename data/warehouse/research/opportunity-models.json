@@ -1,0 +1,489 @@
+{
+ "trainSeason": 2024,
+ "testSeason": 2025,
+ "trainN": 89,
+ "testN": 136,
+ "fitted": {
+  "global": {
+   "featureRate": 0.5174452986398582,
+   "startRate": 0.3625073920756949,
+   "minutesRate": 32.658190419869904
+  },
+  "byPosition": {
+   "Midfield": {
+    "featureRate": 0.6000284731804544,
+    "n": 17,
+    "startRate": 0.4276343167531813,
+    "minutesRate": 37.184320038548314
+   },
+   "Offence": {
+    "featureRate": 0.5743881268957098,
+    "n": 21,
+    "startRate": 0.3461399057629576,
+    "minutesRate": 31.856631884168564
+   },
+   "Defence": {
+    "featureRate": 0.5448804595759061,
+    "n": 32,
+    "startRate": 0.4177649179127595,
+    "minutesRate": 37.880396215257235
+   },
+   "Right Winger": {
+    "featureRate": 0.5110746734046558,
+    "n": 1,
+    "startRate": 0.3462985860975216,
+    "minutesRate": 30.895005644857804
+   },
+   "Goalkeeper": {
+    "featureRate": 0.3027794204612656,
+    "n": 13,
+    "startRate": 0.23541511325945547,
+    "minutesRate": 21.09852672717456
+   },
+   "Left-Back": {
+    "featureRate": 0.47997419493575627,
+    "n": 1,
+    "startRate": 0.3319445191118757,
+    "minutesRate": 30.160555884092254
+   },
+   "Left Winger": {
+    "featureRate": 0.5167307313226889,
+    "n": 2,
+    "startRate": 0.35252808988764045,
+    "minutesRate": 31.820421841119657
+   },
+   "Central Midfield": {
+    "featureRate": 0.5408535383402328,
+    "n": 2,
+    "startRate": 0.3613000197122019,
+    "minutesRate": 33.16691306918983
+   }
+  },
+  "byType": {
+   "EPL_TO_EPL_TRANSFER": {
+    "featureRate": 0.4698501872659177,
+    "n": 20,
+    "startRate": 0.3217129903410211,
+    "minutesRate": 28.72202838557067
+   },
+   "FOREIGN_TO_EPL_TRANSFER": {
+    "featureRate": 0.5549055222325476,
+    "n": 32,
+    "startRate": 0.3770381008701529,
+    "minutesRate": 34.29768944833995
+   },
+   "CHAMPIONSHIP_TO_EPL_TRANSFER": {
+    "featureRate": 0.4380544056771142,
+    "n": 8,
+    "startRate": 0.2905742821473159,
+    "minutesRate": 26.114199356068074
+   },
+   "SAME_CLUB_PROMOTION": {
+    "featureRate": 0.5503570941181822,
+    "n": 29,
+    "startRate": 0.41143914236758716,
+    "minutesRate": 36.940696598887016
+   }
+  },
+  "byLeague": {
+   "eng.1": {
+    "featureRate": 0.4698501872659177,
+    "n": 20,
+    "startRate": 0.3217129903410211,
+    "minutesRate": 28.72202838557067
+   },
+   "esp.1": {
+    "featureRate": 0.4672941717589856,
+    "n": 8,
+    "startRate": 0.32712398974965506,
+    "minutesRate": 29.7443163151324
+   },
+   "ger.1": {
+    "featureRate": 0.578433813688568,
+    "n": 9,
+    "startRate": 0.4013196800398394,
+    "minutesRate": 35.99046033178749
+   },
+   "fra.1": {
+    "featureRate": 0.5341124840486788,
+    "n": 9,
+    "startRate": 0.3957795138348533,
+    "minutesRate": 35.288244265305494
+   },
+   "eng.2": {
+    "featureRate": 0.5143500635403954,
+    "n": 37,
+    "startRate": 0.37556148319639654,
+    "minutesRate": 33.70555003334297
+   },
+   "por.1": {
+    "featureRate": 0.5556940103066657,
+    "n": 4,
+    "startRate": 0.34915941539241363,
+    "minutesRate": 32.50397060065895
+   },
+   "ned.1": {
+    "featureRate": 0.5562044155332152,
+    "n": 2,
+    "startRate": 0.3678789670806229,
+    "minutesRate": 33.506825349891585
+   }
+  },
+  "k": {
+   "featureRate": 250,
+   "startRate": 500,
+   "minutesRate": 500
+  }
+ },
+ "targets": {
+  "featureRate": {
+   "scores": {
+    "O0": {
+     "n": 136,
+     "mae": 0.4346,
+     "rmse": 0.5326,
+     "bias": -0.434,
+     "spearman": 0.0688,
+     "calibration": 0.5594
+    },
+    "O0b": {
+     "n": 136,
+     "mae": 0.2725,
+     "rmse": 0.3149,
+     "bias": 0.0336,
+     "spearman": -0.015,
+     "calibration": 1.065
+    },
+    "O1": {
+     "n": 136,
+     "mae": 0.2653,
+     "rmse": 0.3066,
+     "bias": 0.0051,
+     "spearman": 0.2981,
+     "calibration": 1.0094
+    },
+    "O2": {
+     "n": 136,
+     "mae": 0.2653,
+     "rmse": 0.3066,
+     "bias": 0.0051,
+     "spearman": 0.2981,
+     "calibration": 1.0094
+    },
+    "O3": {
+     "n": 136,
+     "mae": 0.2478,
+     "rmse": 0.2907,
+     "bias": -0.0102,
+     "spearman": 0.3476,
+     "calibration": 0.9818
+    },
+    "O4": {
+     "n": 136,
+     "mae": 0.2627,
+     "rmse": 0.3051,
+     "bias": -0.0047,
+     "spearman": 0.2397,
+     "calibration": 0.9916
+    },
+    "O5": {
+     "n": 136,
+     "mae": 0.2652,
+     "rmse": 0.3073,
+     "bias": 0.0076,
+     "spearman": 0.2164,
+     "calibration": 1.014
+    }
+   },
+   "vsControl": {
+    "O0b": {
+     "deltaMAE": 0.1626,
+     "ci95": [
+      0.1036,
+      0.2185
+     ],
+     "pBetter": 1
+    },
+    "O1": {
+     "deltaMAE": 0.1696,
+     "ci95": [
+      0.114,
+      0.22
+     ],
+     "pBetter": 1
+    },
+    "O2": {
+     "deltaMAE": 0.1696,
+     "ci95": [
+      0.114,
+      0.22
+     ],
+     "pBetter": 1
+    },
+    "O3": {
+     "deltaMAE": 0.1869,
+     "ci95": [
+      0.1335,
+      0.2373
+     ],
+     "pBetter": 1
+    },
+    "O4": {
+     "deltaMAE": 0.1721,
+     "ci95": [
+      0.1183,
+      0.2226
+     ],
+     "pBetter": 1
+    },
+    "O5": {
+     "deltaMAE": 0.1697,
+     "ci95": [
+      0.1141,
+      0.2216
+     ],
+     "pBetter": 1
+    }
+   },
+   "deviance": {
+    "O0": 3.9368,
+    "O0b": 1.3804,
+    "O1": 1.3595,
+    "O2": 1.3595,
+    "O3": 1.3206,
+    "O4": 1.3557,
+    "O5": 1.3612
+   }
+  },
+  "startRate": {
+   "scores": {
+    "O0": {
+     "n": 136,
+     "mae": 0.2615,
+     "rmse": 0.3327,
+     "bias": 0.0261,
+     "spearman": 0.2956,
+     "calibration": 1.0719
+    },
+    "O0b": {
+     "n": 136,
+     "mae": 0.2619,
+     "rmse": 0.3098,
+     "bias": 0.0268,
+     "spearman": 0.0243,
+     "calibration": 1.074
+    },
+    "O1": {
+     "n": 136,
+     "mae": 0.2593,
+     "rmse": 0.3046,
+     "bias": 0.0068,
+     "spearman": 0.2823,
+     "calibration": 1.0179
+    },
+    "O2": {
+     "n": 136,
+     "mae": 0.2582,
+     "rmse": 0.3039,
+     "bias": 0.0103,
+     "spearman": 0.2966,
+     "calibration": 1.0272
+    },
+    "O3": {
+     "n": 136,
+     "mae": 0.25,
+     "rmse": 0.2978,
+     "bias": 0.0021,
+     "spearman": 0.3354,
+     "calibration": 1.0053
+    },
+    "O4": {
+     "n": 136,
+     "mae": 0.2568,
+     "rmse": 0.3027,
+     "bias": 0.0035,
+     "spearman": 0.2082,
+     "calibration": 1.009
+    },
+    "O5": {
+     "n": 136,
+     "mae": 0.258,
+     "rmse": 0.3049,
+     "bias": 0.0088,
+     "spearman": 0.1937,
+     "calibration": 1.023
+    }
+   },
+   "vsControl": {
+    "O0b": {
+     "deltaMAE": -0.0006,
+     "ci95": [
+      -0.0383,
+      0.036
+     ],
+     "pBetter": 0.494
+    },
+    "O1": {
+     "deltaMAE": 0.0019,
+     "ci95": [
+      -0.0331,
+      0.0359
+     ],
+     "pBetter": 0.544
+    },
+    "O2": {
+     "deltaMAE": 0.003,
+     "ci95": [
+      -0.0318,
+      0.0364
+     ],
+     "pBetter": 0.571
+    },
+    "O3": {
+     "deltaMAE": 0.0111,
+     "ci95": [
+      -0.0233,
+      0.0449
+     ],
+     "pBetter": 0.726
+    },
+    "O4": {
+     "deltaMAE": 0.0044,
+     "ci95": [
+      -0.0306,
+      0.0384
+     ],
+     "pBetter": 0.599
+    },
+    "O5": {
+     "deltaMAE": 0.0032,
+     "ci95": [
+      -0.0316,
+      0.0367
+     ],
+     "pBetter": 0.57
+    }
+   },
+   "deviance": {
+    "O0": 1.9155,
+    "O0b": 1.34,
+    "O1": 1.3264,
+    "O2": 1.3245,
+    "O3": 1.3093,
+    "O4": 1.3212,
+    "O5": 1.3272
+   }
+  },
+  "minutesRate": {
+   "scores": {
+    "O0": {
+     "n": 136,
+     "mae": 22.9613,
+     "rmse": 27.8535,
+     "bias": -7.5997,
+     "spearman": 0.285,
+     "calibration": 0.8218
+    },
+    "O0b": {
+     "n": 136,
+     "mae": 22.5544,
+     "rmse": 26.8588,
+     "bias": 2.3912,
+     "spearman": -0.012,
+     "calibration": 1.0732
+    },
+    "O1": {
+     "n": 136,
+     "mae": 22.3869,
+     "rmse": 26.3959,
+     "bias": 0.5917,
+     "spearman": 0.2765,
+     "calibration": 1.0172
+    },
+    "O2": {
+     "n": 136,
+     "mae": 22.2703,
+     "rmse": 26.3412,
+     "bias": 0.9521,
+     "spearman": 0.2941,
+     "calibration": 1.0279
+    },
+    "O3": {
+     "n": 136,
+     "mae": 21.4743,
+     "rmse": 25.8047,
+     "bias": 0.2737,
+     "spearman": 0.3408,
+     "calibration": 1.0079
+    },
+    "O4": {
+     "n": 136,
+     "mae": 22.1364,
+     "rmse": 26.235,
+     "bias": 0.2942,
+     "spearman": 0.2011,
+     "calibration": 1.0085
+    },
+    "O5": {
+     "n": 136,
+     "mae": 22.1796,
+     "rmse": 26.4361,
+     "bias": 0.935,
+     "spearman": 0.1819,
+     "calibration": 1.0274
+    }
+   },
+   "vsControl": {
+    "O0b": {
+     "deltaMAE": 0.4175,
+     "ci95": [
+      -2.4168,
+      3.1694
+     ],
+     "pBetter": 0.624
+    },
+    "O1": {
+     "deltaMAE": 0.5813,
+     "ci95": [
+      -1.9093,
+      3.0092
+     ],
+     "pBetter": 0.676
+    },
+    "O2": {
+     "deltaMAE": 0.7008,
+     "ci95": [
+      -1.8174,
+      3.1394
+     ],
+     "pBetter": 0.709
+    },
+    "O3": {
+     "deltaMAE": 1.4791,
+     "ci95": [
+      -1.0411,
+      3.9863
+     ],
+     "pBetter": 0.868
+    },
+    "O4": {
+     "deltaMAE": 0.831,
+     "ci95": [
+      -1.6505,
+      3.2754
+     ],
+     "pBetter": 0.74
+    },
+    "O5": {
+     "deltaMAE": 0.7881,
+     "ci95": [
+      -1.7858,
+      3.2686
+     ],
+     "pBetter": 0.723
+    }
+   },
+   "deviance": {}
+  }
+ }
+}
