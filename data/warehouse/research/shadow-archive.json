@@ -102,6 +102,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0699,
+    "predicted_xA90": 0.0385,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -186,6 +193,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0425,
+    "predicted_xA90": 0.1772,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -270,6 +284,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0048,
+    "predicted_xA90": 0.081,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -354,6 +375,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0919,
+    "predicted_xA90": 0.1474,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -438,6 +466,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0501,
+    "predicted_xA90": 0.0671,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -522,7 +557,8 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
-   }
+   },
+   "bridge": null
   },
   {
    "name": "Jan Paul van Hecke",
@@ -606,6 +642,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0811,
+    "predicted_xA90": 0.0418,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -690,6 +733,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0477,
+    "predicted_xA90": 0.0636,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -774,7 +824,8 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
-   }
+   },
+   "bridge": null
   },
   {
    "name": "Vitor Reis",
@@ -858,6 +909,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0474,
+    "predicted_xA90": 0.0326,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -942,6 +1000,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0694,
+    "predicted_xA90": 0.1105,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1026,6 +1091,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0703,
+    "predicted_xA90": 0.0911,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1110,6 +1182,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0624,
+    "predicted_xA90": 0.0421,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1194,6 +1273,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.107,
+    "predicted_xA90": 0.1672,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1278,6 +1364,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.301,
+    "predicted_xA90": 0.1238,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1362,6 +1455,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.288,
+    "predicted_xA90": 0.1649,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1446,6 +1546,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.3987,
+    "predicted_xA90": 0.0948,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1530,6 +1637,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.1001,
+    "predicted_xA90": 0.1138,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1614,6 +1728,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.3478,
+    "predicted_xA90": 0.089,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1698,6 +1819,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0637,
+    "predicted_xA90": 0.024,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1782,6 +1910,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.4446,
+    "predicted_xA90": 0.0687,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1866,6 +2001,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.1082,
+    "predicted_xA90": 0.0454,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -1950,7 +2092,8 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
-   }
+   },
+   "bridge": null
   },
   {
    "name": "Hayden Hackney",
@@ -2034,6 +2177,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.2321,
+    "predicted_xA90": 0.234,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -2118,6 +2268,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.1857,
+    "predicted_xA90": 0.0855,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -2202,6 +2359,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0607,
+    "predicted_xA90": 0.1799,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -2286,6 +2450,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.2445,
+    "predicted_xA90": 0.1606,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -2370,6 +2541,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0452,
+    "predicted_xA90": 0.0981,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -2454,6 +2632,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0351,
+    "predicted_xA90": 0.127,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -2538,6 +2723,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.4491,
+    "predicted_xA90": 0.0978,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -2622,6 +2814,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0683,
+    "predicted_xA90": 0.0464,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -2706,6 +2905,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0673,
+    "predicted_xA90": 0.0837,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -2790,6 +2996,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0987,
+    "predicted_xA90": 0.103,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -2874,6 +3087,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0356,
+    "predicted_xA90": 0.0962,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -2958,7 +3178,8 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
-   }
+   },
+   "bridge": null
   },
   {
    "name": "Issa Kaboré",
@@ -3042,6 +3263,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0479,
+    "predicted_xA90": 0.0987,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -3126,7 +3354,8 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
-   }
+   },
+   "bridge": null
   },
   {
    "name": "Jeremy Jacquet",
@@ -3210,6 +3439,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0572,
+    "predicted_xA90": 0.0522,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -3294,6 +3530,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.474,
+    "predicted_xA90": 0.0787,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -3378,6 +3621,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.1038,
+    "predicted_xA90": 0.1566,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -3462,6 +3712,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0711,
+    "predicted_xA90": 0.129,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -3546,6 +3803,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.1212,
+    "predicted_xA90": 0.0712,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -3630,6 +3894,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.4869,
+    "predicted_xA90": 0.0677,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -3714,6 +3985,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.2492,
+    "predicted_xA90": 0.276,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -3798,6 +4076,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0458,
+    "predicted_xA90": 0.0382,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -3882,6 +4167,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.3134,
+    "predicted_xA90": 0.1069,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -3966,6 +4258,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0859,
+    "predicted_xA90": 0.0711,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4050,6 +4349,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.3939,
+    "predicted_xA90": 0.1487,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4134,6 +4440,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.4014,
+    "predicted_xA90": 0.1008,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4218,6 +4531,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.2702,
+    "predicted_xA90": 0.1474,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4302,6 +4622,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.5802,
+    "predicted_xA90": 0.1642,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4386,6 +4713,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0553,
+    "predicted_xA90": 0.06,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4470,6 +4804,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.4989,
+    "predicted_xA90": 0.0659,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4554,6 +4895,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.1679,
+    "predicted_xA90": 0.1219,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4638,6 +4986,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0606,
+    "predicted_xA90": 0.054,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4722,6 +5077,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0416,
+    "predicted_xA90": 0.0404,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4806,6 +5168,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0734,
+    "predicted_xA90": 0.023,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4890,6 +5259,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0632,
+    "predicted_xA90": 0.0165,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -4974,6 +5350,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.3168,
+    "predicted_xA90": 0.0694,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5058,6 +5441,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.636,
+    "predicted_xA90": 0.1153,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5142,6 +5532,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0638,
+    "predicted_xA90": 0.0641,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5226,6 +5623,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0491,
+    "predicted_xA90": 0.0559,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5310,6 +5714,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.3447,
+    "predicted_xA90": 0.0984,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5394,6 +5805,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0165,
+    "predicted_xA90": 0.1451,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5478,6 +5896,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0738,
+    "predicted_xA90": 0.1432,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5562,6 +5987,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.4672,
+    "predicted_xA90": 0.0467,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5646,6 +6078,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.5578,
+    "predicted_xA90": 0.0863,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5730,6 +6169,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.1015,
+    "predicted_xA90": 0.0602,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5814,6 +6260,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.2453,
+    "predicted_xA90": 0.0997,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5898,6 +6351,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.5962,
+    "predicted_xA90": 0.1237,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -5982,7 +6442,8 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
-   }
+   },
+   "bridge": null
   },
   {
    "name": "Luke Woolfenden",
@@ -6066,6 +6527,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0261,
+    "predicted_xA90": 0.0539,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -6150,6 +6618,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.4101,
+    "predicted_xA90": 0.0898,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -6234,6 +6709,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0446,
+    "predicted_xA90": 0.0547,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -6318,6 +6800,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.3116,
+    "predicted_xA90": 0.0566,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -6402,6 +6891,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.3245,
+    "predicted_xA90": 0.1017,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -6486,6 +6982,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.3384,
+    "predicted_xA90": 0.1382,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -6570,6 +7073,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0662,
+    "predicted_xA90": 0.1211,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -6654,6 +7164,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.1023,
+    "predicted_xA90": 0.1716,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -6738,6 +7255,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0812,
+    "predicted_xA90": 0.1253,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -6822,6 +7346,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.2996,
+    "predicted_xA90": 0.0977,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -6906,6 +7437,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0336,
+    "predicted_xA90": 0.0592,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -6990,6 +7528,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.382,
+    "predicted_xA90": 0.0959,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -7074,6 +7619,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.3227,
+    "predicted_xA90": 0.1171,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -7158,6 +7710,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.5917,
+    "predicted_xA90": 0.049,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -7242,6 +7801,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.1299,
+    "predicted_xA90": 0.1035,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -7326,6 +7892,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.155,
+    "predicted_xA90": 0.1116,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -7410,6 +7983,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.2628,
+    "predicted_xA90": 0.1412,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -7494,6 +8074,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0151,
+    "predicted_xA90": 0.0103,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -7578,6 +8165,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0982,
+    "predicted_xA90": 0.0783,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -7662,6 +8256,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.1323,
+    "predicted_xA90": 0.0562,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -7746,6 +8347,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0083,
+    "predicted_xA90": 0.127,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -7830,6 +8438,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0222,
+    "predicted_xA90": 0.0433,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -7914,7 +8529,8 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
-   }
+   },
+   "bridge": null
   },
   {
    "name": "Harvey Elliott",
@@ -7998,6 +8614,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.1739,
+    "predicted_xA90": 0.0812,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -8082,6 +8705,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.4384,
+    "predicted_xA90": 0.1095,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -8166,6 +8796,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0151,
+    "predicted_xA90": 0.0103,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   },
   {
@@ -8211,7 +8848,8 @@
      "minutesRate": 0
     }
    },
-   "production": null
+   "production": null,
+   "bridge": null
   },
   {
    "name": "César Palacios",
@@ -8295,6 +8933,13 @@
      }
     },
     "note": "P4 pooled translation. The slope is REGRESSION, not a league-quality discount — EPL-to-EPL transfers regress just as much."
+   },
+   "bridge": {
+    "version": "xg-bridge-2025-v1",
+    "frozenAt": "2026-08-29T01:12:28.994Z",
+    "predicted_xG90": 0.0877,
+    "predicted_xA90": 0.1116,
+    "note": "From SOURCE-season volume only. Units are xG/90 and xA/90 — not shots. No 2026/27 data used."
    }
   }
  ],
@@ -8319,6 +8964,17 @@
    "shotsOnTarget": "marginal, dMAE 0.0291 CI [-0.0042,0.0623] P 0.957",
    "goals": "no improvement, CI includes zero",
    "assists": "no improvement, CI includes zero"
+  }
+ },
+ "bridgeAdded": {
+  "at": "2026-08-29T01:13:00.791Z",
+  "playersWithBridge": 91,
+  "bridgeVersion": "xg-bridge-2025-v1",
+  "trainingSeason": "2025/26",
+  "validationStatus": "NO EXTERNAL VALIDATION. One season of overlap. The K-fold figures below are INTERNAL MODEL DEVELOPMENT ONLY and are not out-of-sample proof.",
+  "firstScorableGW": 3,
+  "warehouse": {
+   "coverageDigest": "8d72985ccdbffbf4"
   }
  }
 }

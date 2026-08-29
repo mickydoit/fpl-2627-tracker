@@ -1,0 +1,25 @@
+{
+ "preRegisteredAt": "2026-08-29",
+ "status": "PRE-REGISTERED — frozen before the new season pair is scored",
+ "purpose": "Replicate the Milestone 2 team-strength result on a second, independent season pair. The analysis below is fixed now so it cannot be adjusted after seeing the new data.",
+ "milestone2Result": {
+  "attack": "SOT/game -> next-season goals for, r 0.776, beat the goals control r 0.705",
+  "defence": "no shot metric beat the goals-conceded control (best 0.565 vs 0.646)",
+  "n": 16,
+  "seasonPair": "eng.1 2023 -> 2024"
+ },
+ "newSeasonPair": "eng.1 2024 -> 2025",
+ "attackCandidates": ["shotsPerGame", "sotPerGame", "possession"],
+ "defenceCandidates": ["shotsAgainstPerGame", "sotAgainstPerGame", "possessionAllowed"],
+ "control": "previous-season goals for / goals against",
+ "outcome": "next-season goals for per game / goals against per game",
+ "statistics": ["within-season split-half stability", "next-season Pearson r with 95% CI", "delta vs control"],
+ "minMatchesPerClub": 30,
+ "rules": [
+  "Attack and defence are reported separately and never combined into a composite.",
+  "The control is previous-season goals, not a straw man.",
+  "No metric may be added, removed or transformed after the new pair is scored.",
+  "A result that refutes Milestone 2 is reported as a refutation, not re-analysed."
+ ],
+ "prediction": "If the Milestone 2 result was real, SOT/game beats the goals control on attack again and no defence metric beats its control. If it was noise on n=16, the attack advantage will not reproduce."
+}

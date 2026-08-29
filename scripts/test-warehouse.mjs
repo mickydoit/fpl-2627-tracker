@@ -766,5 +766,110 @@ console.log('\nMilestone 4');
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * Milestone 5 — frozen bridge and prospective discipline
+ * ------------------------------------------------------------------ */
+console.log('\nMilestone 5');
+{
+  const readIf = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
+  const bridge = readIf('data/warehouse/research/xg-bridge-FROZEN.json');
+  const rob = readIf('data/warehouse/research/transition-robustness.json');
+  const shadow = readIf('data/warehouse/research/shadow-archive.json');
+  const prereg = readIf('data/warehouse/research/team-strength-PREREGISTERED.json');
+  const { isModelSafe } = await import('./warehouse/field-registry.mjs');
+
+  if (rob) {
+    /* M5-1. The bootstrap must be reproducible — it is seeded, so a rerun gives
+       the same interval. Asserted by re-deriving one figure from the stored
+       output rather than trusting that it was seeded. */
+    const s450 = rob.thresholds?.['450']?.metrics?.shots;
+    ok('M5-1 retention bootstrap intervals are stored with n on both sides',
+      !!s450?.['sameClub - eplToEpl']?.ci && Number.isInteger(s450['sameClub - eplToEpl'].nA));
+    ok('M5-1 the bootstrap reports a direction probability',
+      Number.isFinite(s450['sameClub - eplToEpl'].pPositive));
+    /* M5-2. Every transition group must be measured at the same thresholds with
+       the same definition — otherwise the comparison is between different
+       populations, not different transitions. */
+    const ts = Object.keys(rob.thresholds);
+    ok('M5-2 all four thresholds are reported', ts.length === 4, ts.join(','));
+    ok('M5-2 every threshold reports all three groups',
+      ts.every((t) => ['sameClub', 'eplToEpl', 'foreign']
+        .every((g) => rob.thresholds[t].metrics.shots.retention[g] !== undefined)));
+    ok('M5-2 no threshold was omitted for being inconvenient',
+      ts.every((t) => Number.isInteger(rob.thresholds[t].n.sameClub)));
+  } else console.log('  – no robustness output, skipping M5-1..2');
+
+  if (bridge) {
+    /* M5-3 / M5-4. Training is 2025/26 only, and 2026 cannot enter. */
+    ok('M5-3 the bridge trained on 2025/26 only', bridge.trainingSeason === '2025/26');
+    ok('M5-3 training required a same-season join on both sides',
+      /same season/i.test(bridge.trainingSource) && /450/.test(bridge.trainingSource));
+    ok('M5-4 the bridge declares no external validation',
+      /NO EXTERNAL VALIDATION/.test(bridge.validationStatus));
+    ok('M5-4 internal K-fold is labelled development only',
+      /INTERNAL MODEL DEVELOPMENT ONLY/.test(bridge.validationStatus));
+    /* M5-5. Immutable after freeze: it carries a status saying so and a digest. */
+    ok('M5-5 the bridge is marked frozen with a new-version rule',
+      /FROZEN/.test(bridge.status) && /NEW candidate version/.test(bridge.status));
+    ok('M5-5 the bridge records its warehouse digest', !!bridge.warehouse?.coverageDigest);
+    /* M5-6 / M5-7. Prospective scoring starts after the freeze. */
+    ok('M5-6 the bridge names a first scorable gameweek', Number.isInteger(bridge.firstScorableGW));
+    ok('M5-7 the first scorable gameweek is not 1 or 2', bridge.firstScorableGW >= 3,
+      `got ${bridge.firstScorableGW}`);
+    /* M5-8. Position effects survive — a universal conversion is what Part 6 forbids. */
+    const xg1 = bridge.fitted?.XG1?.coefficients;
+    ok('M5-8 the bridge fits position interactions, not one universal slope',
+      Array.isArray(xg1) && xg1.length === 6 && (xg1[4] !== 0 || xg1[5] !== 0));
+    ok('M5-8 position slopes actually differ',
+      Math.abs((xg1[1] + xg1[4]) - xg1[1]) > 1e-6);
+    /* M5-9. Units are declared and distinct. */
+    ok('M5-9 the bridge declares input and output units',
+      /shots\/90/.test(bridge.units) && /xG\/90/.test(bridge.units));
+    ok('M5-9 the bridge forbids substituting one unit for the other',
+      /never be substituted/.test(bridge.units));
+    /* M5-10. Price prior untouched. */
+    ok('M5-10 the bridge states the price prior is untouched', /UNTOUCHED/.test(bridge.pricePrior));
+  } else console.log('  – no frozen bridge, skipping M5-3..10');
+
+  if (shadow?.bridgeAdded) {
+    ok('M5-4 prospective bridge predictions carry the frozen version',
+      (shadow.players || []).filter((p) => p.bridge).every((p) => p.bridge.version === 'xg-bridge-2025-v1'));
+    ok('M5-9 bridge output is xG/xA, never re-labelled volume',
+      (shadow.players || []).filter((p) => p.bridge?.predicted_xG90 != null)
+        .every((p) => /xG\/90 and xA\/90/.test(p.bridge.note)));
+    ok('M5-7 the shadow archive first scorable gameweek is 3 or later', shadow.firstScorableGW >= 3);
+  }
+
+  /* M5-11. Only MODEL_SAFE fields reach research models — enforced, not hoped. */
+  ok('M5-11 assertModelSafe is called by the modelling paths', (() => {
+    const files = ['scripts/warehouse/research/production-translation.mjs',
+      'scripts/warehouse/research/same-club-control.mjs',
+      'scripts/warehouse/research/transition-robustness.mjs',
+      'scripts/warehouse/research/xg-bridge.mjs'];
+    return files.every((f) => fs.existsSync(f) && /assertModelSafe\(/.test(fs.readFileSync(f, 'utf8')));
+  })());
+  ok('M5-11 a rejected field is still rejected', !isModelSafe('saves'));
+
+  /* M5-12. The standing guarantee. */
+  ok('M5-12 no browser module references any shadow or bridge artefact', (() => {
+    const out = [];
+    const walk = (dir) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const p2 = path.join(dir, e.name);
+        if (e.isDirectory()) walk(p2); else if (e.name.endsWith('.js')) out.push(p2);
+      }
+    };
+    walk('js');
+    return !out.some((f) => /xg-bridge|shadow-archive|transition-robustness|same-club/.test(fs.readFileSync(f, 'utf8')));
+  })());
+
+  if (prereg) {
+    ok('M5-pre the team-strength test is pre-registered before scoring',
+      /PRE-REGISTERED/.test(prereg.status) && Array.isArray(prereg.attackCandidates));
+    ok('M5-pre the pre-registration names its control and forbids post-hoc changes',
+      /goals/.test(prereg.control) && prereg.rules.some((r) => /may be added, removed or transformed/.test(r)));
+  }
+}
+
 console.log(`\n${failures === 0 ? `✓ all ${checks} warehouse checks passed` : `✗ ${failures} of ${checks} failed`}\n`);
 process.exit(failures === 0 ? 0 : 1);

@@ -1,0 +1,168 @@
+{
+ "frozenAt": "2026-08-29T01:12:28.994Z",
+ "status": "FROZEN — any change requires a NEW candidate version, not an edit to this one",
+ "trainingSeason": "2025/26",
+ "trainingN": 276,
+ "trainingSource": "warehouse eng.1 2025 Tier B volume x data/draft/prior-2526.json FPL xG/xA, same season, both sides >=450 minutes, goalkeepers excluded",
+ "validationStatus": "NO EXTERNAL VALIDATION. One season of overlap. The K-fold figures below are INTERNAL MODEL DEVELOPMENT ONLY and are not out-of-sample proof.",
+ "forms": {
+  "XG0": {
+   "label": "position baseline only",
+   "target": "xg90"
+  },
+  "XG1": {
+   "label": "shots + position (baseline and slope)",
+   "target": "xg90"
+  },
+  "XG2": {
+   "label": "shots + SOT + position",
+   "target": "xg90"
+  },
+  "XA0": {
+   "label": "position baseline only",
+   "target": "xa90"
+  },
+  "XA1": {
+   "label": "key passes + position (baseline and slope)",
+   "target": "xa90"
+  }
+ },
+ "development": {
+  "XG0": {
+   "label": "position baseline only",
+   "target": "xg90",
+   "lambda": 0.001,
+   "mae": 0.06598,
+   "rmse": 0.09083
+  },
+  "XG1": {
+   "label": "shots + position (baseline and slope)",
+   "target": "xg90",
+   "lambda": 1,
+   "mae": 0.04667,
+   "rmse": 0.06877
+  },
+  "XG2": {
+   "label": "shots + SOT + position",
+   "target": "xg90",
+   "lambda": 1,
+   "mae": 0.0398,
+   "rmse": 0.05863
+  },
+  "XA0": {
+   "label": "position baseline only",
+   "target": "xa90",
+   "lambda": 0.001,
+   "mae": 0.04556,
+   "rmse": 0.06117
+  },
+  "XA1": {
+   "label": "key passes + position (baseline and slope)",
+   "target": "xa90",
+   "lambda": 1,
+   "mae": 0.02457,
+   "rmse": 0.03304
+  }
+ },
+ "fitted": {
+  "XG0": {
+   "target": "xg90",
+   "lambda": 0.001,
+   "coefficients": [
+    0.058337,
+    0.095795,
+    0.378808
+   ]
+  },
+  "XG1": {
+   "target": "xg90",
+   "lambda": 1,
+   "coefficients": [
+    0.012666,
+    0.0757,
+    -0.037027,
+    0.128802,
+    0.03822,
+    0.037823
+   ]
+  },
+  "XG2": {
+   "target": "xg90",
+   "lambda": 1,
+   "coefficients": [
+    0.015062,
+    0.018718,
+    0.192706,
+    -0.029991,
+    0.106004,
+    0.02745,
+    0.02595
+   ]
+  },
+  "XA0": {
+   "target": "xa90",
+   "lambda": 0.001,
+   "coefficients": [
+    0.057012,
+    0.072411,
+    0.002952
+   ]
+  },
+  "XA1": {
+   "target": "xa90",
+   "lambda": 1,
+   "coefficients": [
+    0.010302,
+    0.086504,
+    -0.013736,
+    -0.00204,
+    0.016986,
+    -0.020164
+   ]
+  }
+ },
+ "featureOrder": {
+  "XG0": [
+   "1",
+   "isMID",
+   "isFWD"
+  ],
+  "XG1": [
+   "1",
+   "shots90",
+   "isMID",
+   "isFWD",
+   "shots90*isMID",
+   "shots90*isFWD"
+  ],
+  "XG2": [
+   "1",
+   "shots90",
+   "sot90",
+   "isMID",
+   "isFWD",
+   "shots90*isMID",
+   "shots90*isFWD"
+  ],
+  "XA0": [
+   "1",
+   "isMID",
+   "isFWD"
+  ],
+  "XA1": [
+   "1",
+   "kp90",
+   "isMID",
+   "isFWD",
+   "kp90*isMID",
+   "kp90*isFWD"
+  ]
+ },
+ "units": "INPUT shots/90, shotsOnTarget/90, keyPasses/90. OUTPUT xG/90, xA/90. These are different units from the inputs and must never be substituted for one another.",
+ "pricePrior": "UNTOUCHED. This bridge is not a cold-start prior and does not replace price as the level prior.",
+ "firstScorableGW": 3,
+ "warehouse": {
+  "schemaVersion": 2,
+  "coverageDigest": "8d72985ccdbffbf4"
+ }
+}

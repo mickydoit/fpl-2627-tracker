@@ -1,0 +1,929 @@
+{
+ "builtAt": "2026-08-29T01:11:28.852Z",
+ "thresholds": {
+  "180": {
+   "n": {
+    "sameClub": 399,
+    "eplToEpl": 42,
+    "foreign": 82
+   },
+   "metrics": {
+    "shots": {
+     "retention": {
+      "sameClub": 0.9819473109005659,
+      "eplToEpl": 0.8639413981025748,
+      "foreign": 0.8894714453669179
+     },
+     "sameClub - eplToEpl": {
+      "nA": 399,
+      "nB": 42,
+      "diff": 0.1167,
+      "ci": [
+       0.0056,
+       0.2184
+      ],
+      "pPositive": 0.98
+     },
+     "sameClub - foreign": {
+      "nA": 399,
+      "nB": 82,
+      "diff": 0.0911,
+      "ci": [
+       -0.0041,
+       0.1806
+      ],
+      "pPositive": 0.97
+     },
+     "eplToEpl - foreign": {
+      "nA": 42,
+      "nB": 82,
+      "diff": -0.0262,
+      "ci": [
+       -0.1551,
+       0.1145
+      ],
+      "pPositive": 0.341
+     }
+    },
+    "shotsOnTarget": {
+     "retention": {
+      "sameClub": 0.9372869247998089,
+      "eplToEpl": 0.859021281174561,
+      "foreign": 0.8406562192565598
+     },
+     "sameClub - eplToEpl": {
+      "nA": 399,
+      "nB": 42,
+      "diff": 0.076,
+      "ci": [
+       -0.1423,
+       0.2637
+      ],
+      "pPositive": 0.785
+     },
+     "sameClub - foreign": {
+      "nA": 399,
+      "nB": 82,
+      "diff": 0.0952,
+      "ci": [
+       -0.0466,
+       0.2253
+      ],
+      "pPositive": 0.916
+     },
+     "eplToEpl - foreign": {
+      "nA": 42,
+      "nB": 82,
+      "diff": 0.0165,
+      "ci": [
+       -0.2029,
+       0.2435
+      ],
+      "pPositive": 0.558
+     }
+    },
+    "keyPasses": {
+     "retention": {
+      "sameClub": 0.951978841911217,
+      "eplToEpl": 0.9419846027622054,
+      "foreign": 0.8704845817116358
+     },
+     "sameClub - eplToEpl": {
+      "nA": 399,
+      "nB": 42,
+      "diff": 0.0078,
+      "ci": [
+       -0.1773,
+       0.1728
+      ],
+      "pPositive": 0.556
+     },
+     "sameClub - foreign": {
+      "nA": 399,
+      "nB": 82,
+      "diff": 0.0797,
+      "ci": [
+       -0.0372,
+       0.1797
+      ],
+      "pPositive": 0.92
+     },
+     "eplToEpl - foreign": {
+      "nA": 42,
+      "nB": 82,
+      "diff": 0.0775,
+      "ci": [
+       -0.1111,
+       0.2876
+      ],
+      "pPositive": 0.77
+     }
+    },
+    "goals": {
+     "retention": {
+      "sameClub": 0.8720070272772746,
+      "eplToEpl": 0.7668872243267597,
+      "foreign": 0.7989102147915917
+     },
+     "sameClub - eplToEpl": {
+      "nA": 399,
+      "nB": 42,
+      "diff": 0.0865,
+      "ci": [
+       -0.2394,
+       0.3431
+      ],
+      "pPositive": 0.739
+     },
+     "sameClub - foreign": {
+      "nA": 399,
+      "nB": 82,
+      "diff": 0.0708,
+      "ci": [
+       -0.1337,
+       0.2638
+      ],
+      "pPositive": 0.758
+     },
+     "eplToEpl - foreign": {
+      "nA": 42,
+      "nB": 82,
+      "diff": -0.0211,
+      "ci": [
+       -0.3465,
+       0.3268
+      ],
+      "pPositive": 0.437
+     }
+    },
+    "assists": {
+     "retention": {
+      "sameClub": 0.8853795654020746,
+      "eplToEpl": 0.8239794535072587,
+      "foreign": 0.712044226825723
+     },
+     "sameClub - eplToEpl": {
+      "nA": 399,
+      "nB": 42,
+      "diff": 0.0478,
+      "ci": [
+       -0.3309,
+       0.3311
+      ],
+      "pPositive": 0.648
+     },
+     "sameClub - foreign": {
+      "nA": 399,
+      "nB": 82,
+      "diff": 0.172,
+      "ci": [
+       -0.0383,
+       0.3644
+      ],
+      "pPositive": 0.951
+     },
+     "eplToEpl - foreign": {
+      "nA": 42,
+      "nB": 82,
+      "diff": 0.1268,
+      "ci": [
+       -0.2052,
+       0.5232
+      ],
+      "pPositive": 0.749
+     }
+    }
+   }
+  },
+  "450": {
+   "n": {
+    "sameClub": 364,
+    "eplToEpl": 32,
+    "foreign": 75
+   },
+   "metrics": {
+    "shots": {
+     "retention": {
+      "sameClub": 0.982865036460503,
+      "eplToEpl": 0.8533413157476176,
+      "foreign": 0.8585638448881578
+     },
+     "sameClub - eplToEpl": {
+      "nA": 364,
+      "nB": 32,
+      "diff": 0.1267,
+      "ci": [
+       0.0301,
+       0.2094
+      ],
+      "pPositive": 0.995
+     },
+     "sameClub - foreign": {
+      "nA": 364,
+      "nB": 75,
+      "diff": 0.1232,
+      "ci": [
+       0.0275,
+       0.2101
+      ],
+      "pPositive": 0.994
+     },
+     "eplToEpl - foreign": {
+      "nA": 32,
+      "nB": 75,
+      "diff": -0.0026,
+      "ci": [
+       -0.118,
+       0.1129
+      ],
+      "pPositive": 0.478
+     }
+    },
+    "shotsOnTarget": {
+     "retention": {
+      "sameClub": 0.9379148664129769,
+      "eplToEpl": 0.8196578846846839,
+      "foreign": 0.811570443305676
+     },
+     "sameClub - eplToEpl": {
+      "nA": 364,
+      "nB": 32,
+      "diff": 0.1192,
+      "ci": [
+       -0.0368,
+       0.2777
+      ],
+      "pPositive": 0.935
+     },
+     "sameClub - foreign": {
+      "nA": 364,
+      "nB": 75,
+      "diff": 0.1267,
+      "ci": [
+       -0.0046,
+       0.251
+      ],
+      "pPositive": 0.969
+     },
+     "eplToEpl - foreign": {
+      "nA": 32,
+      "nB": 75,
+      "diff": 0.0104,
+      "ci": [
+       -0.1832,
+       0.1972
+      ],
+      "pPositive": 0.537
+     }
+    },
+    "keyPasses": {
+     "retention": {
+      "sameClub": 0.9518184319624803,
+      "eplToEpl": 0.9465861520126712,
+      "foreign": 0.8662364479612907
+     },
+     "sameClub - eplToEpl": {
+      "nA": 364,
+      "nB": 32,
+      "diff": 0.0016,
+      "ci": [
+       -0.1971,
+       0.1666
+      ],
+      "pPositive": 0.535
+     },
+     "sameClub - foreign": {
+      "nA": 364,
+      "nB": 75,
+      "diff": 0.0844,
+      "ci": [
+       -0.0165,
+       0.1765
+      ],
+      "pPositive": 0.95
+     },
+     "eplToEpl - foreign": {
+      "nA": 32,
+      "nB": 75,
+      "diff": 0.0833,
+      "ci": [
+       -0.0984,
+       0.2862
+      ],
+      "pPositive": 0.809
+     }
+    },
+    "goals": {
+     "retention": {
+      "sameClub": 0.8831538834041492,
+      "eplToEpl": 0.7813536880532485,
+      "foreign": 0.7563728781611668
+     },
+     "sameClub - eplToEpl": {
+      "nA": 364,
+      "nB": 32,
+      "diff": 0.0965,
+      "ci": [
+       -0.1637,
+       0.3128
+      ],
+      "pPositive": 0.794
+     },
+     "sameClub - foreign": {
+      "nA": 364,
+      "nB": 75,
+      "diff": 0.1247,
+      "ci": [
+       -0.0751,
+       0.3061
+      ],
+      "pPositive": 0.899
+     },
+     "eplToEpl - foreign": {
+      "nA": 32,
+      "nB": 75,
+      "diff": 0.0325,
+      "ci": [
+       -0.2389,
+       0.326
+      ],
+      "pPositive": 0.587
+     }
+    },
+    "assists": {
+     "retention": {
+      "sameClub": 0.9091915640082362,
+      "eplToEpl": 0.9706349451118589,
+      "foreign": 0.7572546294889534
+     },
+     "sameClub - eplToEpl": {
+      "nA": 364,
+      "nB": 32,
+      "diff": -0.0756,
+      "ci": [
+       -0.4404,
+       0.2292
+      ],
+      "pPositive": 0.34
+     },
+     "sameClub - foreign": {
+      "nA": 364,
+      "nB": 75,
+      "diff": 0.1486,
+      "ci": [
+       -0.0758,
+       0.3496
+      ],
+      "pPositive": 0.917
+     },
+     "eplToEpl - foreign": {
+      "nA": 32,
+      "nB": 75,
+      "diff": 0.2231,
+      "ci": [
+       -0.1228,
+       0.6205
+      ],
+      "pPositive": 0.889
+     }
+    }
+   }
+  },
+  "900": {
+   "n": {
+    "sameClub": 298,
+    "eplToEpl": 23,
+    "foreign": 57
+   },
+   "metrics": {
+    "shots": {
+     "retention": {
+      "sameClub": 0.983880337184298,
+      "eplToEpl": 0.8588174666789062,
+      "foreign": 0.8833886482369605
+     },
+     "sameClub - eplToEpl": {
+      "nA": 298,
+      "nB": 23,
+      "diff": 0.1215,
+      "ci": [
+       0.0075,
+       0.2221
+      ],
+      "pPositive": 0.982
+     },
+     "sameClub - foreign": {
+      "nA": 298,
+      "nB": 57,
+      "diff": 0.0996,
+      "ci": [
+       -0.0136,
+       0.2076
+      ],
+      "pPositive": 0.959
+     },
+     "eplToEpl - foreign": {
+      "nA": 23,
+      "nB": 57,
+      "diff": -0.0243,
+      "ci": [
+       -0.1711,
+       0.121
+      ],
+      "pPositive": 0.372
+     }
+    },
+    "shotsOnTarget": {
+     "retention": {
+      "sameClub": 0.9623037786280252,
+      "eplToEpl": 0.8680803182572989,
+      "foreign": 0.8377880435697779
+     },
+     "sameClub - eplToEpl": {
+      "nA": 298,
+      "nB": 23,
+      "diff": 0.0912,
+      "ci": [
+       -0.0924,
+       0.2716
+      ],
+      "pPositive": 0.835
+     },
+     "sameClub - foreign": {
+      "nA": 298,
+      "nB": 57,
+      "diff": 0.1224,
+      "ci": [
+       -0.0392,
+       0.2606
+      ],
+      "pPositive": 0.935
+     },
+     "eplToEpl - foreign": {
+      "nA": 23,
+      "nB": 57,
+      "diff": 0.0254,
+      "ci": [
+       -0.2051,
+       0.2502
+      ],
+      "pPositive": 0.593
+     }
+    },
+    "keyPasses": {
+     "retention": {
+      "sameClub": 0.9594052297084422,
+      "eplToEpl": 0.9195025448658256,
+      "foreign": 0.8602507278802235
+     },
+     "sameClub - eplToEpl": {
+      "nA": 298,
+      "nB": 23,
+      "diff": 0.0378,
+      "ci": [
+       -0.1256,
+       0.1993
+      ],
+      "pPositive": 0.676
+     },
+     "sameClub - foreign": {
+      "nA": 298,
+      "nB": 57,
+      "diff": 0.0986,
+      "ci": [
+       -0.0265,
+       0.2017
+      ],
+      "pPositive": 0.942
+     },
+     "eplToEpl - foreign": {
+      "nA": 23,
+      "nB": 57,
+      "diff": 0.0642,
+      "ci": [
+       -0.1278,
+       0.2613
+      ],
+      "pPositive": 0.732
+     }
+    },
+    "goals": {
+     "retention": {
+      "sameClub": 0.893370413999334,
+      "eplToEpl": 0.8760455363495511,
+      "foreign": 0.7190306081645236
+     },
+     "sameClub - eplToEpl": {
+      "nA": 298,
+      "nB": 23,
+      "diff": 0.007,
+      "ci": [
+       -0.2694,
+       0.2537
+      ],
+      "pPositive": 0.539
+     },
+     "sameClub - foreign": {
+      "nA": 298,
+      "nB": 57,
+      "diff": 0.1704,
+      "ci": [
+       -0.0229,
+       0.3549
+      ],
+      "pPositive": 0.953
+     },
+     "eplToEpl - foreign": {
+      "nA": 23,
+      "nB": 57,
+      "diff": 0.1562,
+      "ci": [
+       -0.1468,
+       0.4601
+      ],
+      "pPositive": 0.847
+     }
+    },
+    "assists": {
+     "retention": {
+      "sameClub": 0.8932529778050116,
+      "eplToEpl": 0.7842189356377632,
+      "foreign": 0.7103316165605426
+     },
+     "sameClub - eplToEpl": {
+      "nA": 298,
+      "nB": 23,
+      "diff": 0.0918,
+      "ci": [
+       -0.2751,
+       0.3843
+      ],
+      "pPositive": 0.728
+     },
+     "sameClub - foreign": {
+      "nA": 298,
+      "nB": 57,
+      "diff": 0.1823,
+      "ci": [
+       -0.0157,
+       0.369
+      ],
+      "pPositive": 0.966
+     },
+     "eplToEpl - foreign": {
+      "nA": 23,
+      "nB": 57,
+      "diff": 0.0925,
+      "ci": [
+       -0.2416,
+       0.499
+      ],
+      "pPositive": 0.685
+     }
+    }
+   }
+  },
+  "1800": {
+   "n": {
+    "sameClub": 165,
+    "eplToEpl": 10,
+    "foreign": 15
+   },
+   "metrics": {
+    "shots": {
+     "retention": {
+      "sameClub": 0.9725029115363131,
+      "eplToEpl": 0.9387779374249765,
+      "foreign": 0.9561461167490014
+     },
+     "sameClub - eplToEpl": {
+      "nA": 165,
+      "nB": 10,
+      "diff": 0.0227,
+      "ci": [
+       -0.1661,
+       0.163
+      ],
+      "pPositive": 0.649
+     },
+     "sameClub - foreign": {
+      "nA": 165,
+      "nB": 15,
+      "diff": 0.0085,
+      "ci": [
+       -0.2244,
+       0.1554
+      ],
+      "pPositive": 0.598
+     },
+     "eplToEpl - foreign": {
+      "nA": 10,
+      "nB": 15,
+      "diff": -0.0153,
+      "ci": [
+       -0.2758,
+       0.2173
+      ],
+      "pPositive": 0.467
+     }
+    },
+    "shotsOnTarget": {
+     "retention": {
+      "sameClub": 0.9881680446171416,
+      "eplToEpl": 1.0383415401282927,
+      "foreign": 0.941192416274399
+     },
+     "sameClub - eplToEpl": {
+      "nA": 165,
+      "nB": 10,
+      "diff": -0.0514,
+      "ci": [
+       -0.1303,
+       0.0231
+      ],
+      "pPositive": 0.088
+     },
+     "sameClub - foreign": {
+      "nA": 165,
+      "nB": 15,
+      "diff": 0.0188,
+      "ci": [
+       -0.3477,
+       0.2799
+      ],
+      "pPositive": 0.589
+     },
+     "eplToEpl - foreign": {
+      "nA": 10,
+      "nB": 15,
+      "diff": 0.0759,
+      "ci": [
+       -0.2796,
+       0.3265
+      ],
+      "pPositive": 0.718
+     }
+    },
+    "keyPasses": {
+     "retention": {
+      "sameClub": 0.9777780954453882,
+      "eplToEpl": 0.7520150999696097,
+      "foreign": 0.8545899435588278
+     },
+     "sameClub - eplToEpl": {
+      "nA": 165,
+      "nB": 10,
+      "diff": 0.2185,
+      "ci": [
+       0.0483,
+       0.3878
+      ],
+      "pPositive": 0.993
+     },
+     "sameClub - foreign": {
+      "nA": 165,
+      "nB": 15,
+      "diff": 0.1075,
+      "ci": [
+       -0.3091,
+       0.3262
+      ],
+      "pPositive": 0.777
+     },
+     "eplToEpl - foreign": {
+      "nA": 10,
+      "nB": 15,
+      "diff": -0.1076,
+      "ci": [
+       -0.5351,
+       0.1759
+      ],
+      "pPositive": 0.303
+     }
+    },
+    "goals": {
+     "retention": {
+      "sameClub": 0.9585918428232174,
+      "eplToEpl": 0.980803259466358,
+      "foreign": 0.9698923646738363
+     },
+     "sameClub - eplToEpl": {
+      "nA": 165,
+      "nB": 10,
+      "diff": -0.0266,
+      "ci": [
+       -0.2745,
+       0.1912
+      ],
+      "pPositive": 0.422
+     },
+     "sameClub - foreign": {
+      "nA": 165,
+      "nB": 15,
+      "diff": -0.0525,
+      "ci": [
+       -0.7815,
+       0.3358
+      ],
+      "pPositive": 0.493
+     },
+     "eplToEpl - foreign": {
+      "nA": 10,
+      "nB": 15,
+      "diff": -0.0246,
+      "ci": [
+       -0.7387,
+       0.4218
+      ],
+      "pPositive": 0.531
+     }
+    },
+    "assists": {
+     "retention": {
+      "sameClub": 0.9390604118019947,
+      "eplToEpl": 0.6083944988766554,
+      "foreign": 0.9417580458686338
+     },
+     "sameClub - eplToEpl": {
+      "nA": 165,
+      "nB": 10,
+      "diff": 0.3221,
+      "ci": [
+       0.0951,
+       0.5311
+      ],
+      "pPositive": 0.994
+     },
+     "sameClub - foreign": {
+      "nA": 165,
+      "nB": 15,
+      "diff": -0.0263,
+      "ci": [
+       -0.4019,
+       0.2416
+      ],
+      "pPositive": 0.493
+     },
+     "eplToEpl - foreign": {
+      "nA": 10,
+      "nB": 15,
+      "diff": -0.342,
+      "ci": [
+       -0.7295,
+       -0.0214
+      ],
+      "pPositive": 0.021
+     }
+    }
+   }
+  }
+ },
+ "byPosition": {
+  "450": {
+   "DEF": {
+    "n": {
+     "sameClub": 142,
+     "eplToEpl": 8,
+     "foreign": 26
+    },
+    "metrics": {
+     "shots": {
+      "sameClub": 0.9472864291378096,
+      "eplToEpl": 1.162800066161556,
+      "foreign": 0.7662121335722053,
+      "sameClub - anyTransfer": {
+       "nA": 142,
+       "nB": 34,
+       "diff": 0.1014,
+       "ci": [
+        -0.0842,
+        0.2639
+       ],
+       "pPositive": 0.87
+      }
+     },
+     "keyPasses": {
+      "sameClub": 0.9130646083455487,
+      "eplToEpl": 1.0393965128416092,
+      "foreign": 0.9211172022082958,
+      "sameClub - anyTransfer": {
+       "nA": 142,
+       "nB": 34,
+       "diff": -0.0377,
+       "ci": [
+        -0.2938,
+        0.1698
+       ],
+       "pPositive": 0.4
+      }
+     }
+    }
+   },
+   "MID": {
+    "n": {
+     "sameClub": 116,
+     "eplToEpl": 6,
+     "foreign": 20
+    },
+    "metrics": {
+     "shots": {
+      "sameClub": 1.003372407532686,
+      "eplToEpl": 0.8611919477356146,
+      "foreign": 1.11003335941931,
+      "sameClub - anyTransfer": {
+       "nA": 116,
+       "nB": 26,
+       "diff": -0.0281,
+       "ci": [
+        -0.1896,
+        0.1188
+       ],
+       "pPositive": 0.373
+      }
+     },
+     "keyPasses": {
+      "sameClub": 0.9618581034693069,
+      "eplToEpl": 1.0058636527756963,
+      "foreign": 0.8638441867694774,
+      "sameClub - anyTransfer": {
+       "nA": 116,
+       "nB": 26,
+       "diff": 0.0668,
+       "ci": [
+        -0.1351,
+        0.2424
+       ],
+       "pPositive": 0.773
+      }
+     }
+    }
+   },
+   "FWD": {
+    "n": {
+     "sameClub": 80,
+     "eplToEpl": 15,
+     "foreign": 19
+    },
+    "metrics": {
+     "shots": {
+      "sameClub": 0.9834903838195369,
+      "eplToEpl": 0.8167645672348575,
+      "foreign": 0.7677149928989082,
+      "sameClub - anyTransfer": {
+       "nA": 80,
+       "nB": 34,
+       "diff": 0.1932,
+       "ci": [
+        0.1058,
+        0.2784
+       ],
+       "pPositive": 1
+      }
+     },
+     "keyPasses": {
+      "sameClub": 0.9688475711824751,
+      "eplToEpl": 0.8800727721183434,
+      "foreign": 0.8529999083800291,
+      "sameClub - anyTransfer": {
+       "nA": 80,
+       "nB": 34,
+       "diff": 0.1047,
+       "ci": [
+        -0.0302,
+        0.2269
+       ],
+       "pPositive": 0.942
+      }
+     }
+    }
+   }
+  }
+ },
+ "adjusted": {
+  "shots": {
+   "n": 486,
+   "terms": {
+    "intercept": 0.233,
+    "sourceRate": 0.648,
+    "isTransfer": -0.2047,
+    "isForeign": 0.0515,
+    "posMID": 0.2803,
+    "posFWD": 0.4971
+   },
+   "reading": "isTransfer is the level shift after source rate and position. isForeign is any ADDITIONAL foreign effect on top of transferring at all — the number that would have to be non-zero for a league-specific penalty to exist."
+  },
+  "keyPasses": {
+   "n": 486,
+   "terms": {
+    "intercept": 0.1728,
+    "sourceRate": 0.6796,
+    "isTransfer": -0.133,
+    "isForeign": 0.0562,
+    "posMID": 0.1841,
+    "posFWD": 0.1862
+   },
+   "reading": "isTransfer is the level shift after source rate and position. isForeign is any ADDITIONAL foreign effect on top of transferring at all — the number that would have to be non-zero for a league-specific penalty to exist."
+  }
+ },
+ "caveat": "TRANSFER-ASSOCIATED, not transfer-caused. Role, age, destination squad quality and selection into the both-sides-minutes requirement are uncontrolled."
+}
