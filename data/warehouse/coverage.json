@@ -1,14 +1,14 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-29T10:36:35.964Z",
-  "coverageDigest": "3d6f1d88f282b097",
+  "generatedAt": "2026-08-30T09:39:25.642Z",
+  "coverageDigest": "5dbf6d211a1bebd6",
   "entities": {
    "structural_match": 12182,
-   "team_match": 3164,
+   "team_match": 3404,
    "player_season": 25003,
-   "teams": 222,
-   "players": 547,
+   "teams": 227,
+   "players": 548,
    "transfers": 2566
   },
   "sources": {
@@ -20,7 +20,7 @@
    "espn": {
     "minSeason": 2021,
     "competitionSeasons": 40,
-    "rows": 26585
+    "rows": 26705
    }
   },
   "seasonWindows": {
@@ -47,13 +47,13 @@
     2026
    ]
   },
-  "files": 203
+  "files": 205
  },
- "builtAt": "2026-08-29T10:36:35.965Z",
+ "builtAt": "2026-08-30T09:39:25.643Z",
  "footprint": {
-  "files": 203,
-  "bytes": 4429504,
-  "mb": 4.43
+  "files": 205,
+  "bytes": 4493920,
+  "mb": 4.49
  },
  "competitions": [
   {
@@ -63,10 +63,10 @@
    "season": 2021,
    "structuralMatches": 0,
    "structuralPlayed": 0,
-   "espnMatches": 120,
+   "espnMatches": 240,
    "espnExpected": 380,
-   "espnCollectedPct": 31.6,
-   "teamMatchRows": 240,
+   "espnCollectedPct": 63.2,
+   "teamMatchRows": 480,
    "joinRatePct": 0,
    "teams": 0,
    "fdSquadPlayers": 0,
@@ -487,7 +487,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 24,
-   "fdSquadPlayers": 719,
+   "fdSquadPlayers": 721,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1399,7 +1399,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 536,
+   "fdSquadPlayers": 539,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1627,7 +1627,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 484,
+   "fdSquadPlayers": 487,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1855,7 +1855,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 559,
+   "fdSquadPlayers": 560,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1993,19 +1993,57 @@
    },
    "unresolvedMatches": 189,
    "scoreConflicts": 0
+  },
+  {
+   "competition": "uefa.champions",
+   "name": "UEFA Champions League",
+   "tier": "bridge",
+   "season": 2026,
+   "structuralMatches": 0,
+   "structuralPlayed": 0,
+   "espnMatches": 0,
+   "espnExpected": 189,
+   "espnCollectedPct": 0,
+   "teamMatchRows": 0,
+   "joinRatePct": 0,
+   "teams": 36,
+   "fdSquadPlayers": 0,
+   "playerSeasonRows": 0,
+   "playerSeasonTierA": 0,
+   "playerSeasonTierB": 0,
+   "cov": {
+    "startingLineup": 0,
+    "formation": 0,
+    "shots": 0,
+    "shotsOnTarget": 0,
+    "possession": 0,
+    "corners": 0,
+    "passAccuracy": 0,
+    "saves": 0,
+    "playerMinutes": 0,
+    "playerStarts": 0,
+    "playerAppearances": 0,
+    "playerPosition": 0,
+    "playerDateOfBirth": 0,
+    "manager": 0,
+    "xg": 0,
+    "xa": 0
+   },
+   "unresolvedMatches": 0,
+   "scoreConflicts": 0
   }
  ],
  "identity": {
-  "fplTotal": 622,
-  "fplActive": 571,
+  "fplTotal": 623,
+  "fplActive": 572,
   "fplDeparted": 51,
-  "mappedToEspn": 547,
-  "mappedToFootballData": 524,
+  "mappedToEspn": 548,
+  "mappedToFootballData": 525,
   "ambiguousRefused": 0,
-  "unmappedActive": 25,
-  "unmappedDeparted": 50,
+  "unmappedActive": 24,
+  "unmappedDeparted": 51,
   "historyByCompetition": {
-   "eng.1": 450,
+   "eng.1": 452,
    "eng.2": 101,
    "esp.1": 38,
    "ger.1": 53,
@@ -2016,7 +2054,7 @@
    "uefa.champions": 0,
    "uefa.europa": 0
   },
-  "withEspnSeasonMinutes": 210,
+  "withEspnSeasonMinutes": 215,
   "unmappedActiveList": [
    {
     "code": 606798,
@@ -2046,6 +2084,11 @@
    {
     "code": 684268,
     "name": "Shepherd",
+    "status": "a"
+   },
+   {
+    "code": 79602,
+    "name": "Bentley",
     "status": "a"
    },
    {
@@ -2101,16 +2144,6 @@
    {
     "code": 590039,
     "name": "Mukasa",
-    "status": "a"
-   },
-   {
-    "code": 616288,
-    "name": "McAidoo",
-    "status": "a"
-   },
-   {
-    "code": 554054,
-    "name": "Braithwaite",
     "status": "a"
    },
    {

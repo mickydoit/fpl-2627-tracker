@@ -1,23 +1,23 @@
 {
- "builtAt": "2026-08-29T10:36:34.566Z",
+ "builtAt": "2026-08-30T09:39:24.185Z",
  "teams": {
-  "total": 222,
+  "total": 227,
   "withFpl": 20,
   "withEspn": 44,
   "problems": 0
  },
  "players": {
-  "fplTotal": 622,
-  "inFplEspnMap": 547,
-  "mappedToFootballData": 524,
+  "fplTotal": 623,
+  "inFplEspnMap": 548,
+  "mappedToFootballData": 525,
   "byMethod": {
-   "dob+full-name": 496,
+   "dob+full-name": 497,
    "dob+surname": 28
   },
   "proposals": 0,
   "unmapped": 23
  },
- "footballDataPlayersSeen": 10094,
+ "footballDataPlayersSeen": 10103,
  "teamProblems": [],
  "proposals": [],
  "unmapped": [
@@ -248,6 +248,18 @@
    "reason": "date of birth matched but no name did"
   },
   {
+   "code": 554054,
+   "name": "Braithwaite",
+   "dateOfBirth": "2008-02-08",
+   "candidates": [
+    {
+     "footballDataId": 294736,
+     "name": "Miguel Cubo"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
    "code": 569577,
    "name": "Rowe",
    "dateOfBirth": "2006-10-02",
@@ -330,12 +342,6 @@
     }
    ],
    "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 629397,
-   "name": "Andrews",
-   "dateOfBirth": "2006-08-06",
-   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 696104,
