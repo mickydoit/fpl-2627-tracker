@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-08-30T09:39:24.185Z",
+ "builtAt": "2026-08-31T10:16:14.842Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -7,17 +7,17 @@
   "problems": 0
  },
  "players": {
-  "fplTotal": 623,
-  "inFplEspnMap": 548,
-  "mappedToFootballData": 525,
+  "fplTotal": 626,
+  "inFplEspnMap": 549,
+  "mappedToFootballData": 527,
   "byMethod": {
-   "dob+full-name": 497,
+   "dob+full-name": 499,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 23
+  "unmapped": 22
  },
- "footballDataPlayersSeen": 10103,
+ "footballDataPlayersSeen": 10115,
  "teamProblems": [],
  "proposals": [],
  "unmapped": [
@@ -44,12 +44,6 @@
     }
    ],
    "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 247348,
-   "name": "Muñoz",
-   "dateOfBirth": "2006-07-19",
-   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 434399,
@@ -125,6 +119,22 @@
     {
      "footballDataId": 186393,
      "name": "Duke Verduin"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 487838,
+   "name": "Hall",
+   "dateOfBirth": "1999-12-07",
+   "candidates": [
+    {
+     "footballDataId": 122231,
+     "name": "Isaac Schmidt"
+    },
+    {
+     "footballDataId": 189593,
+     "name": "Sam Dalby"
     }
    ],
    "reason": "date of birth matched but no name did"
@@ -339,26 +349,6 @@
     {
      "footballDataId": 184743,
      "name": "Jeppe Corfitzen"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 696104,
-   "name": "Ahoka",
-   "dateOfBirth": "2005-12-17",
-   "candidates": [
-    {
-     "footballDataId": 286773,
-     "name": "Jaden Heskey"
-    },
-    {
-     "footballDataId": 229272,
-     "name": "Ifechukwu Ogbus"
-    },
-    {
-     "footballDataId": 245346,
-     "name": "Messias"
     }
    ],
    "reason": "date of birth matched but no name did"
