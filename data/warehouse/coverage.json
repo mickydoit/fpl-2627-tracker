@@ -1,14 +1,14 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-31T10:16:16.306Z",
-  "coverageDigest": "ba4b3317de83e8ec",
+  "generatedAt": "2026-09-01T09:06:53.804Z",
+  "coverageDigest": "77868424ea82341d",
   "entities": {
    "structural_match": 12326,
-   "team_match": 3644,
+   "team_match": 3884,
    "player_season": 25003,
    "teams": 227,
-   "players": 549,
+   "players": 548,
    "transfers": 2566
   },
   "sources": {
@@ -20,7 +20,7 @@
    "espn": {
     "minSeason": 2021,
     "competitionSeasons": 40,
-    "rows": 26825
+    "rows": 26945
    }
   },
   "seasonWindows": {
@@ -47,13 +47,13 @@
     2026
    ]
   },
-  "files": 205
+  "files": 207
  },
- "builtAt": "2026-08-31T10:16:16.307Z",
+ "builtAt": "2026-09-01T09:06:53.805Z",
  "footprint": {
-  "files": 205,
-  "bytes": 4565902,
-  "mb": 4.57
+  "files": 207,
+  "bytes": 4633476,
+  "mb": 4.63
  },
  "competitions": [
   {
@@ -63,10 +63,10 @@
    "season": 2021,
    "structuralMatches": 0,
    "structuralPlayed": 0,
-   "espnMatches": 360,
+   "espnMatches": 380,
    "espnExpected": 380,
-   "espnCollectedPct": 94.7,
-   "teamMatchRows": 720,
+   "espnCollectedPct": 100,
+   "teamMatchRows": 760,
    "joinRatePct": 0,
    "teams": 0,
    "fdSquadPlayers": 0,
@@ -252,7 +252,7 @@
    "tier": "target",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 19,
+   "structuralPlayed": 20,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
@@ -281,7 +281,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 19,
+   "unresolvedMatches": 20,
    "scoreConflicts": 0
   },
   {
@@ -291,10 +291,10 @@
    "season": 2021,
    "structuralMatches": 0,
    "structuralPlayed": 0,
-   "espnMatches": 0,
+   "espnMatches": 100,
    "espnExpected": 557,
-   "espnCollectedPct": 0,
-   "teamMatchRows": 0,
+   "espnCollectedPct": 18,
+   "teamMatchRows": 200,
    "joinRatePct": 0,
    "teams": 0,
    "fdSquadPlayers": 0,
@@ -302,14 +302,14 @@
    "playerSeasonTierA": 646,
    "playerSeasonTierB": 337,
    "cov": {
-    "startingLineup": 0,
-    "formation": 0,
-    "shots": 0,
-    "shotsOnTarget": 0,
-    "possession": 0,
-    "corners": 0,
-    "passAccuracy": 0,
-    "saves": 0,
+    "startingLineup": 100,
+    "formation": 100,
+    "shots": 100,
+    "shotsOnTarget": 100,
+    "possession": 100,
+    "corners": 100,
+    "passAccuracy": 100,
+    "saves": 100,
     "playerMinutes": 34.3,
     "playerStarts": 34.3,
     "playerAppearances": 73.1,
@@ -708,14 +708,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 27,
+   "structuralPlayed": 30,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 556,
+   "fdSquadPlayers": 557,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -737,7 +737,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 27,
+   "unresolvedMatches": 30,
    "scoreConflicts": 0
   },
   {
@@ -1164,7 +1164,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 18,
+   "structuralPlayed": 20,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
@@ -1193,7 +1193,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 18,
+   "unresolvedMatches": 20,
    "scoreConflicts": 0
   },
   {
@@ -1848,14 +1848,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 30,
+   "structuralPlayed": 33,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 582,
+   "fdSquadPlayers": 583,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1877,7 +1877,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 30,
+   "unresolvedMatches": 33,
    "scoreConflicts": 0
   },
   {
@@ -2037,28 +2037,33 @@
   "fplTotal": 626,
   "fplActive": 575,
   "fplDeparted": 51,
-  "mappedToEspn": 549,
-  "mappedToFootballData": 527,
+  "mappedToEspn": 548,
+  "mappedToFootballData": 523,
   "ambiguousRefused": 0,
-  "unmappedActive": 26,
+  "unmappedActive": 27,
   "unmappedDeparted": 51,
   "historyByCompetition": {
-   "eng.1": 452,
-   "eng.2": 102,
+   "eng.1": 451,
+   "eng.2": 103,
    "esp.1": 38,
    "ger.1": 53,
    "ita.1": 33,
-   "fra.1": 55,
+   "fra.1": 54,
    "ned.1": 32,
    "por.1": 19,
    "uefa.champions": 0,
    "uefa.europa": 0
   },
-  "withEspnSeasonMinutes": 215,
+  "withEspnSeasonMinutes": 216,
   "unmappedActiveList": [
    {
     "code": 606798,
     "name": "A.García",
+    "status": "a"
+   },
+   {
+    "code": 178301,
+    "name": "Watkins",
     "status": "a"
    },
    {
@@ -2069,11 +2074,6 @@
    {
     "code": 550090,
     "name": "Coppola",
-    "status": "a"
-   },
-   {
-    "code": 519324,
-    "name": "Cozier-Duberry",
     "status": "a"
    },
    {
@@ -2112,11 +2112,6 @@
     "status": "a"
    },
    {
-    "code": 616069,
-    "name": "Zepa",
-    "status": "a"
-   },
-   {
     "code": 661800,
     "name": "McCarthy",
     "status": "a"
@@ -2132,14 +2127,14 @@
     "status": "a"
    },
    {
+    "code": 201595,
+    "name": "Perri",
+    "status": "a"
+   },
+   {
     "code": 565297,
     "name": "Mateo Joseph",
     "status": "i"
-   },
-   {
-    "code": 97846,
-    "name": "Cairns",
-    "status": "a"
    },
    {
     "code": 519440,
@@ -2157,6 +2152,11 @@
     "status": "a"
    },
    {
+    "code": 490881,
+    "name": "Collyer",
+    "status": "a"
+   },
+   {
     "code": 576620,
     "name": "Bendito Mantato",
     "status": "a"
@@ -2169,6 +2169,11 @@
    {
     "code": 204822,
     "name": "O.Richards",
+    "status": "a"
+   },
+   {
+    "code": 538638,
+    "name": "Bindon",
     "status": "a"
    },
    {

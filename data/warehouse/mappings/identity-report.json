@@ -1,24 +1,49 @@
 {
- "builtAt": "2026-08-31T10:16:14.842Z",
+ "builtAt": "2026-09-01T09:06:52.405Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
-  "withEspn": 44,
-  "problems": 0
+  "withEspn": 45,
+  "problems": 4
  },
  "players": {
   "fplTotal": 626,
-  "inFplEspnMap": 549,
-  "mappedToFootballData": 527,
+  "inFplEspnMap": 548,
+  "mappedToFootballData": 523,
   "byMethod": {
-   "dob+full-name": 499,
+   "dob+full-name": 495,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 22
+  "unmapped": 25
  },
- "footballDataPlayersSeen": 10115,
- "teamProblems": [],
+ "footballDataPlayersSeen": 10117,
+ "teamProblems": [
+  {
+   "espnTeamId": 338,
+   "espnName": "Reading",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 342,
+   "espnName": "Peterborough United",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 397,
+   "espnName": "Barnsley",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 346,
+   "espnName": "Blackpool",
+   "candidates": 0,
+   "reason": "no football-data club"
+  }
+ ],
  "proposals": [],
  "unmapped": [
   {
@@ -44,6 +69,32 @@
     }
    ],
    "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 231899,
+   "name": "Taylor",
+   "dateOfBirth": "2005-04-12",
+   "candidates": [
+    {
+     "footballDataId": 273415,
+     "name": "Henry Cartwright"
+    },
+    {
+     "footballDataId": 217910,
+     "name": "Giacomo Stabile"
+    },
+    {
+     "footballDataId": 227024,
+     "name": "Luis Fernando"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 247348,
+   "name": "Muñoz",
+   "dateOfBirth": "2006-07-19",
+   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 434399,
@@ -349,6 +400,18 @@
     {
      "footballDataId": 184743,
      "name": "Jeppe Corfitzen"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 616069,
+   "name": "Zepa",
+   "dateOfBirth": "2008-07-07",
+   "candidates": [
+    {
+     "footballDataId": 292310,
+     "name": "Axel Lassus"
     }
    ],
    "reason": "date of birth matched but no name did"
