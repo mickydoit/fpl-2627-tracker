@@ -1,14 +1,14 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-01T09:06:53.804Z",
-  "coverageDigest": "77868424ea82341d",
+  "generatedAt": "2026-09-02T08:19:56.786Z",
+  "coverageDigest": "a9577c130fb816c3",
   "entities": {
    "structural_match": 12326,
-   "team_match": 3884,
+   "team_match": 4124,
    "player_season": 25003,
    "teams": 227,
-   "players": 548,
+   "players": 542,
    "transfers": 2566
   },
   "sources": {
@@ -20,7 +20,7 @@
    "espn": {
     "minSeason": 2021,
     "competitionSeasons": 40,
-    "rows": 26945
+    "rows": 27065
    }
   },
   "seasonWindows": {
@@ -49,11 +49,11 @@
   },
   "files": 207
  },
- "builtAt": "2026-09-01T09:06:53.805Z",
+ "builtAt": "2026-09-02T08:19:56.787Z",
  "footprint": {
   "files": 207,
-  "bytes": 4633476,
-  "mb": 4.63
+  "bytes": 4699367,
+  "mb": 4.7
  },
  "competitions": [
   {
@@ -259,7 +259,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 688,
+   "fdSquadPlayers": 720,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -291,10 +291,10 @@
    "season": 2021,
    "structuralMatches": 0,
    "structuralPlayed": 0,
-   "espnMatches": 100,
+   "espnMatches": 220,
    "espnExpected": 557,
-   "espnCollectedPct": 18,
-   "teamMatchRows": 200,
+   "espnCollectedPct": 39.5,
+   "teamMatchRows": 440,
    "joinRatePct": 0,
    "teams": 0,
    "fdSquadPlayers": 0,
@@ -480,14 +480,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 552,
-   "structuralPlayed": 36,
+   "structuralPlayed": 44,
    "espnMatches": 0,
    "espnExpected": 557,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 24,
-   "fdSquadPlayers": 721,
+   "fdSquadPlayers": 724,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -509,7 +509,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 36,
+   "unresolvedMatches": 44,
    "scoreConflicts": 0
   },
   {
@@ -715,7 +715,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 557,
+   "fdSquadPlayers": 587,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -943,7 +943,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 597,
+   "fdSquadPlayers": 615,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1171,7 +1171,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 657,
+   "fdSquadPlayers": 698,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1399,7 +1399,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 541,
+   "fdSquadPlayers": 563,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1627,7 +1627,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 526,
+   "fdSquadPlayers": 546,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1855,7 +1855,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 583,
+   "fdSquadPlayers": 590,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -2034,19 +2034,19 @@
   }
  ],
  "identity": {
-  "fplTotal": 626,
-  "fplActive": 575,
-  "fplDeparted": 51,
-  "mappedToEspn": 548,
-  "mappedToFootballData": 523,
+  "fplTotal": 629,
+  "fplActive": 568,
+  "fplDeparted": 61,
+  "mappedToEspn": 542,
+  "mappedToFootballData": 519,
   "ambiguousRefused": 0,
   "unmappedActive": 27,
-  "unmappedDeparted": 51,
+  "unmappedDeparted": 60,
   "historyByCompetition": {
-   "eng.1": 451,
+   "eng.1": 445,
    "eng.2": 103,
    "esp.1": 38,
-   "ger.1": 53,
+   "ger.1": 52,
    "ita.1": 33,
    "fra.1": 54,
    "ned.1": 32,
@@ -2059,11 +2059,6 @@
    {
     "code": 606798,
     "name": "A.García",
-    "status": "a"
-   },
-   {
-    "code": 178301,
-    "name": "Watkins",
     "status": "a"
    },
    {
@@ -2107,11 +2102,6 @@
     "status": "a"
    },
    {
-    "code": 505079,
-    "name": "McNally",
-    "status": "a"
-   },
-   {
     "code": 661800,
     "name": "McCarthy",
     "status": "a"
@@ -2127,14 +2117,14 @@
     "status": "a"
    },
    {
-    "code": 201595,
-    "name": "Perri",
-    "status": "a"
-   },
-   {
     "code": 565297,
     "name": "Mateo Joseph",
     "status": "i"
+   },
+   {
+    "code": 155465,
+    "name": "Zetterer",
+    "status": "a"
    },
    {
     "code": 519440,
@@ -2147,13 +2137,18 @@
     "status": "i"
    },
    {
+    "code": 482616,
+    "name": "Barcola",
+    "status": "a"
+   },
+   {
     "code": 590039,
     "name": "Mukasa",
     "status": "a"
    },
    {
-    "code": 490881,
-    "name": "Collyer",
+    "code": 624777,
+    "name": "Allan",
     "status": "a"
    },
    {
@@ -2167,13 +2162,13 @@
     "status": "a"
    },
    {
-    "code": 204822,
-    "name": "O.Richards",
+    "code": 247348,
+    "name": "Muñoz",
     "status": "a"
    },
    {
-    "code": 538638,
-    "name": "Bindon",
+    "code": 204822,
+    "name": "O.Richards",
     "status": "a"
    },
    {
@@ -2184,6 +2179,11 @@
    {
     "code": 499716,
     "name": "Rowswell",
+    "status": "a"
+   },
+   {
+    "code": 499721,
+    "name": "Moore",
     "status": "a"
    },
    {

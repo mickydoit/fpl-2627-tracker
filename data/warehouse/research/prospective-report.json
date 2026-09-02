@@ -1,16 +1,17 @@
 {
- "generatedAt": "2026-09-01T09:06:53.868Z",
+ "generatedAt": "2026-09-02T08:19:56.845Z",
  "experimentFreeze": {
   "commit": "ae062f6",
   "at": "2026-08-29T01:18:26.376Z",
   "digest": "e64207497905c541",
   "firstScorableGW": 3
  },
- "dataThroughGW": 1,
+ "dataThroughGW": 2,
  "eligibleGameweeks": [],
  "eligibleGwCount": 0,
  "excludedGameweeks": [
-  1
+  1,
+  2
  ],
  "cohortN": 32,
  "modelChanges": "NONE — no candidate was refitted, edited or re-versioned this run.",

@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-01T09:06:52.405Z",
+ "builtAt": "2026-09-02T08:19:55.349Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -7,27 +7,21 @@
   "problems": 4
  },
  "players": {
-  "fplTotal": 626,
-  "inFplEspnMap": 548,
-  "mappedToFootballData": 523,
+  "fplTotal": 629,
+  "inFplEspnMap": 542,
+  "mappedToFootballData": 519,
   "byMethod": {
-   "dob+full-name": 495,
+   "dob+full-name": 491,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 25
+  "unmapped": 23
  },
- "footballDataPlayersSeen": 10117,
+ "footballDataPlayersSeen": 10128,
  "teamProblems": [
   {
-   "espnTeamId": 338,
-   "espnName": "Reading",
-   "candidates": 0,
-   "reason": "no football-data club"
-  },
-  {
-   "espnTeamId": 342,
-   "espnName": "Peterborough United",
+   "espnTeamId": 346,
+   "espnName": "Blackpool",
    "candidates": 0,
    "reason": "no football-data club"
   },
@@ -38,8 +32,14 @@
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 346,
-   "espnName": "Blackpool",
+   "espnTeamId": 338,
+   "espnName": "Reading",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 342,
+   "espnName": "Peterborough United",
    "candidates": 0,
    "reason": "no football-data club"
   }
@@ -89,12 +89,6 @@
     }
    ],
    "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 247348,
-   "name": "Muñoz",
-   "dateOfBirth": "2006-07-19",
-   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 434399,
@@ -227,26 +221,6 @@
    "name": "Hughes",
    "dateOfBirth": "2008-09-19",
    "reason": "no football-data player born that day in the collected competitions"
-  },
-  {
-   "code": 503301,
-   "name": "Hutchinson",
-   "dateOfBirth": "2003-10-30",
-   "candidates": [
-    {
-     "footballDataId": 171802,
-     "name": "Cameron Humphreys"
-    },
-    {
-     "footballDataId": 264158,
-     "name": "Oier Gastesi"
-    },
-    {
-     "footballDataId": 186393,
-     "name": "Duke Verduin"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
   },
   {
    "code": 508395,
