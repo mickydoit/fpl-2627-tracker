@@ -1,14 +1,14 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-02T08:19:56.786Z",
-  "coverageDigest": "a9577c130fb816c3",
+  "generatedAt": "2026-09-03T08:29:22.200Z",
+  "coverageDigest": "668d5d5bf79eef1e",
   "entities": {
    "structural_match": 12326,
-   "team_match": 4124,
+   "team_match": 4364,
    "player_season": 25003,
    "teams": 227,
-   "players": 542,
+   "players": 514,
    "transfers": 2566
   },
   "sources": {
@@ -20,7 +20,7 @@
    "espn": {
     "minSeason": 2021,
     "competitionSeasons": 40,
-    "rows": 27065
+    "rows": 27185
    }
   },
   "seasonWindows": {
@@ -49,11 +49,11 @@
   },
   "files": 207
  },
- "builtAt": "2026-09-02T08:19:56.787Z",
+ "builtAt": "2026-09-03T08:29:22.201Z",
  "footprint": {
   "files": 207,
-  "bytes": 4699367,
-  "mb": 4.7
+  "bytes": 4756656,
+  "mb": 4.76
  },
  "competitions": [
   {
@@ -259,7 +259,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 720,
+   "fdSquadPlayers": 555,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -291,10 +291,10 @@
    "season": 2021,
    "structuralMatches": 0,
    "structuralPlayed": 0,
-   "espnMatches": 220,
+   "espnMatches": 340,
    "espnExpected": 557,
-   "espnCollectedPct": 39.5,
-   "teamMatchRows": 440,
+   "espnCollectedPct": 61,
+   "teamMatchRows": 680,
    "joinRatePct": 0,
    "teams": 0,
    "fdSquadPlayers": 0,
@@ -480,14 +480,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 552,
-   "structuralPlayed": 44,
+   "structuralPlayed": 48,
    "espnMatches": 0,
    "espnExpected": 557,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 24,
-   "fdSquadPlayers": 724,
+   "fdSquadPlayers": 674,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -509,7 +509,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 44,
+   "unresolvedMatches": 48,
    "scoreConflicts": 0
   },
   {
@@ -715,7 +715,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 587,
+   "fdSquadPlayers": 515,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -943,7 +943,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 615,
+   "fdSquadPlayers": 522,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1171,7 +1171,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 698,
+   "fdSquadPlayers": 581,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1399,7 +1399,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 563,
+   "fdSquadPlayers": 468,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1627,7 +1627,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 546,
+   "fdSquadPlayers": 483,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1855,7 +1855,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 590,
+   "fdSquadPlayers": 509,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -2034,23 +2034,23 @@
   }
  ],
  "identity": {
-  "fplTotal": 629,
-  "fplActive": 568,
-  "fplDeparted": 61,
-  "mappedToEspn": 542,
-  "mappedToFootballData": 519,
+  "fplTotal": 651,
+  "fplActive": 562,
+  "fplDeparted": 89,
+  "mappedToEspn": 514,
+  "mappedToFootballData": 494,
   "ambiguousRefused": 0,
-  "unmappedActive": 27,
-  "unmappedDeparted": 60,
+  "unmappedActive": 51,
+  "unmappedDeparted": 86,
   "historyByCompetition": {
-   "eng.1": 445,
-   "eng.2": 103,
-   "esp.1": 38,
-   "ger.1": 52,
-   "ita.1": 33,
-   "fra.1": 54,
-   "ned.1": 32,
-   "por.1": 19,
+   "eng.1": 417,
+   "eng.2": 97,
+   "esp.1": 37,
+   "ger.1": 50,
+   "ita.1": 30,
+   "fra.1": 52,
+   "ned.1": 31,
+   "por.1": 16,
    "uefa.champions": 0,
    "uefa.europa": 0
   },
@@ -2062,6 +2062,16 @@
     "status": "a"
    },
    {
+    "code": 245719,
+    "name": "Harwood-Bellis",
+    "status": "a"
+   },
+   {
+    "code": 638987,
+    "name": "Mbaye",
+    "status": "a"
+   },
+   {
     "code": 231416,
     "name": "F.Kadıoğlu",
     "status": "a"
@@ -2069,6 +2079,11 @@
    {
     "code": 550090,
     "name": "Coppola",
+    "status": "a"
+   },
+   {
+    "code": 592984,
+    "name": "Andrés",
     "status": "a"
    },
    {
@@ -2087,11 +2102,6 @@
     "status": "a"
    },
    {
-    "code": 606921,
-    "name": "Esse",
-    "status": "a"
-   },
-   {
     "code": 450542,
     "name": "J.Rak-Sakyi",
     "status": "a"
@@ -2099,6 +2109,56 @@
    {
     "code": 672492,
     "name": "Drakes-Thomas",
+    "status": "a"
+   },
+   {
+    "code": 605972,
+    "name": "Ahanor",
+    "status": "a"
+   },
+   {
+    "code": 172850,
+    "name": "Chilwell",
+    "status": "a"
+   },
+   {
+    "code": 450063,
+    "name": "Timber",
+    "status": "a"
+   },
+   {
+    "code": 533646,
+    "name": "Osorio",
+    "status": "a"
+   },
+   {
+    "code": 114283,
+    "name": "Grealish",
+    "status": "a"
+   },
+   {
+    "code": 154043,
+    "name": "Maitland-Niles",
+    "status": "a"
+   },
+   {
+    "code": 551050,
+    "name": "Larsson",
+    "status": "a"
+   },
+   {
+    "code": 500033,
+    "name": "Ángel",
+    "status": "a"
+   },
+   {
+    "code": 442299,
+    "name": "Affengruber",
+    "status": "a"
+   },
+   {
+    "code": 490094,
+    "name": "Iroegbunam",
     "status": "a"
    },
    {
@@ -2112,83 +2172,38 @@
     "status": "a"
    },
    {
+    "code": 626751,
+    "name": "Ansah",
+    "status": "a"
+   },
+   {
+    "code": 631000,
+    "name": "Vaz",
+    "status": "a"
+   },
+   {
+    "code": 496181,
+    "name": "Norton-Cuffy",
+    "status": "a"
+   },
+   {
+    "code": 243951,
+    "name": "Thomas",
+    "status": "a"
+   },
+   {
+    "code": 647839,
+    "name": "Mouzakitis",
+    "status": "a"
+   },
+   {
     "code": 222018,
     "name": "Johnson",
     "status": "a"
    },
    {
-    "code": 565297,
-    "name": "Mateo Joseph",
-    "status": "i"
-   },
-   {
-    "code": 155465,
-    "name": "Zetterer",
-    "status": "a"
-   },
-   {
-    "code": 519440,
-    "name": "Lucky",
-    "status": "a"
-   },
-   {
-    "code": 500058,
-    "name": "Danns",
-    "status": "i"
-   },
-   {
-    "code": 482616,
-    "name": "Barcola",
-    "status": "a"
-   },
-   {
-    "code": 590039,
-    "name": "Mukasa",
-    "status": "a"
-   },
-   {
-    "code": 624777,
-    "name": "Allan",
-    "status": "a"
-   },
-   {
-    "code": 576620,
-    "name": "Bendito Mantato",
-    "status": "a"
-   },
-   {
-    "code": 596047,
-    "name": "Obi",
-    "status": "a"
-   },
-   {
-    "code": 247348,
-    "name": "Muñoz",
-    "status": "a"
-   },
-   {
-    "code": 204822,
-    "name": "O.Richards",
-    "status": "a"
-   },
-   {
-    "code": 640419,
-    "name": "Byfield",
-    "status": "a"
-   },
-   {
-    "code": 499716,
-    "name": "Rowswell",
-    "status": "a"
-   },
-   {
-    "code": 499721,
-    "name": "Moore",
-    "status": "a"
-   },
-   {
-    "code": 499726,
-    "name": "Olusesi",
+    "code": 431639,
+    "name": "Flemming",
     "status": "a"
    }
   ]
