@@ -1,14 +1,14 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-03T08:29:22.200Z",
-  "coverageDigest": "668d5d5bf79eef1e",
+  "generatedAt": "2026-09-04T08:25:34.709Z",
+  "coverageDigest": "ab8203e132842759",
   "entities": {
    "structural_match": 12326,
-   "team_match": 4364,
+   "team_match": 4604,
    "player_season": 25003,
    "teams": 227,
-   "players": 514,
+   "players": 534,
    "transfers": 2566
   },
   "sources": {
@@ -20,7 +20,7 @@
    "espn": {
     "minSeason": 2021,
     "competitionSeasons": 40,
-    "rows": 27185
+    "rows": 27305
    }
   },
   "seasonWindows": {
@@ -49,11 +49,11 @@
   },
   "files": 207
  },
- "builtAt": "2026-09-03T08:29:22.201Z",
+ "builtAt": "2026-09-04T08:25:34.710Z",
  "footprint": {
   "files": 207,
-  "bytes": 4756656,
-  "mb": 4.76
+  "bytes": 4822899,
+  "mb": 4.82
  },
  "competitions": [
   {
@@ -291,10 +291,10 @@
    "season": 2021,
    "structuralMatches": 0,
    "structuralPlayed": 0,
-   "espnMatches": 340,
+   "espnMatches": 460,
    "espnExpected": 557,
-   "espnCollectedPct": 61,
-   "teamMatchRows": 680,
+   "espnCollectedPct": 82.6,
+   "teamMatchRows": 920,
    "joinRatePct": 0,
    "teams": 0,
    "fdSquadPlayers": 0,
@@ -708,7 +708,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 30,
+   "structuralPlayed": 31,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
@@ -737,7 +737,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 30,
+   "unresolvedMatches": 31,
    "scoreConflicts": 0
   },
   {
@@ -1392,7 +1392,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 18,
+   "structuralPlayed": 19,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
@@ -1421,7 +1421,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 18,
+   "unresolvedMatches": 19,
    "scoreConflicts": 0
   },
   {
@@ -2034,27 +2034,27 @@
   }
  ],
  "identity": {
-  "fplTotal": 651,
-  "fplActive": 562,
-  "fplDeparted": 89,
-  "mappedToEspn": 514,
-  "mappedToFootballData": 494,
+  "fplTotal": 652,
+  "fplActive": 561,
+  "fplDeparted": 91,
+  "mappedToEspn": 534,
+  "mappedToFootballData": 510,
   "ambiguousRefused": 0,
-  "unmappedActive": 51,
-  "unmappedDeparted": 86,
+  "unmappedActive": 27,
+  "unmappedDeparted": 91,
   "historyByCompetition": {
-   "eng.1": 417,
-   "eng.2": 97,
-   "esp.1": 37,
-   "ger.1": 50,
-   "ita.1": 30,
-   "fra.1": 52,
-   "ned.1": 31,
+   "eng.1": 420,
+   "eng.2": 101,
+   "esp.1": 39,
+   "ger.1": 54,
+   "ita.1": 34,
+   "fra.1": 62,
+   "ned.1": 32,
    "por.1": 16,
    "uefa.champions": 0,
    "uefa.europa": 0
   },
-  "withEspnSeasonMinutes": 216,
+  "withEspnSeasonMinutes": 219,
   "unmappedActiveList": [
    {
     "code": 606798,
@@ -2062,13 +2062,18 @@
     "status": "a"
    },
    {
-    "code": 245719,
-    "name": "Harwood-Bellis",
+    "code": 215711,
+    "name": "Bailey",
     "status": "a"
    },
    {
-    "code": 638987,
-    "name": "Mbaye",
+    "code": 645618,
+    "name": "Burrowes",
+    "status": "a"
+   },
+   {
+    "code": 571380,
+    "name": "Lynch",
     "status": "a"
    },
    {
@@ -2082,8 +2087,8 @@
     "status": "a"
    },
    {
-    "code": 592984,
-    "name": "Andrés",
+    "code": 471551,
+    "name": "Azeez",
     "status": "a"
    },
    {
@@ -2112,56 +2117,6 @@
     "status": "a"
    },
    {
-    "code": 605972,
-    "name": "Ahanor",
-    "status": "a"
-   },
-   {
-    "code": 172850,
-    "name": "Chilwell",
-    "status": "a"
-   },
-   {
-    "code": 450063,
-    "name": "Timber",
-    "status": "a"
-   },
-   {
-    "code": 533646,
-    "name": "Osorio",
-    "status": "a"
-   },
-   {
-    "code": 114283,
-    "name": "Grealish",
-    "status": "a"
-   },
-   {
-    "code": 154043,
-    "name": "Maitland-Niles",
-    "status": "a"
-   },
-   {
-    "code": 551050,
-    "name": "Larsson",
-    "status": "a"
-   },
-   {
-    "code": 500033,
-    "name": "Ángel",
-    "status": "a"
-   },
-   {
-    "code": 442299,
-    "name": "Affengruber",
-    "status": "a"
-   },
-   {
-    "code": 490094,
-    "name": "Iroegbunam",
-    "status": "a"
-   },
-   {
     "code": 661800,
     "name": "McCarthy",
     "status": "a"
@@ -2172,39 +2127,69 @@
     "status": "a"
    },
    {
-    "code": 626751,
-    "name": "Ansah",
-    "status": "a"
-   },
-   {
-    "code": 631000,
-    "name": "Vaz",
-    "status": "a"
-   },
-   {
-    "code": 496181,
-    "name": "Norton-Cuffy",
-    "status": "a"
-   },
-   {
-    "code": 243951,
-    "name": "Thomas",
-    "status": "a"
-   },
-   {
-    "code": 647839,
-    "name": "Mouzakitis",
-    "status": "a"
-   },
-   {
     "code": 222018,
     "name": "Johnson",
     "status": "a"
    },
    {
-    "code": 431639,
-    "name": "Flemming",
+    "code": 565297,
+    "name": "Mateo Joseph",
+    "status": "i"
+   },
+   {
+    "code": 519440,
+    "name": "Lucky",
     "status": "a"
+   },
+   {
+    "code": 500058,
+    "name": "Danns",
+    "status": "a"
+   },
+   {
+    "code": 576620,
+    "name": "Bendito Mantato",
+    "status": "a"
+   },
+   {
+    "code": 596047,
+    "name": "Obi",
+    "status": "a"
+   },
+   {
+    "code": 599303,
+    "name": "Neave",
+    "status": "a"
+   },
+   {
+    "code": 204822,
+    "name": "O.Richards",
+    "status": "a"
+   },
+   {
+    "code": 640419,
+    "name": "Byfield",
+    "status": "a"
+   },
+   {
+    "code": 499716,
+    "name": "Rowswell",
+    "status": "a"
+   },
+   {
+    "code": 499721,
+    "name": "Moore",
+    "status": "a"
+   },
+   {
+    "code": 499726,
+    "name": "Olusesi",
+    "status": "a"
+   },
+   {
+    "code": 535818,
+    "name": "Adingra",
+    "status": "i"
    }
   ]
  }

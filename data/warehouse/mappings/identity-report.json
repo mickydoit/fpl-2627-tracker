@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-03T08:29:20.940Z",
+ "builtAt": "2026-09-04T08:25:33.444Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -7,15 +7,15 @@
   "problems": 4
  },
  "players": {
-  "fplTotal": 651,
-  "inFplEspnMap": 514,
-  "mappedToFootballData": 494,
+  "fplTotal": 652,
+  "inFplEspnMap": 534,
+  "mappedToFootballData": 510,
   "byMethod": {
-   "dob+full-name": 467,
-   "dob+surname": 27
+   "dob+full-name": 482,
+   "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 20
+  "unmapped": 24
  },
  "footballDataPlayersSeen": 10020,
  "teamProblems": [
@@ -47,6 +47,12 @@
  "proposals": [],
  "unmapped": [
   {
+   "code": 110690,
+   "name": "Wilson",
+   "dateOfBirth": "2001-12-05",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
+  {
    "code": 121709,
    "name": "Benitez",
    "dateOfBirth": "1993-01-19",
@@ -66,6 +72,42 @@
     {
      "footballDataId": 1299,
      "name": "John"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 231899,
+   "name": "Taylor",
+   "dateOfBirth": "2005-04-12",
+   "candidates": [
+    {
+     "footballDataId": 273415,
+     "name": "Henry Cartwright"
+    },
+    {
+     "footballDataId": 217910,
+     "name": "Giacomo Stabile"
+    },
+    {
+     "footballDataId": 227024,
+     "name": "Luis Fernando"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 243951,
+   "name": "Thomas",
+   "dateOfBirth": "1999-01-25",
+   "candidates": [
+    {
+     "footballDataId": 97164,
+     "name": "Darko Nejašmić"
+    },
+    {
+     "footballDataId": 80871,
+     "name": "Ibrahima Camara"
     }
    ],
    "reason": "date of birth matched but no name did"
@@ -134,6 +176,26 @@
     {
      "footballDataId": 186393,
      "name": "Duke Verduin"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 490094,
+   "name": "Iroegbunam",
+   "dateOfBirth": "2003-06-30",
+   "candidates": [
+    {
+     "footballDataId": 206334,
+     "name": "Bonota Traore"
+    },
+    {
+     "footballDataId": 183544,
+     "name": "Tochukwu Nadi"
+    },
+    {
+     "footballDataId": 213101,
+     "name": "João Santos"
     }
    ],
    "reason": "date of birth matched but no name did"
@@ -245,12 +307,6 @@
    "reason": "date of birth matched but no name did"
   },
   {
-   "code": 571380,
-   "name": "Lynch",
-   "dateOfBirth": "2007-01-11",
-   "reason": "no football-data player born that day in the collected competitions"
-  },
-  {
    "code": 586309,
    "name": "Barry",
    "dateOfBirth": "2002-10-21",
@@ -344,6 +400,18 @@
     {
      "footballDataId": 272179,
      "name": "David Murar"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 638987,
+   "name": "Mbaye",
+   "dateOfBirth": "2008-01-24",
+   "candidates": [
+    {
+     "footballDataId": 265040,
+     "name": "Ibrahim M'Baye"
     }
    ],
    "reason": "date of birth matched but no name did"
