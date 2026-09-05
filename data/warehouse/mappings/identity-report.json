@@ -1,18 +1,18 @@
 {
- "builtAt": "2026-09-04T08:25:33.444Z",
+ "builtAt": "2026-09-05T08:03:12.722Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
-  "withEspn": 45,
-  "problems": 4
+  "withEspn": 63,
+  "problems": 6
  },
  "players": {
   "fplTotal": 652,
   "inFplEspnMap": 534,
   "mappedToFootballData": 510,
   "byMethod": {
-   "dob+full-name": 482,
-   "dob+surname": 28
+   "dob+full-name": 483,
+   "dob+surname": 27
   },
   "proposals": 0,
   "unmapped": 24
@@ -20,14 +20,20 @@
  "footballDataPlayersSeen": 10020,
  "teamProblems": [
   {
-   "espnTeamId": 346,
-   "espnName": "Blackpool",
+   "espnTeamId": 397,
+   "espnName": "Barnsley",
    "candidates": 0,
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 397,
-   "espnName": "Barnsley",
+   "espnTeamId": 342,
+   "espnName": "Peterborough United",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 346,
+   "espnName": "Blackpool",
    "candidates": 0,
    "reason": "no football-data club"
   },
@@ -38,8 +44,14 @@
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 342,
-   "espnName": "Peterborough United",
+   "espnTeamId": 85,
+   "espnName": "Celta Vigo",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 1068,
+   "espnName": "Atlético Madrid",
    "candidates": 0,
    "reason": "no football-data club"
   }
@@ -72,26 +84,6 @@
     {
      "footballDataId": 1299,
      "name": "John"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 231899,
-   "name": "Taylor",
-   "dateOfBirth": "2005-04-12",
-   "candidates": [
-    {
-     "footballDataId": 273415,
-     "name": "Henry Cartwright"
-    },
-    {
-     "footballDataId": 217910,
-     "name": "Giacomo Stabile"
-    },
-    {
-     "footballDataId": 227024,
-     "name": "Luis Fernando"
     }
    ],
    "reason": "date of birth matched but no name did"
@@ -176,6 +168,22 @@
     {
      "footballDataId": 186393,
      "name": "Duke Verduin"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 487838,
+   "name": "Hall",
+   "dateOfBirth": "1999-12-07",
+   "candidates": [
+    {
+     "footballDataId": 122231,
+     "name": "Isaac Schmidt"
+    },
+    {
+     "footballDataId": 189593,
+     "name": "Sam Dalby"
     }
    ],
    "reason": "date of birth matched but no name did"
