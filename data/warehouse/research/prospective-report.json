@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-09-08T08:31:35.253Z",
+ "generatedAt": "2026-09-09T08:34:19.790Z",
  "experimentFreeze": {
   "commit": "ae062f6",
   "at": "2026-08-29T01:18:26.376Z",
@@ -15,7 +15,7 @@
   1,
   2
  ],
- "cohortN": 32,
+ "cohortN": 33,
  "modelChanges": "NONE — no candidate was refitted, edited or re-versioned this run.",
  "measurability": {
   "opportunity (minutes, starts, 60+)": "SCORABLE — FPL element-summary carries per-gameweek minutes and starts",
@@ -61,16 +61,16 @@
   }
  },
  "pooled": {
-  "n": 24,
-  "totalProspectiveMinutes": 1649,
-  "realisedTotalXG": 1.46,
-  "bridgePredictedTotalXG": 2.79,
-  "incumbentPredictedTotalXG": 3.316,
+  "n": 25,
+  "totalProspectiveMinutes": 1739,
+  "realisedTotalXG": 1.5,
+  "bridgePredictedTotalXG": 3.277,
+  "incumbentPredictedTotalXG": 3.49,
   "caveat": "Pooled level agreement only. A model can match the aggregate and rank players badly, so this may never on its own justify promoting a candidate."
  },
  "populations": {
   "GROUP A — INCUMBENT-COMPARABLE": {
-   "n": 26,
+   "n": 27,
    "question": "Does the frozen bridge improve on the live model, in the same units?",
    "comparators": [
     "live incumbent xG/90 and xA/90",
@@ -550,6 +550,29 @@
    "O0c_startRate": 0.4276,
    "O3_startRate": 0.4283,
    "incumbent_startProbability": 0.5362273407119353
+  },
+  {
+   "name": "George Hirst",
+   "position": 3,
+   "episodeType": "SAME_CLUB_PROMOTION",
+   "eligibleGws": 1,
+   "excludedGws": 2,
+   "prospectiveMinutes": 90,
+   "prospectiveStarts": 1,
+   "played": 1,
+   "sixtyPlus": 1,
+   "realised_xG90": 0.04,
+   "realised_xA90": 0.07,
+   "realised_startRate": 1,
+   "realised_featureRate": 1,
+   "incumbent_xG90": 0.1741,
+   "incumbent_xA90": 0.235,
+   "incumbentHasProductionEstimate": true,
+   "bridge_xG90": 0.4869,
+   "bridge_xA90": 0.0677,
+   "O0c_startRate": 0.3461,
+   "O3_startRate": 0.3478,
+   "incumbent_startProbability": 0.14300394380887196
   },
   {
    "name": "Aurele Amenda",

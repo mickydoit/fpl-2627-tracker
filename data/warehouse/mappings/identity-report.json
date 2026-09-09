@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-08T08:31:33.489Z",
+ "builtAt": "2026-09-09T08:34:18.125Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,13 +9,13 @@
  "players": {
   "fplTotal": 654,
   "inFplEspnMap": 532,
-  "mappedToFootballData": 506,
+  "mappedToFootballData": 507,
   "byMethod": {
-   "dob+full-name": 479,
+   "dob+full-name": 480,
    "dob+surname": 27
   },
   "proposals": 0,
-  "unmapped": 26
+  "unmapped": 25
  },
  "footballDataPlayersSeen": 10025,
  "teamProblems": [
@@ -44,14 +44,14 @@
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 85,
-   "espnName": "Celta Vigo",
+   "espnTeamId": 1068,
+   "espnName": "Atlético Madrid",
    "candidates": 0,
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 1068,
-   "espnName": "Atlético Madrid",
+   "espnTeamId": 85,
+   "espnName": "Celta Vigo",
    "candidates": 0,
    "reason": "no football-data club"
   }
@@ -123,6 +123,12 @@
     }
    ],
    "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 247348,
+   "name": "Muñoz",
+   "dateOfBirth": "2006-07-19",
+   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 434399,
@@ -327,22 +333,6 @@
    "reason": "date of birth matched but no name did"
   },
   {
-   "code": 549940,
-   "name": "Fofana",
-   "dateOfBirth": "2000-05-02",
-   "candidates": [
-    {
-     "footballDataId": 160405,
-     "name": "Callum Wright"
-    },
-    {
-     "footballDataId": 67920,
-     "name": "Thijs Oosting"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
    "code": 554054,
    "name": "Braithwaite",
    "dateOfBirth": "2008-02-08",
@@ -353,12 +343,6 @@
     }
    ],
    "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 586309,
-   "name": "Barry",
-   "dateOfBirth": "2002-10-21",
-   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 606930,
