@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-09-09T08:34:19.790Z",
+ "generatedAt": "2026-09-10T08:35:05.858Z",
  "experimentFreeze": {
   "commit": "ae062f6",
   "at": "2026-08-29T01:18:26.376Z",
@@ -15,7 +15,7 @@
   1,
   2
  ],
- "cohortN": 33,
+ "cohortN": 34,
  "modelChanges": "NONE — no candidate was refitted, edited or re-versioned this run.",
  "measurability": {
   "opportunity (minutes, starts, 60+)": "SCORABLE — FPL element-summary carries per-gameweek minutes and starts",
@@ -61,16 +61,16 @@
   }
  },
  "pooled": {
-  "n": 25,
-  "totalProspectiveMinutes": 1739,
-  "realisedTotalXG": 1.5,
-  "bridgePredictedTotalXG": 3.277,
-  "incumbentPredictedTotalXG": 3.49,
+  "n": 26,
+  "totalProspectiveMinutes": 1763,
+  "realisedTotalXG": 1.52,
+  "bridgePredictedTotalXG": 3.349,
+  "incumbentPredictedTotalXG": 3.52,
   "caveat": "Pooled level agreement only. A model can match the aggregate and rank players badly, so this may never on its own justify promoting a candidate."
  },
  "populations": {
   "GROUP A — INCUMBENT-COMPARABLE": {
-   "n": 27,
+   "n": 28,
    "question": "Does the frozen bridge improve on the live model, in the same units?",
    "comparators": [
     "live incumbent xG/90 and xA/90",
@@ -596,6 +596,29 @@
    "O0c_startRate": 0.4178,
    "O3_startRate": 0.4183,
    "incumbent_startProbability": 0.5032449438202248
+  },
+  {
+   "name": "Jack Grealish",
+   "position": 3,
+   "episodeType": "EPL_TO_EPL_TRANSFER",
+   "eligibleGws": 1,
+   "excludedGws": 2,
+   "prospectiveMinutes": 24,
+   "prospectiveStarts": 0,
+   "played": 1,
+   "sixtyPlus": 0,
+   "realised_xG90": 0.07500000000000001,
+   "realised_xA90": 0.48750000000000004,
+   "realised_startRate": 0,
+   "realised_featureRate": 1,
+   "incumbent_xG90": 0.1123,
+   "incumbent_xA90": 0.1846,
+   "incumbentHasProductionEstimate": true,
+   "bridge_xG90": 0.2702,
+   "bridge_xA90": 0.1474,
+   "O0c_startRate": 0.3461,
+   "O3_startRate": 0.3466,
+   "incumbent_startProbability": 0.4063314438671075
   },
   {
    "name": "Marcus Rashford",

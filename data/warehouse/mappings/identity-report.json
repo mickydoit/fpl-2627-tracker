@@ -1,10 +1,10 @@
 {
- "builtAt": "2026-09-09T08:34:18.125Z",
+ "builtAt": "2026-09-10T08:35:04.164Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
-  "withEspn": 63,
-  "problems": 6
+  "withEspn": 67,
+  "problems": 8
  },
  "players": {
   "fplTotal": 654,
@@ -52,6 +52,18 @@
   {
    "espnTeamId": 85,
    "espnName": "Celta Vigo",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 132,
+   "espnName": "Bayern Munich",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 2506,
+   "espnName": "Arminia Bielefeld",
    "candidates": 0,
    "reason": "no football-data club"
   }
@@ -221,15 +233,15 @@
   {
    "code": 487838,
    "name": "Hall",
-   "dateOfBirth": "2004-09-08",
+   "dateOfBirth": "1999-12-07",
    "candidates": [
     {
-     "footballDataId": 203511,
-     "name": "Nico Paz"
+     "footballDataId": 122231,
+     "name": "Isaac Schmidt"
     },
     {
-     "footballDataId": 268930,
-     "name": "Andro Babić"
+     "footballDataId": 189593,
+     "name": "Sam Dalby"
     }
    ],
    "reason": "date of birth matched but no name did"
