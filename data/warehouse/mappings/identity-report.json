@@ -1,23 +1,23 @@
 {
- "builtAt": "2026-09-10T08:35:04.164Z",
+ "builtAt": "2026-09-11T08:29:30.020Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
-  "withEspn": 67,
-  "problems": 8
+  "withEspn": 76,
+  "problems": 11
  },
  "players": {
-  "fplTotal": 654,
-  "inFplEspnMap": 532,
-  "mappedToFootballData": 507,
+  "fplTotal": 655,
+  "inFplEspnMap": 533,
+  "mappedToFootballData": 508,
   "byMethod": {
-   "dob+full-name": 480,
+   "dob+full-name": 481,
    "dob+surname": 27
   },
   "proposals": 0,
   "unmapped": 25
  },
- "footballDataPlayersSeen": 10025,
+ "footballDataPlayersSeen": 10033,
  "teamProblems": [
   {
    "espnTeamId": 397,
@@ -62,8 +62,26 @@
    "reason": "no football-data club"
   },
   {
+   "espnTeamId": 122,
+   "espnName": "FC Cologne",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 129,
+   "espnName": "Hertha Berlin",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
    "espnTeamId": 2506,
    "espnName": "Arminia Bielefeld",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 3070,
+   "espnName": "SpVgg Greuther Fürth",
    "candidates": 0,
    "reason": "no football-data club"
   }

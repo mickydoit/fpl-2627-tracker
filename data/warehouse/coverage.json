@@ -1,14 +1,14 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-10T08:35:05.794Z",
-  "coverageDigest": "992a896475f1a73a",
+  "generatedAt": "2026-09-11T08:29:31.771Z",
+  "coverageDigest": "7fff9a1826d2109c",
   "entities": {
    "structural_match": 12326,
-   "team_match": 5564,
+   "team_match": 5804,
    "player_season": 25003,
    "teams": 227,
-   "players": 532,
+   "players": 533,
    "transfers": 2566
   },
   "sources": {
@@ -20,7 +20,7 @@
    "espn": {
     "minSeason": 2021,
     "competitionSeasons": 40,
-    "rows": 27785
+    "rows": 27905
    }
   },
   "seasonWindows": {
@@ -49,11 +49,11 @@
   },
   "files": 212
  },
- "builtAt": "2026-09-10T08:35:05.795Z",
+ "builtAt": "2026-09-11T08:29:31.771Z",
  "footprint": {
   "files": 212,
-  "bytes": 5112181,
-  "mb": 5.11
+  "bytes": 5176192,
+  "mb": 5.18
  },
  "competitions": [
   {
@@ -747,10 +747,10 @@
    "season": 2021,
    "structuralMatches": 0,
    "structuralPlayed": 0,
-   "espnMatches": 3,
+   "espnMatches": 123,
    "espnExpected": 306,
-   "espnCollectedPct": 1,
-   "teamMatchRows": 6,
+   "espnCollectedPct": 40.2,
+   "teamMatchRows": 246,
    "joinRatePct": 0,
    "teams": 0,
    "fdSquadPlayers": 0,
@@ -1171,7 +1171,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 581,
+   "fdSquadPlayers": 582,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1848,7 +1848,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 43,
+   "structuralPlayed": 44,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
@@ -1877,7 +1877,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 43,
+   "unresolvedMatches": 44,
    "scoreConflicts": 0
   },
   {
@@ -2000,14 +2000,14 @@
    "tier": "bridge",
    "season": 2026,
    "structuralMatches": 144,
-   "structuralPlayed": 12,
+   "structuralPlayed": 18,
    "espnMatches": 0,
    "espnExpected": 189,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 36,
-   "fdSquadPlayers": 0,
+   "fdSquadPlayers": 7,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -2029,21 +2029,21 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 12,
+   "unresolvedMatches": 18,
    "scoreConflicts": 0
   }
  ],
  "identity": {
-  "fplTotal": 654,
+  "fplTotal": 655,
   "fplActive": 555,
-  "fplDeparted": 99,
-  "mappedToEspn": 532,
-  "mappedToFootballData": 507,
+  "fplDeparted": 100,
+  "mappedToEspn": 533,
+  "mappedToFootballData": 508,
   "ambiguousRefused": 0,
-  "unmappedActive": 24,
-  "unmappedDeparted": 98,
+  "unmappedActive": 23,
+  "unmappedDeparted": 99,
   "historyByCompetition": {
-   "eng.1": 417,
+   "eng.1": 418,
    "eng.2": 102,
    "esp.1": 39,
    "ger.1": 54,
@@ -2097,13 +2097,13 @@
     "status": "a"
    },
    {
-    "code": 536694,
-    "name": "M.França",
+    "code": 242893,
+    "name": "Gboho",
     "status": "a"
    },
    {
-    "code": 450542,
-    "name": "J.Rak-Sakyi",
+    "code": 536694,
+    "name": "M.França",
     "status": "a"
    },
    {
@@ -2134,11 +2134,6 @@
    {
     "code": 519440,
     "name": "Lucky",
-    "status": "a"
-   },
-   {
-    "code": 500058,
-    "name": "Danns",
     "status": "a"
    },
    {
