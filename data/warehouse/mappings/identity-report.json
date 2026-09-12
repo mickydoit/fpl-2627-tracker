@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-11T08:29:30.020Z",
+ "builtAt": "2026-09-12T08:19:10.599Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -7,11 +7,11 @@
   "problems": 11
  },
  "players": {
-  "fplTotal": 655,
-  "inFplEspnMap": 533,
-  "mappedToFootballData": 508,
+  "fplTotal": 656,
+  "inFplEspnMap": 534,
+  "mappedToFootballData": 509,
   "byMethod": {
-   "dob+full-name": 481,
+   "dob+full-name": 482,
    "dob+surname": 27
   },
   "proposals": 0,
