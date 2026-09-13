@@ -1,23 +1,23 @@
 {
- "builtAt": "2026-09-12T08:19:10.599Z",
+ "builtAt": "2026-09-13T08:44:02.741Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
-  "withEspn": 76,
-  "problems": 11
+  "withEspn": 93,
+  "problems": 14
  },
  "players": {
-  "fplTotal": 656,
-  "inFplEspnMap": 534,
-  "mappedToFootballData": 509,
+  "fplTotal": 657,
+  "inFplEspnMap": 535,
+  "mappedToFootballData": 511,
   "byMethod": {
-   "dob+full-name": 482,
+   "dob+full-name": 484,
    "dob+surname": 27
   },
   "proposals": 0,
-  "unmapped": 25
+  "unmapped": 24
  },
- "footballDataPlayersSeen": 10033,
+ "footballDataPlayersSeen": 10036,
  "teamProblems": [
   {
    "espnTeamId": 397,
@@ -82,6 +82,24 @@
   {
    "espnTeamId": 3070,
    "espnName": "SpVgg Greuther Fürth",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 110,
+   "espnName": "Internazionale",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 4056,
+   "espnName": "Spezia",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 2734,
+   "espnName": "Sampdoria",
    "candidates": 0,
    "reason": "no football-data club"
   }
@@ -153,12 +171,6 @@
     }
    ],
    "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 247348,
-   "name": "Muñoz",
-   "dateOfBirth": "2006-07-19",
-   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 434399,
@@ -251,15 +263,15 @@
   {
    "code": 487838,
    "name": "Hall",
-   "dateOfBirth": "1999-12-07",
+   "dateOfBirth": "2004-09-08",
    "candidates": [
     {
-     "footballDataId": 122231,
-     "name": "Isaac Schmidt"
+     "footballDataId": 203511,
+     "name": "Nico Paz"
     },
     {
-     "footballDataId": 189593,
-     "name": "Sam Dalby"
+     "footballDataId": 268930,
+     "name": "Andro Babić"
     }
    ],
    "reason": "date of birth matched but no name did"

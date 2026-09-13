@@ -1,14 +1,14 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-12T08:19:12.286Z",
-  "coverageDigest": "212b0ee9f9203b86",
+  "generatedAt": "2026-09-13T08:44:04.456Z",
+  "coverageDigest": "89a85135c3c9ecc1",
   "entities": {
    "structural_match": 12326,
-   "team_match": 6044,
+   "team_match": 6284,
    "player_season": 25003,
    "teams": 227,
-   "players": 534,
+   "players": 535,
    "transfers": 2566
   },
   "sources": {
@@ -20,7 +20,7 @@
    "espn": {
     "minSeason": 2021,
     "competitionSeasons": 40,
-    "rows": 28025
+    "rows": 28145
    }
   },
   "seasonWindows": {
@@ -47,13 +47,13 @@
     2026
    ]
   },
-  "files": 212
+  "files": 215
  },
- "builtAt": "2026-09-12T08:19:12.287Z",
+ "builtAt": "2026-09-13T08:44:04.456Z",
  "footprint": {
-  "files": 212,
-  "bytes": 5238185,
-  "mb": 5.24
+  "files": 215,
+  "bytes": 5314338,
+  "mb": 5.31
  },
  "competitions": [
   {
@@ -252,7 +252,7 @@
    "tier": "target",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 30,
+   "structuralPlayed": 37,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
@@ -281,7 +281,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 30,
+   "unresolvedMatches": 37,
    "scoreConflicts": 0
   },
   {
@@ -480,14 +480,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 552,
-   "structuralPlayed": 70,
+   "structuralPlayed": 80,
    "espnMatches": 0,
    "espnExpected": 557,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 24,
-   "fdSquadPlayers": 674,
+   "fdSquadPlayers": 675,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -509,7 +509,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 70,
+   "unresolvedMatches": 80,
    "scoreConflicts": 0
   },
   {
@@ -708,7 +708,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 42,
+   "structuralPlayed": 46,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
@@ -737,7 +737,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 42,
+   "unresolvedMatches": 46,
    "scoreConflicts": 0
   },
   {
@@ -747,10 +747,10 @@
    "season": 2021,
    "structuralMatches": 0,
    "structuralPlayed": 0,
-   "espnMatches": 243,
+   "espnMatches": 306,
    "espnExpected": 306,
-   "espnCollectedPct": 79.4,
-   "teamMatchRows": 486,
+   "espnCollectedPct": 100,
+   "teamMatchRows": 612,
    "joinRatePct": 0,
    "teams": 0,
    "fdSquadPlayers": 0,
@@ -936,7 +936,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 19,
+   "structuralPlayed": 25,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
@@ -965,7 +965,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 19,
+   "unresolvedMatches": 25,
    "scoreConflicts": 0
   },
   {
@@ -975,10 +975,10 @@
    "season": 2021,
    "structuralMatches": 0,
    "structuralPlayed": 0,
-   "espnMatches": 0,
+   "espnMatches": 57,
    "espnExpected": 380,
-   "espnCollectedPct": 0,
-   "teamMatchRows": 0,
+   "espnCollectedPct": 15,
+   "teamMatchRows": 114,
    "joinRatePct": 0,
    "teams": 0,
    "fdSquadPlayers": 0,
@@ -986,14 +986,14 @@
    "playerSeasonTierA": 630,
    "playerSeasonTierB": 0,
    "cov": {
-    "startingLineup": 0,
-    "formation": 0,
-    "shots": 0,
-    "shotsOnTarget": 0,
-    "possession": 0,
-    "corners": 0,
-    "passAccuracy": 0,
-    "saves": 0,
+    "startingLineup": 100,
+    "formation": 100,
+    "shots": 100,
+    "shotsOnTarget": 100,
+    "possession": 100,
+    "corners": 100,
+    "passAccuracy": 100,
+    "saves": 100,
     "playerMinutes": 0,
     "playerStarts": 0,
     "playerAppearances": 82.1,
@@ -1164,7 +1164,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 31,
+   "structuralPlayed": 34,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
@@ -1193,7 +1193,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 31,
+   "unresolvedMatches": 34,
    "scoreConflicts": 0
   },
   {
@@ -1392,14 +1392,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 28,
+   "structuralPlayed": 33,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 469,
+   "fdSquadPlayers": 471,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1421,7 +1421,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 28,
+   "unresolvedMatches": 33,
    "scoreConflicts": 0
   },
   {
@@ -1620,7 +1620,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 45,
+   "structuralPlayed": 49,
    "espnMatches": 0,
    "espnExpected": 309,
    "espnCollectedPct": 0,
@@ -1649,7 +1649,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 45,
+   "unresolvedMatches": 49,
    "scoreConflicts": 0
   },
   {
@@ -1848,7 +1848,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 44,
+   "structuralPlayed": 47,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
@@ -1877,7 +1877,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 44,
+   "unresolvedMatches": 47,
    "scoreConflicts": 0
   },
   {
@@ -2034,11 +2034,11 @@
   }
  ],
  "identity": {
-  "fplTotal": 656,
-  "fplActive": 552,
+  "fplTotal": 657,
+  "fplActive": 553,
   "fplDeparted": 104,
-  "mappedToEspn": 534,
-  "mappedToFootballData": 509,
+  "mappedToEspn": 535,
+  "mappedToFootballData": 511,
   "ambiguousRefused": 0,
   "unmappedActive": 19,
   "unmappedDeparted": 103,
@@ -2054,7 +2054,7 @@
    "uefa.champions": 0,
    "uefa.europa": 0
   },
-  "withEspnSeasonMinutes": 241,
+  "withEspnSeasonMinutes": 242,
   "unmappedActiveList": [
    {
     "code": 606798,
@@ -2069,6 +2069,11 @@
    {
     "code": 569577,
     "name": "Rowe",
+    "status": "a"
+   },
+   {
+    "code": 626464,
+    "name": "Nunes",
     "status": "a"
    },
    {
@@ -2094,11 +2099,6 @@
    {
     "code": 684268,
     "name": "Shepherd",
-    "status": "a"
-   },
-   {
-    "code": 566213,
-    "name": "Mfuni",
     "status": "a"
    },
    {
