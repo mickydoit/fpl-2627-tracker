@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-13T08:44:02.741Z",
+ "builtAt": "2026-09-16T09:33:30.329Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -7,17 +7,17 @@
   "problems": 14
  },
  "players": {
-  "fplTotal": 657,
-  "inFplEspnMap": 535,
-  "mappedToFootballData": 511,
+  "fplTotal": 659,
+  "inFplEspnMap": 538,
+  "mappedToFootballData": 514,
   "byMethod": {
-   "dob+full-name": 484,
+   "dob+full-name": 487,
    "dob+surname": 27
   },
   "proposals": 0,
   "unmapped": 24
  },
- "footballDataPlayersSeen": 10036,
+ "footballDataPlayersSeen": 10043,
  "teamProblems": [
   {
    "espnTeamId": 397,
@@ -106,12 +106,6 @@
  ],
  "proposals": [],
  "unmapped": [
-  {
-   "code": 110690,
-   "name": "Wilson",
-   "dateOfBirth": "2001-12-05",
-   "reason": "no football-data player born that day in the collected competitions"
-  },
   {
    "code": 121709,
    "name": "Benitez",
@@ -263,15 +257,15 @@
   {
    "code": 487838,
    "name": "Hall",
-   "dateOfBirth": "2004-09-08",
+   "dateOfBirth": "1999-12-07",
    "candidates": [
     {
-     "footballDataId": 203511,
-     "name": "Nico Paz"
+     "footballDataId": 122231,
+     "name": "Isaac Schmidt"
     },
     {
-     "footballDataId": 268930,
-     "name": "Andro Babić"
+     "footballDataId": 189593,
+     "name": "Sam Dalby"
     }
    ],
    "reason": "date of birth matched but no name did"
@@ -474,6 +468,22 @@
     {
      "footballDataId": 272179,
      "name": "David Murar"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 626464,
+   "name": "Nunes",
+   "dateOfBirth": "2005-11-20",
+   "candidates": [
+    {
+     "footballDataId": 213296,
+     "name": "Gustavo Gomes"
+    },
+    {
+     "footballDataId": 194860,
+     "name": "Francisco Silva"
     }
    ],
    "reason": "date of birth matched but no name did"
