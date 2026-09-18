@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-17T09:37:08.311Z",
+ "builtAt": "2026-09-18T09:12:35.553Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,13 +9,13 @@
  "players": {
   "fplTotal": 659,
   "inFplEspnMap": 538,
-  "mappedToFootballData": 513,
+  "mappedToFootballData": 512,
   "byMethod": {
-   "dob+full-name": 485,
+   "dob+full-name": 484,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 25
+  "unmapped": 26
  },
  "footballDataPlayersSeen": 10043,
  "teamProblems": [
@@ -381,6 +381,12 @@
     }
    ],
    "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 586309,
+   "name": "Barry",
+   "dateOfBirth": "2002-10-21",
+   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 606930,
