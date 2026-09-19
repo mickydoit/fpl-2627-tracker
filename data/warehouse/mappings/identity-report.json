@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-18T09:12:35.553Z",
+ "builtAt": "2026-09-19T08:59:56.451Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -7,17 +7,17 @@
   "problems": 14
  },
  "players": {
-  "fplTotal": 659,
+  "fplTotal": 662,
   "inFplEspnMap": 538,
-  "mappedToFootballData": 512,
+  "mappedToFootballData": 513,
   "byMethod": {
-   "dob+full-name": 484,
+   "dob+full-name": 485,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 26
+  "unmapped": 25
  },
- "footballDataPlayersSeen": 10043,
+ "footballDataPlayersSeen": 10045,
  "teamProblems": [
   {
    "espnTeamId": 397,
@@ -165,12 +165,6 @@
     }
    ],
    "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 247348,
-   "name": "Muñoz",
-   "dateOfBirth": "2006-07-19",
-   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 434399,
