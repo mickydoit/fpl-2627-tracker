@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-19T08:59:56.451Z",
+ "builtAt": "2026-09-22T09:31:45.422Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -7,17 +7,17 @@
   "problems": 14
  },
  "players": {
-  "fplTotal": 662,
-  "inFplEspnMap": 538,
-  "mappedToFootballData": 513,
+  "fplTotal": 667,
+  "inFplEspnMap": 546,
+  "mappedToFootballData": 522,
   "byMethod": {
-   "dob+full-name": 485,
+   "dob+full-name": 494,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 25
+  "unmapped": 24
  },
- "footballDataPlayersSeen": 10045,
+ "footballDataPlayersSeen": 10049,
  "teamProblems": [
   {
    "espnTeamId": 397,
@@ -237,15 +237,15 @@
   {
    "code": 487838,
    "name": "Hall",
-   "dateOfBirth": "1999-12-07",
+   "dateOfBirth": "2004-09-08",
    "candidates": [
     {
-     "footballDataId": 122231,
-     "name": "Isaac Schmidt"
+     "footballDataId": 203511,
+     "name": "Nico Paz"
     },
     {
-     "footballDataId": 189593,
-     "name": "Sam Dalby"
+     "footballDataId": 268930,
+     "name": "Andro Babić"
     }
    ],
    "reason": "date of birth matched but no name did"
@@ -349,22 +349,6 @@
    "reason": "date of birth matched but no name did"
   },
   {
-   "code": 549940,
-   "name": "Fofana",
-   "dateOfBirth": "2000-05-02",
-   "candidates": [
-    {
-     "footballDataId": 160405,
-     "name": "Callum Wright"
-    },
-    {
-     "footballDataId": 67920,
-     "name": "Thijs Oosting"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
    "code": 554054,
    "name": "Braithwaite",
    "dateOfBirth": "2008-02-08",
@@ -377,9 +361,9 @@
    "reason": "date of birth matched but no name did"
   },
   {
-   "code": 586309,
-   "name": "Barry",
-   "dateOfBirth": "2002-10-21",
+   "code": 601767,
+   "name": "Salia",
+   "dateOfBirth": "2007-08-30",
    "reason": "no football-data player born that day in the collected competitions"
   },
   {
