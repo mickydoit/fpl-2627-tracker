@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-09-23T09:32:53.729Z",
+ "generatedAt": "2026-09-24T09:27:44.834Z",
  "experimentFreeze": {
   "commit": "ae062f6",
   "at": "2026-08-29T01:18:26.376Z",
@@ -17,7 +17,7 @@
   1,
   2
  ],
- "cohortN": 30,
+ "cohortN": 31,
  "modelChanges": "NONE — no candidate was refitted, edited or re-versioned this run.",
  "measurability": {
   "opportunity (minutes, starts, 60+)": "SCORABLE — FPL element-summary carries per-gameweek minutes and starts",
@@ -63,10 +63,10 @@
   }
  },
  "pooled": {
-  "n": 24,
-  "totalProspectiveMinutes": 5120,
-  "realisedTotalXG": 6.84,
-  "bridgePredictedTotalXG": 10.099,
+  "n": 25,
+  "totalProspectiveMinutes": 5218,
+  "realisedTotalXG": 7.28,
+  "bridgePredictedTotalXG": 10.301,
   "incumbentPredictedTotalXG": 10.478,
   "caveat": "Pooled level agreement only. A model can match the aggregate and rank players badly, so this may never on its own justify promoting a candidate."
  },
@@ -82,7 +82,7 @@
    "scorable": 18
   },
   "GROUP B — COLD-START GAP": {
-   "n": 6,
+   "n": 7,
    "question": "Can warehouse evidence inform players where the live model has no comparable event-rate estimate?",
    "comparators": [
     "XG0/XA0 position baseline",
@@ -344,6 +344,29 @@
    "bridge_xA90": null,
    "O0c_startRate": 0.2354,
    "O3_startRate": 0.2394,
+   "incumbent_startProbability": null
+  },
+  {
+   "name": "Johan Manzambi",
+   "position": 3,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "eligibleGws": 3,
+   "excludedGws": 2,
+   "prospectiveMinutes": 98,
+   "prospectiveStarts": 1,
+   "played": 2,
+   "sixtyPlus": 1,
+   "realised_xG90": 0.40408163265306124,
+   "realised_xA90": 0.2204081632653061,
+   "realised_startRate": 0.3333333333333333,
+   "realised_featureRate": 0.6666666666666666,
+   "incumbent_xG90": 0,
+   "incumbent_xA90": 0,
+   "incumbentHasProductionEstimate": false,
+   "bridge_xG90": 0.1857,
+   "bridge_xA90": 0.0855,
+   "O0c_startRate": 0.4276,
+   "O3_startRate": 0.4294,
    "incumbent_startProbability": null
   },
   {

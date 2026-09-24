@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-23T09:32:52.015Z",
+ "builtAt": "2026-09-24T09:27:43.054Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -217,15 +217,15 @@
   {
    "code": 487838,
    "name": "Hall",
-   "dateOfBirth": "2004-09-08",
+   "dateOfBirth": "1999-12-07",
    "candidates": [
     {
-     "footballDataId": 203511,
-     "name": "Nico Paz"
+     "footballDataId": 122231,
+     "name": "Isaac Schmidt"
     },
     {
-     "footballDataId": 268930,
-     "name": "Andro Babić"
+     "footballDataId": 189593,
+     "name": "Sam Dalby"
     }
    ],
    "reason": "date of birth matched but no name did"
