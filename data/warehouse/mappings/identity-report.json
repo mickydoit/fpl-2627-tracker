@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-24T09:27:43.054Z",
+ "builtAt": "2026-09-25T09:48:22.226Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,13 +9,13 @@
  "players": {
   "fplTotal": 667,
   "inFplEspnMap": 546,
-  "mappedToFootballData": 523,
+  "mappedToFootballData": 522,
   "byMethod": {
-   "dob+full-name": 495,
+   "dob+full-name": 494,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 23
+  "unmapped": 24
  },
  "footballDataPlayersSeen": 10049,
  "teamProblems": [
@@ -465,6 +465,12 @@
     }
    ],
    "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 661313,
+   "name": "J.Angulo",
+   "dateOfBirth": "1988-09-26",
+   "reason": "no football-data player born that day in the collected competitions"
   }
  ]
 }
