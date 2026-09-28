@@ -1,7 +1,7 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-27T10:14:16.744Z",
+  "generatedAt": "2026-09-28T10:52:46.257Z",
   "coverageDigest": "89a85135c3c9ecc1",
   "entities": {
    "structural_match": 12326,
@@ -49,10 +49,10 @@
   },
   "files": 215
  },
- "builtAt": "2026-09-27T10:14:16.745Z",
+ "builtAt": "2026-09-28T10:52:46.258Z",
  "footprint": {
   "files": 215,
-  "bytes": 5314758,
+  "bytes": 5314899,
   "mb": 5.31
  },
  "competitions": [
@@ -2038,7 +2038,7 @@
   "fplActive": 562,
   "fplDeparted": 105,
   "mappedToEspn": 546,
-  "mappedToFootballData": 522,
+  "mappedToFootballData": 521,
   "ambiguousRefused": 0,
   "unmappedActive": 17,
   "unmappedDeparted": 104,

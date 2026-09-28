@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-27T10:14:15.038Z",
+ "builtAt": "2026-09-28T10:52:44.996Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,13 +9,13 @@
  "players": {
   "fplTotal": 667,
   "inFplEspnMap": 546,
-  "mappedToFootballData": 522,
+  "mappedToFootballData": 521,
   "byMethod": {
-   "dob+full-name": 494,
+   "dob+full-name": 493,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 24
+  "unmapped": 25
  },
  "footballDataPlayersSeen": 10049,
  "teamProblems": [
@@ -106,6 +106,12 @@
  ],
  "proposals": [],
  "unmapped": [
+  {
+   "code": 110690,
+   "name": "Wilson",
+   "dateOfBirth": "2001-12-05",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
   {
    "code": 121709,
    "name": "Benitez",
