@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-09-30T10:42:55.311Z",
+ "builtAt": "2026-10-01T11:10:10.650Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,13 +9,13 @@
  "players": {
   "fplTotal": 667,
   "inFplEspnMap": 546,
-  "mappedToFootballData": 521,
+  "mappedToFootballData": 522,
   "byMethod": {
-   "dob+full-name": 493,
+   "dob+full-name": 494,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 25
+  "unmapped": 24
  },
  "footballDataPlayersSeen": 10049,
  "teamProblems": [
@@ -126,26 +126,6 @@
     {
      "footballDataId": 1299,
      "name": "John"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 231899,
-   "name": "Taylor",
-   "dateOfBirth": "2005-04-12",
-   "candidates": [
-    {
-     "footballDataId": 273415,
-     "name": "Henry Cartwright"
-    },
-    {
-     "footballDataId": 217910,
-     "name": "Giacomo Stabile"
-    },
-    {
-     "footballDataId": 227024,
-     "name": "Luis Fernando"
     }
    ],
    "reason": "date of birth matched but no name did"
