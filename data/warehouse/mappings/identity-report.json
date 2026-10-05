@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-10-04T10:47:48.348Z",
+ "builtAt": "2026-10-05T11:33:27.283Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,13 +9,13 @@
  "players": {
   "fplTotal": 667,
   "inFplEspnMap": 546,
-  "mappedToFootballData": 522,
+  "mappedToFootballData": 520,
   "byMethod": {
-   "dob+full-name": 494,
+   "dob+full-name": 492,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 24
+  "unmapped": 26
  },
  "footballDataPlayersSeen": 10049,
  "teamProblems": [
@@ -131,6 +131,26 @@
    "reason": "date of birth matched but no name did"
   },
   {
+   "code": 231899,
+   "name": "Taylor",
+   "dateOfBirth": "2005-04-12",
+   "candidates": [
+    {
+     "footballDataId": 273415,
+     "name": "Henry Cartwright"
+    },
+    {
+     "footballDataId": 217910,
+     "name": "Giacomo Stabile"
+    },
+    {
+     "footballDataId": 227024,
+     "name": "Luis Fernando"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
    "code": 243951,
    "name": "Thomas",
    "dateOfBirth": "1999-01-25",
@@ -145,6 +165,12 @@
     }
    ],
    "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 247348,
+   "name": "Muñoz",
+   "dateOfBirth": "2006-07-19",
+   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 434399,
