@@ -1,7 +1,7 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-05T11:33:28.661Z",
+  "generatedAt": "2026-10-06T11:29:27.283Z",
   "coverageDigest": "89a85135c3c9ecc1",
   "entities": {
    "structural_match": 12326,
@@ -49,10 +49,10 @@
   },
   "files": 215
  },
- "builtAt": "2026-10-05T11:33:28.661Z",
+ "builtAt": "2026-10-06T11:29:27.284Z",
  "footprint": {
   "files": 215,
-  "bytes": 5315292,
+  "bytes": 5315288,
   "mb": 5.32
  },
  "competitions": [
