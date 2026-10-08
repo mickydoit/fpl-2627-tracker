@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-10-07T11:16:59.432Z",
+ "builtAt": "2026-10-08T11:38:21.892Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,13 +9,13 @@
  "players": {
   "fplTotal": 667,
   "inFplEspnMap": 546,
-  "mappedToFootballData": 520,
+  "mappedToFootballData": 521,
   "byMethod": {
-   "dob+full-name": 492,
+   "dob+full-name": 493,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 26
+  "unmapped": 25
  },
  "footballDataPlayersSeen": 10049,
  "teamProblems": [
@@ -131,26 +131,6 @@
    "reason": "date of birth matched but no name did"
   },
   {
-   "code": 231899,
-   "name": "Taylor",
-   "dateOfBirth": "2005-04-12",
-   "candidates": [
-    {
-     "footballDataId": 273415,
-     "name": "Henry Cartwright"
-    },
-    {
-     "footballDataId": 217910,
-     "name": "Giacomo Stabile"
-    },
-    {
-     "footballDataId": 227024,
-     "name": "Luis Fernando"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
    "code": 243951,
    "name": "Thomas",
    "dateOfBirth": "1999-01-25",
@@ -243,15 +223,15 @@
   {
    "code": 487838,
    "name": "Hall",
-   "dateOfBirth": "2004-09-08",
+   "dateOfBirth": "1999-12-07",
    "candidates": [
     {
-     "footballDataId": 203511,
-     "name": "Nico Paz"
+     "footballDataId": 122231,
+     "name": "Isaac Schmidt"
     },
     {
-     "footballDataId": 268930,
-     "name": "Andro Babić"
+     "footballDataId": 189593,
+     "name": "Sam Dalby"
     }
    ],
    "reason": "date of birth matched but no name did"
