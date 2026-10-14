@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-10-10T10:50:13.853Z",
+ "builtAt": "2026-10-14T09:44:22.467Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,15 +9,15 @@
  "players": {
   "fplTotal": 667,
   "inFplEspnMap": 546,
-  "mappedToFootballData": 521,
+  "mappedToFootballData": 512,
   "byMethod": {
-   "dob+full-name": 493,
+   "dob+full-name": 484,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 25
+  "unmapped": 34
  },
- "footballDataPlayersSeen": 10049,
+ "footballDataPlayersSeen": 10202,
  "teamProblems": [
   {
    "espnTeamId": 397,
@@ -107,6 +107,28 @@
  "proposals": [],
  "unmapped": [
   {
+   "code": 106760,
+   "name": "Shaw",
+   "dateOfBirth": "1995-11-24",
+   "candidates": [
+    {
+     "footballDataId": 6082,
+     "name": "Ben Killip"
+    },
+    {
+     "footballDataId": 56671,
+     "name": "Macaulay Gillesphey"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 110690,
+   "name": "Wilson",
+   "dateOfBirth": "2001-12-05",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
+  {
    "code": 121709,
    "name": "Benitez",
    "dateOfBirth": "1993-01-19",
@@ -164,6 +186,18 @@
     {
      "footballDataId": 58282,
      "name": "Cimo Röcker"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 443261,
+   "name": "Clarke",
+   "dateOfBirth": "1999-01-30",
+   "candidates": [
+    {
+     "footballDataId": 98993,
+     "name": "Dmytro Riznyk"
     }
    ],
    "reason": "date of birth matched but no name did"
@@ -264,6 +298,26 @@
     {
      "footballDataId": 180038,
      "name": "Juanlu"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 496221,
+   "name": "Wharton",
+   "dateOfBirth": "2004-02-06",
+   "candidates": [
+    {
+     "footballDataId": 178618,
+     "name": "Mackenzie Kirk"
+    },
+    {
+     "footballDataId": 213281,
+     "name": "Divaio Bobson"
+    },
+    {
+     "footballDataId": 218463,
+     "name": "Wouter Prins"
     }
    ],
    "reason": "date of birth matched but no name did"
@@ -477,6 +531,48 @@
     }
    ],
    "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 655585,
+   "name": "Mills",
+   "dateOfBirth": "2009-02-18",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
+  {
+   "code": 661016,
+   "name": "Ibrahim",
+   "dateOfBirth": "2008-02-16",
+   "candidates": [
+    {
+     "footballDataId": 299182,
+     "name": "Andrea Luongo"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 661313,
+   "name": "J.Angulo",
+   "dateOfBirth": "2008-01-12",
+   "candidates": [
+    {
+     "footballDataId": 283413,
+     "name": "Pedro Fernández"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 665243,
+   "name": "Miley",
+   "dateOfBirth": "2008-09-29",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
+  {
+   "code": 671875,
+   "name": "Thompson",
+   "dateOfBirth": "2009-09-06",
+   "reason": "no football-data player born that day in the collected competitions"
   }
  ]
 }

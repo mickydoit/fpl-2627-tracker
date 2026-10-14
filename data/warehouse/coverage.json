@@ -1,7 +1,7 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-10T10:50:15.565Z",
+  "generatedAt": "2026-10-14T09:44:24.185Z",
   "coverageDigest": "89a85135c3c9ecc1",
   "entities": {
    "structural_match": 12326,
@@ -49,11 +49,11 @@
   },
   "files": 215
  },
- "builtAt": "2026-10-10T10:50:15.565Z",
+ "builtAt": "2026-10-14T09:44:24.186Z",
  "footprint": {
   "files": 215,
-  "bytes": 5315023,
-  "mb": 5.32
+  "bytes": 5340408,
+  "mb": 5.34
  },
  "competitions": [
   {
@@ -145,7 +145,7 @@
    "teamMatchRows": 760,
    "joinRatePct": 100,
    "teams": 20,
-   "fdSquadPlayers": 674,
+   "fdSquadPlayers": 673,
    "playerSeasonRows": 949,
    "playerSeasonTierA": 635,
    "playerSeasonTierB": 314,
@@ -183,7 +183,7 @@
    "teamMatchRows": 760,
    "joinRatePct": 100,
    "teams": 20,
-   "fdSquadPlayers": 656,
+   "fdSquadPlayers": 655,
    "playerSeasonRows": 1010,
    "playerSeasonTierA": 611,
    "playerSeasonTierB": 399,
@@ -221,7 +221,7 @@
    "teamMatchRows": 760,
    "joinRatePct": 100,
    "teams": 20,
-   "fdSquadPlayers": 660,
+   "fdSquadPlayers": 659,
    "playerSeasonRows": 1066,
    "playerSeasonTierA": 628,
    "playerSeasonTierB": 438,
@@ -252,14 +252,14 @@
    "tier": "target",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 50,
+   "structuralPlayed": 56,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 553,
+   "fdSquadPlayers": 545,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -281,7 +281,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 50,
+   "unresolvedMatches": 56,
    "scoreConflicts": 0
   },
   {
@@ -480,14 +480,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 552,
-   "structuralPlayed": 96,
+   "structuralPlayed": 115,
    "espnMatches": 0,
    "espnExpected": 557,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 24,
-   "fdSquadPlayers": 675,
+   "fdSquadPlayers": 678,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -509,7 +509,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 96,
+   "unresolvedMatches": 115,
    "scoreConflicts": 0
   },
   {
@@ -708,14 +708,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 71,
+   "structuralPlayed": 80,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 518,
+   "fdSquadPlayers": 520,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -737,7 +737,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 71,
+   "unresolvedMatches": 80,
    "scoreConflicts": 0
   },
   {
@@ -936,14 +936,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 37,
+   "structuralPlayed": 45,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 522,
+   "fdSquadPlayers": 523,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -965,7 +965,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 37,
+   "unresolvedMatches": 45,
    "scoreConflicts": 0
   },
   {
@@ -1164,14 +1164,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 50,
+   "structuralPlayed": 60,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 583,
+   "fdSquadPlayers": 585,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1193,7 +1193,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 50,
+   "unresolvedMatches": 60,
    "scoreConflicts": 0
   },
   {
@@ -1392,14 +1392,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 46,
+   "structuralPlayed": 54,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 473,
+   "fdSquadPlayers": 474,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1421,7 +1421,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 46,
+   "unresolvedMatches": 54,
    "scoreConflicts": 0
   },
   {
@@ -1620,14 +1620,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 64,
+   "structuralPlayed": 72,
    "espnMatches": 0,
    "espnExpected": 309,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 483,
+   "fdSquadPlayers": 485,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1649,7 +1649,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 64,
+   "unresolvedMatches": 72,
    "scoreConflicts": 0
   },
   {
@@ -1848,14 +1848,14 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 64,
+   "structuralPlayed": 71,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 516,
+   "fdSquadPlayers": 517,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -1877,7 +1877,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 64,
+   "unresolvedMatches": 71,
    "scoreConflicts": 0
   },
   {
@@ -2007,7 +2007,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 36,
-   "fdSquadPlayers": 7,
+   "fdSquadPlayers": 974,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -2038,7 +2038,7 @@
   "fplActive": 562,
   "fplDeparted": 105,
   "mappedToEspn": 546,
-  "mappedToFootballData": 521,
+  "mappedToFootballData": 512,
   "ambiguousRefused": 0,
   "unmappedActive": 17,
   "unmappedDeparted": 104,
