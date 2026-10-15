@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-10-14T09:44:22.467Z",
+ "builtAt": "2026-10-15T09:18:00.848Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -8,16 +8,16 @@
  },
  "players": {
   "fplTotal": 667,
-  "inFplEspnMap": 546,
-  "mappedToFootballData": 512,
+  "inFplEspnMap": 547,
+  "mappedToFootballData": 515,
   "byMethod": {
-   "dob+full-name": 484,
+   "dob+full-name": 487,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 34
+  "unmapped": 32
  },
- "footballDataPlayersSeen": 10202,
+ "footballDataPlayersSeen": 10204,
  "teamProblems": [
   {
    "espnTeamId": 397,
@@ -107,22 +107,6 @@
  "proposals": [],
  "unmapped": [
   {
-   "code": 106760,
-   "name": "Shaw",
-   "dateOfBirth": "1995-11-24",
-   "candidates": [
-    {
-     "footballDataId": 6082,
-     "name": "Ben Killip"
-    },
-    {
-     "footballDataId": 56671,
-     "name": "Macaulay Gillesphey"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
    "code": 110690,
    "name": "Wilson",
    "dateOfBirth": "2001-12-05",
@@ -167,12 +151,6 @@
     }
    ],
    "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 247348,
-   "name": "Muñoz",
-   "dateOfBirth": "2006-07-19",
-   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 434399,
