@@ -1,7 +1,7 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-15T09:18:02.595Z",
+  "generatedAt": "2026-10-16T09:13:09.187Z",
   "coverageDigest": "89a85135c3c9ecc1",
   "entities": {
    "structural_match": 12326,
@@ -49,10 +49,10 @@
   },
   "files": 215
  },
- "builtAt": "2026-10-15T09:18:02.595Z",
+ "builtAt": "2026-10-16T09:13:09.188Z",
  "footprint": {
   "files": 215,
-  "bytes": 5339383,
+  "bytes": 5338913,
   "mb": 5.34
  },
  "competitions": [
@@ -259,7 +259,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 20,
-   "fdSquadPlayers": 546,
+   "fdSquadPlayers": 545,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -936,7 +936,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 45,
+   "structuralPlayed": 43,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
@@ -965,7 +965,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 45,
+   "unresolvedMatches": 43,
    "scoreConflicts": 0
   },
   {
@@ -1164,7 +1164,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 53,
+   "structuralPlayed": 60,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
@@ -1193,7 +1193,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 53,
+   "unresolvedMatches": 60,
    "scoreConflicts": 0
   },
   {
@@ -1392,7 +1392,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 51,
+   "structuralPlayed": 54,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
@@ -1421,7 +1421,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 51,
+   "unresolvedMatches": 54,
    "scoreConflicts": 0
   },
   {
@@ -1848,7 +1848,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 306,
-   "structuralPlayed": 71,
+   "structuralPlayed": 67,
    "espnMatches": 0,
    "espnExpected": 306,
    "espnCollectedPct": 0,
@@ -1877,7 +1877,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 71,
+   "unresolvedMatches": 67,
    "scoreConflicts": 0
   },
   {
@@ -2038,7 +2038,7 @@
   "fplActive": 562,
   "fplDeparted": 105,
   "mappedToEspn": 547,
-  "mappedToFootballData": 515,
+  "mappedToFootballData": 517,
   "ambiguousRefused": 0,
   "unmappedActive": 16,
   "unmappedDeparted": 104,

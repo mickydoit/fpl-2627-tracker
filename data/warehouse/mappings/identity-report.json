@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-10-15T09:18:00.848Z",
+ "builtAt": "2026-10-16T09:13:08.005Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,15 +9,15 @@
  "players": {
   "fplTotal": 667,
   "inFplEspnMap": 547,
-  "mappedToFootballData": 515,
+  "mappedToFootballData": 517,
   "byMethod": {
-   "dob+full-name": 487,
+   "dob+full-name": 489,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 32
+  "unmapped": 30
  },
- "footballDataPlayersSeen": 10204,
+ "footballDataPlayersSeen": 10203,
  "teamProblems": [
   {
    "espnTeamId": 397,
@@ -107,12 +107,6 @@
  "proposals": [],
  "unmapped": [
   {
-   "code": 110690,
-   "name": "Wilson",
-   "dateOfBirth": "2001-12-05",
-   "reason": "no football-data player born that day in the collected competitions"
-  },
-  {
    "code": 121709,
    "name": "Benitez",
    "dateOfBirth": "1993-01-19",
@@ -164,18 +158,6 @@
     {
      "footballDataId": 58282,
      "name": "Cimo Röcker"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 443261,
-   "name": "Clarke",
-   "dateOfBirth": "1999-01-30",
-   "candidates": [
-    {
-     "footballDataId": 98993,
-     "name": "Dmytro Riznyk"
     }
    ],
    "reason": "date of birth matched but no name did"
@@ -235,15 +217,15 @@
   {
    "code": 487838,
    "name": "Hall",
-   "dateOfBirth": "1999-12-07",
+   "dateOfBirth": "2004-09-08",
    "candidates": [
     {
-     "footballDataId": 122231,
-     "name": "Isaac Schmidt"
+     "footballDataId": 203511,
+     "name": "Nico Paz"
     },
     {
-     "footballDataId": 189593,
-     "name": "Sam Dalby"
+     "footballDataId": 268930,
+     "name": "Andro Babić"
     }
    ],
    "reason": "date of birth matched but no name did"
