@@ -1,7 +1,7 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-22T09:37:46.596Z",
+  "generatedAt": "2026-10-23T09:32:55.278Z",
   "coverageDigest": "89a85135c3c9ecc1",
   "entities": {
    "structural_match": 12326,
@@ -49,10 +49,10 @@
   },
   "files": 215
  },
- "builtAt": "2026-10-22T09:37:46.597Z",
+ "builtAt": "2026-10-23T09:32:55.279Z",
  "footprint": {
   "files": 215,
-  "bytes": 5338887,
+  "bytes": 5338896,
   "mb": 5.34
  },
  "competitions": [
@@ -1399,7 +1399,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 474,
+   "fdSquadPlayers": 476,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
