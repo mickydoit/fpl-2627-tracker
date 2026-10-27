@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-10-24T09:06:43.155Z",
+ "builtAt": "2026-10-27T10:02:59.294Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -7,17 +7,17 @@
   "problems": 14
  },
  "players": {
-  "fplTotal": 668,
-  "inFplEspnMap": 549,
-  "mappedToFootballData": 520,
+  "fplTotal": 669,
+  "inFplEspnMap": 550,
+  "mappedToFootballData": 518,
   "byMethod": {
-   "dob+full-name": 492,
+   "dob+full-name": 490,
    "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 29
+  "unmapped": 32
  },
- "footballDataPlayersSeen": 10190,
+ "footballDataPlayersSeen": 10198,
  "teamProblems": [
   {
    "espnTeamId": 397,
@@ -106,6 +106,22 @@
  ],
  "proposals": [],
  "unmapped": [
+  {
+   "code": 106760,
+   "name": "Shaw",
+   "dateOfBirth": "1995-11-24",
+   "candidates": [
+    {
+     "footballDataId": 6082,
+     "name": "Ben Killip"
+    },
+    {
+     "footballDataId": 56671,
+     "name": "Macaulay Gillesphey"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
   {
    "code": 121709,
    "name": "Benitez",
@@ -267,6 +283,12 @@
    "reason": "date of birth matched but no name did"
   },
   {
+   "code": 499857,
+   "name": "Sharman-Lowe",
+   "dateOfBirth": "2003-03-30",
+   "reason": "no football-data player born that day in the collected competitions"
+  },
+  {
    "code": 501902,
    "name": "Hughes",
    "dateOfBirth": "2008-09-19",
@@ -328,6 +350,22 @@
     {
      "footballDataId": 99195,
      "name": "Leo Greiml"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 549940,
+   "name": "Fofana",
+   "dateOfBirth": "2000-05-02",
+   "candidates": [
+    {
+     "footballDataId": 160405,
+     "name": "Callum Wright"
+    },
+    {
+     "footballDataId": 67920,
+     "name": "Thijs Oosting"
     }
    ],
    "reason": "date of birth matched but no name did"
@@ -505,14 +543,8 @@
   {
    "code": 661313,
    "name": "J.Angulo",
-   "dateOfBirth": "2008-01-12",
-   "candidates": [
-    {
-     "footballDataId": 283413,
-     "name": "Pedro Fernández"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
+   "dateOfBirth": "1988-09-26",
+   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 665243,
