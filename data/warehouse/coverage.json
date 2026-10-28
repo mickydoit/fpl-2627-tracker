@@ -1,7 +1,7 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-27T10:03:01.009Z",
+  "generatedAt": "2026-10-28T10:43:37.528Z",
   "coverageDigest": "89a85135c3c9ecc1",
   "entities": {
    "structural_match": 12326,
@@ -49,10 +49,10 @@
   },
   "files": 215
  },
- "builtAt": "2026-10-27T10:03:01.009Z",
+ "builtAt": "2026-10-28T10:43:37.529Z",
  "footprint": {
   "files": 215,
-  "bytes": 5340417,
+  "bytes": 5340585,
   "mb": 5.34
  },
  "competitions": [
@@ -1164,7 +1164,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 80,
+   "structuralPlayed": 83,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
@@ -1193,7 +1193,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 80,
+   "unresolvedMatches": 83,
    "scoreConflicts": 0
   },
   {
@@ -1627,7 +1627,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 485,
+   "fdSquadPlayers": 486,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -2038,7 +2038,7 @@
   "fplActive": 563,
   "fplDeparted": 106,
   "mappedToEspn": 550,
-  "mappedToFootballData": 518,
+  "mappedToFootballData": 519,
   "ambiguousRefused": 0,
   "unmappedActive": 14,
   "unmappedDeparted": 105,
