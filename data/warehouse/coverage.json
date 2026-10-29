@@ -1,7 +1,7 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-28T10:43:37.528Z",
+  "generatedAt": "2026-10-29T11:07:07.380Z",
   "coverageDigest": "89a85135c3c9ecc1",
   "entities": {
    "structural_match": 12326,
@@ -49,10 +49,10 @@
   },
   "files": 215
  },
- "builtAt": "2026-10-28T10:43:37.529Z",
+ "builtAt": "2026-10-29T11:07:07.381Z",
  "footprint": {
   "files": 215,
-  "bytes": 5340585,
+  "bytes": 5340921,
   "mb": 5.34
  },
  "competitions": [
@@ -1164,7 +1164,7 @@
    "tier": "feeder",
    "season": 2026,
    "structuralMatches": 380,
-   "structuralPlayed": 83,
+   "structuralPlayed": 88,
    "espnMatches": 0,
    "espnExpected": 380,
    "espnCollectedPct": 0,
@@ -1193,7 +1193,7 @@
     "xg": 0,
     "xa": 0
    },
-   "unresolvedMatches": 83,
+   "unresolvedMatches": 88,
    "scoreConflicts": 0
   },
   {
@@ -1285,7 +1285,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 572,
+   "fdSquadPlayers": 571,
    "playerSeasonRows": 553,
    "playerSeasonTierA": 418,
    "playerSeasonTierB": 135,
@@ -1323,7 +1323,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 580,
+   "fdSquadPlayers": 579,
    "playerSeasonRows": 617,
    "playerSeasonTierA": 453,
    "playerSeasonTierB": 164,
@@ -1361,7 +1361,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 601,
+   "fdSquadPlayers": 600,
    "playerSeasonRows": 553,
    "playerSeasonTierA": 542,
    "playerSeasonTierB": 11,
@@ -1627,7 +1627,7 @@
    "teamMatchRows": 0,
    "joinRatePct": 0,
    "teams": 18,
-   "fdSquadPlayers": 486,
+   "fdSquadPlayers": 488,
    "playerSeasonRows": 0,
    "playerSeasonTierA": 0,
    "playerSeasonTierB": 0,
@@ -2038,7 +2038,7 @@
   "fplActive": 563,
   "fplDeparted": 106,
   "mappedToEspn": 550,
-  "mappedToFootballData": 519,
+  "mappedToFootballData": 518,
   "ambiguousRefused": 0,
   "unmappedActive": 14,
   "unmappedDeparted": 105,
