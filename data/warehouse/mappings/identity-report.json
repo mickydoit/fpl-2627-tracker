@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-10-31T10:39:58.597Z",
+ "builtAt": "2026-11-01T11:30:02.967Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -7,7 +7,7 @@
   "problems": 14
  },
  "players": {
-  "fplTotal": 669,
+  "fplTotal": 670,
   "inFplEspnMap": 550,
   "mappedToFootballData": 518,
   "byMethod": {
@@ -17,7 +17,7 @@
   "proposals": 0,
   "unmapped": 32
  },
- "footballDataPlayersSeen": 10199,
+ "footballDataPlayersSeen": 10200,
  "teamProblems": [
   {
    "espnTeamId": 397,
