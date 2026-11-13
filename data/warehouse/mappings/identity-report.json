@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-11-12T12:31:45.423Z",
+ "builtAt": "2026-11-13T12:13:29.903Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,13 +9,13 @@
  "players": {
   "fplTotal": 672,
   "inFplEspnMap": 553,
-  "mappedToFootballData": 518,
+  "mappedToFootballData": 521,
   "byMethod": {
-   "dob+full-name": 489,
+   "dob+full-name": 492,
    "dob+surname": 29
   },
   "proposals": 0,
-  "unmapped": 35
+  "unmapped": 32
  },
  "footballDataPlayersSeen": 10229,
  "teamProblems": [
@@ -107,28 +107,6 @@
  "proposals": [],
  "unmapped": [
   {
-   "code": 106760,
-   "name": "Shaw",
-   "dateOfBirth": "1995-11-24",
-   "candidates": [
-    {
-     "footballDataId": 6082,
-     "name": "Ben Killip"
-    },
-    {
-     "footballDataId": 56671,
-     "name": "Macaulay Gillesphey"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 110690,
-   "name": "Wilson",
-   "dateOfBirth": "2001-12-05",
-   "reason": "no football-data player born that day in the collected competitions"
-  },
-  {
    "code": 121709,
    "name": "Benitez",
    "dateOfBirth": "1993-01-19",
@@ -148,26 +126,6 @@
     {
      "footballDataId": 1299,
      "name": "John"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 231899,
-   "name": "Taylor",
-   "dateOfBirth": "2005-04-12",
-   "candidates": [
-    {
-     "footballDataId": 273415,
-     "name": "Henry Cartwright"
-    },
-    {
-     "footballDataId": 217910,
-     "name": "Giacomo Stabile"
-    },
-    {
-     "footballDataId": 227024,
-     "name": "Luis Fernando"
     }
    ],
    "reason": "date of birth matched but no name did"
