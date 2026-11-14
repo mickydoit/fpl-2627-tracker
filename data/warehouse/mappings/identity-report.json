@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-11-13T12:13:29.903Z",
+ "builtAt": "2026-11-14T11:36:35.404Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,13 +9,13 @@
  "players": {
   "fplTotal": 672,
   "inFplEspnMap": 553,
-  "mappedToFootballData": 521,
+  "mappedToFootballData": 520,
   "byMethod": {
-   "dob+full-name": 492,
+   "dob+full-name": 491,
    "dob+surname": 29
   },
   "proposals": 0,
-  "unmapped": 32
+  "unmapped": 33
  },
  "footballDataPlayersSeen": 10229,
  "teamProblems": [
@@ -222,6 +222,22 @@
     {
      "footballDataId": 186393,
      "name": "Duke Verduin"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 487838,
+   "name": "Hall",
+   "dateOfBirth": "1999-12-07",
+   "candidates": [
+    {
+     "footballDataId": 122231,
+     "name": "Isaac Schmidt"
+    },
+    {
+     "footballDataId": 189593,
+     "name": "Sam Dalby"
     }
    ],
    "reason": "date of birth matched but no name did"
