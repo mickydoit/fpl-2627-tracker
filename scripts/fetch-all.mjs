@@ -11,7 +11,7 @@
  *   FPL_LEAGUE_IDS optional — comma-separated classic league ids to track
  *   DEEP           optional — "1" to sweep element-summary for every player
  */
-import { getJSON, mapLimit } from './lib/http.mjs';
+import { getJSON, mapLimit, espnScoreboard } from './lib/http.mjs';
 import { readJSON, writeJSON, writeJSONIfChanged } from './lib/io.mjs';
 
 const FPL = 'https://fantasy.premierleague.com/api';
@@ -230,10 +230,7 @@ const from = new Date(today.getTime() - 3 * 864e5);
 const to = new Date(today.getTime() + 10 * 864e5);
 const ymd = (d) => d.toISOString().slice(0, 10).replace(/-/g, '');
 
-const scoreboard = await getJSON(
-  `${ESPN}/scoreboard?dates=${ymd(from)}-${ymd(to)}&limit=200`,
-  { browserUA: true },
-).catch((e) => {
+const scoreboard = await espnScoreboard(ESPN, ymd(from), ymd(to)).catch((e) => {
   warnings.push(`espn scoreboard: ${e.message}`);
   return null;
 });
@@ -313,6 +310,8 @@ await writeJSON(`${DATA}/meta.json`, {
   source: 'live',
   fetched_at: new Date().toISOString(),
   current_gw: currentGW,
+  // `is_current` outlives the football by up to a fortnight; the data bar needs to know.
+  current_gw_finished: events.find((e) => e.id === currentGW)?.finished ?? false,
   next_gw: nextGW,
   next_deadline: events.find((e) => e.id === nextGW)?.deadline_time ?? null,
   player_count: elements.length,

@@ -31,7 +31,7 @@
  * A match that cannot be fetched is absent, and absence is reported as missing
  * coverage. It must never appear as a player who took no shots.
  */
-import { getJSON } from '../lib/http.mjs';
+import { getJSON, espnScoreboard } from '../lib/http.mjs';
 import { readRows, mergeRows, paths, stamp } from './store.mjs';
 import { isModelSafe } from './field-registry.mjs';
 import fs from 'node:fs';
@@ -78,9 +78,8 @@ for (const f of fixtures) {
   gwByDay.set(String(f.kickoff_time).slice(0, 10), f.event);
 }
 
-const sb = await getJSON(`${SITE}/scoreboard?dates=${SEASON}0801-${SEASON + 1}0630&limit=700`, { browserUA: true })
-  .catch(() => null);
-spent += 1;
+const sb = await espnScoreboard(SITE, `${SEASON}0801`, `${SEASON + 1}0630`).catch(() => null);
+spent += 2;
 if (!sb?.events) { console.warn('✗ scoreboard unavailable — committed data untouched'); process.exit(0); }
 
 const missing = [];

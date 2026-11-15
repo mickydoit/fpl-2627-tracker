@@ -30,7 +30,7 @@
  * the existing half-hourly schedule absorbs in three and a half days without
  * ever making a long request burst.
  */
-import { getJSON } from '../lib/http.mjs';
+import { getJSON, espnScoreboard } from '../lib/http.mjs';
 import { readRows, mergeRows, paths, stamp } from './store.mjs';
 import { COMPETITIONS, WAREHOUSE_SEASONS, assertWarehouseSeason, BUDGET } from './config.mjs';
 
@@ -177,10 +177,9 @@ for (const season of SEASONS) {
     const have = new Set((await readRows(path)).map((r) => r.eventId));
 
     const { range } = seasonWindow(season);
-    const board = await getJSON(
-      `${SITE}/${comp.espn}/scoreboard?dates=${range}&limit=700`,
-      { browserUA: true },
-    ).catch((e) => ({ _err: e.message }));
+    const [rangeFrom, rangeTo] = range.split('-');
+    const board = await espnScoreboard(`${SITE}/${comp.espn}`, rangeFrom, rangeTo)
+      .catch((e) => ({ _err: e.message }));
     if (board?._err || !Array.isArray(board?.events)) {
       // A competition-season ESPN will not serve is recorded and skipped. It is
       // never written as empty over data already collected.

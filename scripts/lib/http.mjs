@@ -56,6 +56,43 @@ export async function getJSON(url, { retries = 4, browserUA = false, timeout = 3
   throw new Error(`Failed after ${retries} retries: ${url} — ${lastErr?.message}`);
 }
 
+/**
+ * An ESPN scoreboard over a span of dates.
+ *
+ * ESPN stopped serving `dates=YYYYMMDD-YYYYMMDD` in mid-September 2026: every
+ * range, however short, now answers 400 "Failed to get events endpoint". The
+ * failure was quiet everywhere it mattered — the live scoreboard stopped
+ * updating on 15 September, the match collector found no fixture list, and the
+ * warehouse spent most of each 43-minute run backing off against requests that
+ * could not succeed.
+ *
+ * A whole calendar year (`dates=YYYY`) and a single day are still served, so a
+ * span is fetched as the one or two years it touches and trimmed to the dates
+ * asked for. A season costs two requests instead of one.
+ *
+ * @param {string} base  e.g. .../sports/soccer/eng.1  (no trailing /scoreboard)
+ * @param {string} from  YYYYMMDD, inclusive
+ * @param {string} to    YYYYMMDD, inclusive
+ */
+export async function espnScoreboard(base, from, to, opts = {}) {
+  const ymd = (iso) => String(iso || '').slice(0, 10).replace(/-/g, '');
+  const merged = { events: [] };
+  const seen = new Set();
+  for (let year = Number(from.slice(0, 4)); year <= Number(to.slice(0, 4)); year++) {
+    const page = await getJSON(`${base}/scoreboard?dates=${year}&limit=1000`, { browserUA: true, ...opts });
+    if (!Array.isArray(page?.events)) throw new Error(`ESPN scoreboard ${year}: no events array`);
+    if (!merged.leagues) Object.assign(merged, { ...page, events: merged.events });
+    for (const ev of page.events) {
+      const day = ymd(ev.date);
+      if (day < from || day > to || seen.has(ev.id)) continue;
+      seen.add(ev.id);
+      merged.events.push(ev);
+    }
+  }
+  merged.events.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  return merged;
+}
+
 // Politeness throttle for the ~700-request element-summary sweep.
 export async function mapLimit(items, limit, fn) {
   const out = new Array(items.length);

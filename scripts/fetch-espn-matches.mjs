@@ -25,7 +25,7 @@
  * store stays and every FPL-derived number is untouched.
  */
 import { readdir } from 'node:fs/promises';
-import { getJSON, mapLimit } from './lib/http.mjs';
+import { getJSON, mapLimit, espnScoreboard } from './lib/http.mjs';
 import { readJSON, writeJSONIfChanged } from './lib/io.mjs';
 
 const CORE = 'https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1';
@@ -110,8 +110,7 @@ console.log(`→ season ${SEASON} fixture list`);
 // worked and was quietly wrong: a run missed for longer than the window would
 // have skipped those matches permanently, with nothing to show it had. Asking
 // for the whole season every time costs one request and cannot drift.
-const seasonRange = `${SEASON}0801-${SEASON + 1}0601`;
-const board = await getJSON(`${SITE}/scoreboard?dates=${seasonRange}&limit=400`, { browserUA: true })
+const board = await espnScoreboard(SITE, `${SEASON}0801`, `${SEASON + 1}0601`)
   .catch((e) => { console.warn(`  scoreboard failed: ${e.message}`); return null; });
 if (!board?.events?.length) {
   console.warn('✗ no fixture list — leaving the store untouched');
