@@ -37,16 +37,23 @@ const FIRST = manifest.firstScorableGW;
 const settled = (boot?.events || []).filter((e) => e.finished).map((e) => e.id);
 const dataThrough = settled.length ? Math.max(...settled) : 0;
 const eligible = settled.filter((g) => g >= FIRST);
+const eligibleSet = new Set(eligible);
 
 /* ---- realised, from GW >= FIRST only ------------------------------ */
 const byId = new Map();
 for (const [, s] of Object.entries(summaries)) {
-  const hist = (s.history || []).filter((h) => Number(h.round) >= FIRST);
-  const excluded = (s.history || []).length - hist.length;
+  /* Only SETTLED gameweeks. History rows arrive per match, as it is played,
+     so `round >= FIRST` alone also admitted the gameweek still in progress:
+     every Sunday and Monday each row claimed one more eligible gameweek than
+     `eligibleGwCount` said existed, and partial minutes were scored against a
+     full-gameweek denominator. PW-5 and PE-9 caught it and failed the job. */
+  const hist = (s.history || []).filter((h) => eligibleSet.has(Number(h.round)));
+  const excluded = (s.history || []).filter((h) => Number(h.round) < FIRST).length;
   if (!hist.length) { if (s.id != null) byId.set(s.id, { id: s.id, gws: 0, excludedGws: excluded, minutes: 0 }); continue; }
   const num = (v) => Number(v) || 0;
   byId.set(s.id, {
-    id: s.id, gws: hist.length, excludedGws: excluded,
+    /* Distinct rounds, not rows: a double gameweek is two rows, one gameweek. */
+    id: s.id, gws: new Set(hist.map((h) => Number(h.round))).size, excludedGws: excluded,
     minutes: hist.reduce((a, h) => a + num(h.minutes), 0),
     starts: hist.reduce((a, h) => a + num(h.starts), 0),
     played: hist.filter((h) => num(h.minutes) > 0).length,
