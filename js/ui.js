@@ -81,8 +81,11 @@ export function dataBar(meta) {
     el('span', {}, meta.source === 'seed' ? 'Seed data — ' : 'Live data — '),
     el('strong', {}, `updated ${when}`),
     meta.player_count ? el('span', { class: 'dim' }, ` · ${meta.player_count} players`) : null,
-    meta.current_gw ? el('span', { class: 'dim' }, ` · GW${meta.current_gw} in progress`) : null,
-    !meta.current_gw && meta.next_gw ? el('span', { class: 'dim' }, ` · GW${meta.next_gw} next`) : null,
+    /* "In progress" only while it is. `current_gw` stays set for the whole
+       week after the last match, so this read "GW10 in progress" through an
+       international break. */
+    meta.current_gw && !meta.current_gw_finished ? el('span', { class: 'dim' }, ` · GW${meta.current_gw} in progress`) : null,
+    (!meta.current_gw || meta.current_gw_finished) && meta.next_gw ? el('span', { class: 'dim' }, ` · GW${meta.next_gw} next`) : null,
   );
   return bar;
 }
@@ -235,7 +238,10 @@ export function sortableTable({ columns, rows, initialSort, onRowClick, rowClass
 
   renderHead();
   renderBody();
-  return { table, refresh: (next) => { rows = next; renderBody(); } };
+  /* The head too: a caller may have relabelled a column (the Players page
+     renames its projection column with the horizon) and the body alone left
+     the old label standing until a header was clicked. */
+  return { table, refresh: (next) => { rows = next; renderHead(); renderBody(); } };
 }
 
 /* ---------- modal ---------- */

@@ -1,4 +1,4 @@
-import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
+import { loadAll, getState, setState, resolveSquadIds, resolveBank, resolveFreeTransfers, sellPrices } from '../data.js';
 import { projectAll, POS, actionableEvent } from '../model.js';
 import { suggestTransfers, bestXI, scoreSquad } from '../optimiser.js';
 import { bestMove, recommendedHorizon, TRANSFER_CONFIG } from '../transfer-advice.js';
@@ -20,8 +20,13 @@ if (!d.boot) { setKids(app, el('p', { class: 'empty' }, 'No data yet — run the
 const state = getState();
 let horizon = state.horizon ?? 5;
 let riskAversion = state.riskAversion ?? 0.5;
-let freeTransfers = state.freeTransfers ?? 1;
-let bank = state.bank ?? (d.entry?.entry?.last_deadline_bank ?? 0);
+/* Both come from the entry — bank moved by transfers already made this week,
+   free transfers counted from the season's history — unless a figure was typed
+   here for THIS gameweek. A typed figure used to stick for the season. */
+const overrideEvent = d.entry?.picks_event ?? null;
+let freeTransfers = resolveFreeTransfers(d.entry, state, d.boot.events);
+let bank = resolveBank(d.entry, state, d.boot.events);
+const sell = sellPrices(d.entry, d.boot.elements, d.boot.events);
 
 const teams = Object.fromEntries(d.boot.teams.map((t) => [t.id, t]));
 let rows = [];
@@ -36,7 +41,7 @@ function recompute() {
 }
 recompute();
 
-const { ids: squadIds, source } = resolveSquadIds(d.entry, state);
+const { ids: squadIds, source } = resolveSquadIds(d.entry, state, d.boot.events);
 
 const controlsSec = section('Filters', { hint: 'Bank, free transfers and the window the adviser plans over' });
 const controls = controlsSec.body;
@@ -51,10 +56,10 @@ function renderControls() {
           (n) => { horizon = n; setState({ horizon }); recompute(); run(); }, { compact: true })),
       el('label', {}, 'Free transfers',
         cycler(freeTransfers, [0, 1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n} FT` })),
-          (n) => { freeTransfers = n; setState({ freeTransfers }); run(); }, { compact: true })),
+          (n) => { freeTransfers = n; setState({ freeTransfers, freeTransfersEvent: overrideEvent }); run(); }, { compact: true })),
       el('label', {}, 'In the bank (£m)',
         el('input', { type: 'number', step: '0.1', min: '0', value: (bank / 10).toFixed(1), style: 'width:6rem',
-          oninput: (e) => { bank = Math.round((parseFloat(e.target.value) || 0) * 10); setState({ bank }); } })),
+          oninput: (e) => { bank = Math.round((parseFloat(e.target.value) || 0) * 10); setState({ bank, bankEvent: overrideEvent }); } })),
       el('label', {}, 'Risk aversion',
         cycler(riskAversion, [[0, 'Ignore doubts'], [0.5, 'Balanced'], [1, 'Avoid all doubts']],
           (v) => { riskAversion = v; setState({ riskAversion }); recompute(); run(); }, { compact: true })),
@@ -98,7 +103,7 @@ function run() {
     };
 
     const res = suggestTransfers(squadIds, rowsAtH(horizon), {
-      bank, freeTransfers, horizon, riskAversion, maxSuggestions: 25,
+      bank, freeTransfers, horizon, riskAversion, maxSuggestions: 25, sellPrices: sell,
     });
     if (res.error) {
       setKids(output, el('div', { class: 'banner err' }, res.error));
@@ -163,7 +168,7 @@ function run() {
           : el('div', {},
             el('p', {}, advice
               ? `The best available move is ${advice.move.out.web_name} → ${advice.move.in.web_name}, `
-                + `worth ${advice.gain >= 0 ? '+' : ''}${advice.gain.toFixed(1)} over ${rec.horizon} gameweeks — ${advice.reasons[0]}.`
+                + `worth ${advice.gain >= 0 ? '+' : ''}${advice.gain.toFixed(1)} over 5 gameweeks — ${advice.reasons[0]}.`
               : 'No legal move improves this squad.'),
             el('p', { class: 'hint' }, 'A free transfer can be banked, so a move has to beat the player you own, '
               + `the model's error and the value of keeping the transfer. Nothing clears that bar this week.`)),

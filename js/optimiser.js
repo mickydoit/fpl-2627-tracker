@@ -750,8 +750,13 @@ export function suggestTransfers(squadIds, players, options = {}) {
     maxSuggestions = 25,
     excludedIds = [],
     lockedIds = [],
+    sellPrices = null,
     ...opts
   } = options;
+  /* What a sale actually raises. FPL keeps half of any price rise, so
+     `now_cost` overstates it; js/data.js sellPrices() supplies the real figure
+     when the entry is known, and `now_cost` remains the estimate when not. */
+  const sale = (p) => sellPrices?.get?.(p.id) ?? p.now_cost;
 
   const byId = new Map(players.map((p) => [p.id, p]));
   const squad = squadIds.map((id) => byId.get(id)).filter(Boolean);
@@ -771,9 +776,7 @@ export function suggestTransfers(squadIds, players, options = {}) {
     const rest = squad.filter((p) => p.id !== out.id);
     const clubs = {};
     for (const p of rest) clubs[p.team] = (clubs[p.team] || 0) + 1;
-    // Selling price already reflects the 50% sell-on fee if you pass purchase
-    // prices in; with live prices only, now_cost is the best available estimate.
-    const funds = bank + out.now_cost;
+    const funds = bank + sale(out);
 
     for (const inc of pool[out.element_type]) {
       if (squadSet.has(inc.id)) continue;
@@ -785,7 +788,7 @@ export function suggestTransfers(squadIds, players, options = {}) {
       const cost = freeTransfers >= 1 ? 0 : 4;
       singles.push({
         out, in: inc, gain, net: gain - cost, hit: cost,
-        spend: inc.now_cost - out.now_cost,
+        spend: inc.now_cost - sale(out),
         bankAfter: funds - inc.now_cost,
       });
     }
@@ -804,8 +807,7 @@ export function suggestTransfers(squadIds, players, options = {}) {
       const rest = squad.filter((p) => p.id !== a.out.id && p.id !== b.out.id);
       if (rest.length !== 13) continue;
       const trial = [...rest, a.in, b.in];
-      const cost = squadCost(trial);
-      if (cost > squadCost(squad) + bank) continue;
+      if (a.in.now_cost + b.in.now_cost > bank + sale(a.out) + sale(b.out)) continue;
       const clubs = {};
       let legal = true;
       for (const p of trial) {

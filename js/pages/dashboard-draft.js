@@ -188,7 +188,12 @@ export async function renderDraftDashboard(host, { sections = DRAFT_SECTIONS } =
   const openPlayer = (p) => playerCard(p, { teams, fixturesFor, horizon: 5, fromEvent: nextEvent(fixtures) });
 
   const livePts = (p) => live?.elements?.[p.id]?.total_points ?? null;
-  const gwLive = Boolean(live?.elements && Object.keys(live.elements).length);
+  /* Live only while that gameweek still has football left in it. live.json
+     keeps last week's scores until the next deadline, and the bare test showed
+     "Your XI, live" for a finished gameweek all week. */
+  const liveFixtures = (fixtures || []).filter((f) => f.event === live?.event);
+  const gwLive = Boolean(live?.elements && Object.keys(live.elements).length)
+    && (!liveFixtures.length || liveFixtures.some((f) => !f.finished));
 
   /**
    * Your chosen XI, which is not necessarily the best one.
@@ -478,7 +483,11 @@ function notesCard(mine, fixtures, teams, fromEvent, openPlayer) {
 }
 
 const ord = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th');
-const nextEvent = (fixtures) => Math.min(...(fixtures || []).filter((f) => !f.finished && f.event).map((f) => f.event), 1);
+const nextEvent = (fixtures) => {
+  /* The fallback used to sit INSIDE the min(), so the answer was always 1. */
+  const open = (fixtures || []).filter((f) => !f.finished && f.event).map((f) => f.event);
+  return open.length ? Math.min(...open) : 1;
+};
 
 /* ------------------------------------------------------------------ *
  * risk

@@ -1,4 +1,4 @@
-import { loadAll, getState, setState, resolveSquadIds } from '../data.js';
+import { loadAll, getState, setState, resolveSquadIds, resolveBank, resolveFreeTransfers, sellPrices } from '../data.js';
 import { projectAll, POS, SQUAD_RULES, actionableEvent } from '../model.js';
 import { rateSquad } from '../rating.js';
 import { optimiseSquad, validate, squadCost, bestXI, canSwap, splitXI, scoreSquad,
@@ -38,7 +38,7 @@ let manualXi = state.manualXi || null;
  * about a hypothetical, and answering it must not overwrite what you actually
  * have. FPL banks to five, so that is the ceiling.
  */
-let plannedTransfers = state.optimiserTransfers ?? state.freeTransfers ?? 1;
+let plannedTransfers = state.optimiserTransfers ?? resolveFreeTransfers(d.entry, state, d.boot.events);
 let result = null;
 let lastMs = 0;
 
@@ -118,6 +118,7 @@ function renderControls() {
 function run() {
   recompute();
   renderControls();
+  compareNode = null;
   setKids(output, el('p', { class: 'loading' }, 'Solving…'));
 
   // Yield to the browser so the "Solving…" state actually paints before the
@@ -331,7 +332,7 @@ function renderResult(ms) {
       el('div', { class: 'tile' }, el('span', { class: 'k' }, 'Solve time'), el('span', { class: 'v' }, `${ms}ms`), el('span', { class: 's' }, 'randomised greedy + local search')),
     ),
     check.ok ? null : el('div', { class: 'banner err' }, check.errors.join('; ')),
-    compareCard(result),
+    (compareNode ??= compareCard(result)),
     sectionOf('Suggested squad', {
       flush: true,
       control: el('div', { class: 'btnrow' },
@@ -385,6 +386,10 @@ function renderResult(ms) {
  * transfer.
  */
 let lastAdvice = null;
+/* The comparison solves a six-rung transfer ladder and a full optimiser run —
+   about 1.7s — and none of it depends on which eleven of the fifteen start.
+   It was being rebuilt on every drag swap; now once per solve. */
+let compareNode = null;
 
 function actionableCard(mine, mineIds) {
   // Bank and free transfers are the Transfers page's controls, not this page's.
@@ -392,8 +397,8 @@ function actionableCard(mine, mineIds) {
   // the conservative case — no money, one transfer — rather than inventing
   // headroom the owner may not have.
   const cstate = getState();
-  const bank = cstate.bank ?? 0;
-  const freeTransfers = cstate.freeTransfers ?? 1;
+  const bank = resolveBank(d.entry, cstate, d.boot.events);
+  const freeTransfers = resolveFreeTransfers(d.entry, cstate, d.boot.events);
 
   const rec = recommendedHorizon({ squad: mine, freeTransfers });
   /* A transfer decided now cannot score from a gameweek whose deadline has
@@ -419,6 +424,7 @@ function actionableCard(mine, mineIds) {
 
   const res = suggestTransfers(mineIds, at(rec.horizon), {
     bank, freeTransfers, horizon: rec.horizon, riskAversion, maxSuggestions: 12,
+    sellPrices: sellPrices(d.entry, d.boot.elements, d.boot.events),
   });
   if (res.error) {
     return el('div', {}, el('h3', {}, 'This week'), el('p', { class: 'hint' }, res.error));
@@ -438,7 +444,7 @@ function actionableCard(mine, mineIds) {
       el('p', { class: 'advice-verdict' }, 'HOLD'),
       el('p', {}, best
         ? `The best available move is ${best.move.out.web_name} → ${best.move.in.web_name}, worth `
-          + `${best.gain >= 0 ? '+' : ''}${best.gain.toFixed(1)} over ${rec.horizon} gameweeks — `
+          + `${best.gain >= 0 ? '+' : ''}${best.gain.toFixed(1)} over 5 gameweeks — `
           + `${best.reasons[0]}.`
         : 'No legal move improves this squad.'),
       el('p', { class: 'hint' }, 'A free transfer can be banked, so a move has to beat the player you own, '
@@ -478,7 +484,13 @@ const SQUAD_COLUMNS = (horizon) => [
 
 function saveSquad() {
   setState({ manualSquad: result.squad.map((p) => p.id) });
-  output.prepend(el('div', { class: 'banner ok' }, 'Saved to this browser. The Dashboard and Transfers pages will now use it.'));
+  /* Say what will actually happen. Once FPL has published picks they take
+     precedence over a saved squad (see resolveSquadIds), so promising that the
+     other pages "will now use it" was untrue from GW1 onward. */
+  const live = !!d.entry?.picks?.picks?.length;
+  output.prepend(el('div', { class: 'banner ok' }, live
+    ? 'Saved to this browser as a plan. The Dashboard and Transfers pages keep following your real FPL team.'
+    : 'Saved to this browser. The Dashboard and Transfers pages will now use it.'));
 }
 
 function copyList() {
@@ -625,7 +637,7 @@ function ratingCard({ mine, rowsAt, bank, freeTransfers, advice }) {
 }
 
 function compareCard(result) {
-  const { ids: mineIds, source } = resolveSquadIds(d.entry, getState());
+  const { ids: mineIds, source } = resolveSquadIds(d.entry, getState(), d.boot.events);
   if (mineIds.length !== 15) {
     return sectionOf('Compare with my squad', { hint: `Next ${horizon} gameweeks` },
       el('p', { class: 'hint' },
@@ -650,7 +662,7 @@ function compareCard(result) {
    * Each solve is single-digit milliseconds, so there is no reason to make the
    * reader move a control to find that out. */
   const cstate = getState();
-  const bank = cstate.bank ?? 0;
+  const bank = resolveBank(d.entry, cstate, d.boot.events);
   const solveOpts = { horizon, riskAversion, benchWeight, excludedIds: [...excluded] };
   const ladder = [0, 1, 2, 3, 4, 5].map((n) =>
     optimiseWithinTransfers(mineIds, rows, { bank, transfers: n, ...solveOpts }));

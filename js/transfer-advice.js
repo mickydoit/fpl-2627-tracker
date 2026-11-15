@@ -92,7 +92,10 @@ export function recommendedHorizon({ squad = [], freeTransfers = 1 } = {}) {
   const longTerm = flagged.filter((p) => (p.chance_of_playing_next_round ?? 100) === 0);
 
   if (longTerm.length) {
-    return { horizon: 8, why: `${longTerm[0].web_name} has no return date, so the decision is a long one — judge it over 8 gameweeks.` };
+    /* A 0% chance next round is not the same as no return date: a suspension
+       and a dated injury both carry one in the news line. Say what is known. */
+    const dated = /until|expected back/i.test(longTerm[0].news || '');
+    return { horizon: 8, why: `${longTerm[0].web_name} is ${dated ? 'out for now' : 'out with no return date'}, so the decision is a long one — judge it over 8 gameweeks.` };
   }
   if (flagged.length) {
     return { horizon: 3, why: `${flagged[0].web_name} is a short-term doubt; 3 gameweeks is the window that actually matters.` };
@@ -151,7 +154,7 @@ export function classify({ gain, cross, hit = 0, incumbentRisk = 0, evidence = 1
     return { verdict: 'WATCH', confidence: 'MEDIUM', net, bar, reasons };
   }
 
-  reasons.push(`projects +${gain.toFixed(1)} over the planning horizon`);
+  reasons.push(`projects +${gain.toFixed(1)} over 5 gameweeks`);
   if (cross.allPositive) reasons.push('the advantage holds at every horizon tested');
   if (incumbentRisk > 0.3) reasons.push('the player being replaced is carrying an availability flag');
 

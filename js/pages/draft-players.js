@@ -80,7 +80,11 @@ if (!board?.players?.length) {
   const freeCount = {};
   for (const r of rows) if (!ownerOf.has(r.id)) freeCount[r.element_type] = (freeCount[r.element_type] || 0) + 1;
 
-  const nextEvent = Math.min(...(fixtures || []).filter((f) => !f.finished && f.event).map((f) => f.event), 1);
+  const nextEvent = ((fixtures) => {
+  /* The fallback used to sit INSIDE the min(), so the answer was always 1. */
+  const open = (fixtures || []).filter((f) => !f.finished && f.event).map((f) => f.event);
+  return open.length ? Math.min(...open) : 1;
+})(fixtures);
   const fixturesFor = (q) => (fixtures || [])
     .filter((f) => f.team_h === q.team || f.team_a === q.team)
     .map((f) => ({

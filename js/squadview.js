@@ -200,7 +200,9 @@ export function playerCard(p, { teams, fixturesFor, horizon = 5, fromEvent = 1, 
     fx.length
       ? el('div', { class: 'pc-fixtures' }, fdrTicker(fx, teams, horizon, fromEvent))
       : el('p', { class: 'hint' }, 'No fixtures published for this horizon yet.'),
-    fx.length ? el('ul', { class: 'pc-fixlist' }, fx.slice(0, horizon).map((f) => {
+    /* From the gameweek being planned, like the ticker above it — callers pass
+       the whole season, and slicing that from the top listed GW1-5 all year. */
+    fx.length ? el('ul', { class: 'pc-fixlist' }, fx.filter((f) => f.event >= fromEvent).slice(0, horizon).map((f) => {
       const opp = teams[f.opponent];
       return el('li', {},
         el('span', { class: 'pcf-gw' }, `GW${f.event}`),

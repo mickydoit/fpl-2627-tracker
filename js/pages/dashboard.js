@@ -18,7 +18,7 @@
  * not compute. projectAll, rateSquad, optimiseWithinTransfers, suggestTransfers
  * and bestMove are called exactly as the pages they came from called them.
  */
-import { loadAll, getState, setState, resolveSquadIds, readGameweek } from '../data.js';
+import { loadAll, getState, setState, resolveSquadIds, readGameweek, resolveBank, resolveFreeTransfers, currentPicks, fieldedPicks, pendingTransfers, sellPrices } from '../data.js';
 import { projectAll, SQUAD_RULES, actionableEvent, livePointsFor } from '../model.js';
 import { bestXI, scoreSquad, legalXI, optimiseWithinTransfers, squadCost, suggestTransfers } from '../optimiser.js';
 import { rateSquad, RATING_HORIZONS } from '../rating.js';
@@ -41,8 +41,13 @@ if (!d.boot) {
 const state = getState();
 const teams = Object.fromEntries(d.boot.teams.map((t) => [t.id, t]));
 const riskAversion = state.riskAversion ?? 0.5;
-const bank = state.bank ?? 0;
-const freeTransfers = state.freeTransfers ?? 1;
+/* From the entry itself, through the same helpers as Squad and Transfers.
+   These two used to default to £0.0m and one transfer here while the
+   Transfers page read the real bank, so the two pages recommended different
+   moves for the same squad. */
+const bank = resolveBank(d.entry, state, d.boot.events);
+const freeTransfers = resolveFreeTransfers(d.entry, state, d.boot.events);
+const sell = sellPrices(d.entry, d.boot.elements, d.boot.events);
 const fromEvent = actionableEvent(d.boot.events) ?? undefined;
 
 /* One projection cache for the page. Every horizon the reader can select goes
@@ -52,13 +57,26 @@ const rowsAt = (h) => {
   if (!cache.has(h)) cache.set(h, projectAll(d.boot, d.fixtures, { horizon: h, riskAversion, fromEvent }).rows);
   return cache.get(h);
 };
-const ctx = projectAll(d.boot, d.fixtures, { horizon: 5, riskAversion, fromEvent }).ctx;
-const byId = (h) => new Map(rowsAt(h).map((r) => [r.id, r]));
+const ctxCache = projectAll(d.boot, d.fixtures, { horizon: 5, riskAversion, fromEvent });
+cache.set(5, ctxCache.rows);
+const ctx = ctxCache.ctx;
+/* Cached per horizon. This is called inside per-player loops and on every
+   drag-legality check, and was building a fresh 672-entry Map each time. */
+const idMaps = new Map();
+const byId = (h) => {
+  if (!idMaps.has(h)) idMaps.set(h, new Map(rowsAt(h).map((r) => [r.id, r])));
+  return idMaps.get(h);
+};
 
-const { ids: squadIds, source } = resolveSquadIds(d.entry, state);
+const { ids: squadIds, source } = resolveSquadIds(d.entry, state, d.boot.events);
 const nextEvent = d.boot.events.find((e) => e.id === ctx.nextEvent);
 const currentEvent = d.boot.events.find((e) => e.is_current);
-const isLiveGW = !!currentEvent && !!d.live?.elements?.length;
+/* Live only while the gameweek is actually being played. `is_current` stays
+   on a gameweek until the NEXT deadline, and live.json keeps its scores, so
+   the bare test was true all week: the projections board showed last week's
+   points for six days, and saved line-up changes were never read back. */
+const isLiveGW = !!currentEvent && !currentEvent.finished
+  && !!d.live?.elements?.length && (d.live.event == null || d.live.event === currentEvent.id);
 const liveById = new Map((d.live?.elements || []).map((e) => [e.id, e]));
 
 /* ------------------------------------------------------------------ *
@@ -122,7 +140,9 @@ if (squadIds.length !== SQUAD_RULES.size) {
   addKids(app, noSquad.wrap);
 } else {
   const squad = squadIds.map((id) => byId(5).get(id)).filter(Boolean);
-  const picks = d.entry?.picks?.picks || [];
+  /* Manual squads carry no picks; an FPL squad carries its picks with any
+     transfer already confirmed for the next deadline applied. */
+  const picks = source === 'fpl' ? currentPicks(d.entry, d.boot.events) : [];
   const pickMap = new Map(picks.map((p) => [p.element, p]));
   let captain = byId(5).get(picks.find((p) => p.is_captain)?.element);
   const vice = byId(5).get(picks.find((p) => p.is_vice_captain)?.element);
@@ -198,7 +218,9 @@ if (squadIds.length !== SQUAD_RULES.size) {
 
   const xiTotal = () => chosenXi.map((id) => byId(lineupH).get(id)).filter(Boolean)
     .reduce((t, p) => t + p.proj * (p.id === captain?.id ? 2 : 1), 0);
-  const liveTotal = () => chosenXi.map((id) => byId(5).get(id)).filter(Boolean)
+  /* Bench Boost scores all fifteen; every other week only the eleven. */
+  const benchBoost = d.entry?.picks?.active_chip === 'bboost';
+  const liveTotal = () => (benchBoost ? squad : chosenXi.map((id) => byId(5).get(id)).filter(Boolean))
     .reduce((t, p) => t + (livePts(p) ?? 0), 0);
 
   /* No pill of its own — the Projections header immediately above it is the
@@ -274,11 +296,25 @@ if (squadIds.length !== SQUAD_RULES.size) {
       if (!g?.actual) {
         setKids(sec.body, el('p', { class: 'empty tight' }, `GW${reviewGw} has not been archived yet.`));
       } else {
-        const xi = chosenXi.map((id) => byId(5).get(id)).filter(Boolean);
+        /* The eleven FPL actually scored, when this is the gameweek it holds
+           picks for — not today's squad, which may already contain players
+           bought since. Older gameweeks have no picks on record, so they are
+           drawn with the current squad and say so. */
+        const fielded = source === 'fpl' && reviewGw === d.entry?.picks_event
+          ? [...fieldedPicks(d.entry)].sort((a, b) => a.position - b.position) : null;
+        const rowOf = (id) => byId(5).get(id);
+        const xi = fielded
+          ? fielded.filter((p) => p.position <= 11).map((p) => rowOf(p.element)).filter(Boolean)
+          : chosenXi.map(rowOf).filter(Boolean);
         const rest = squad.filter((p) => !chosenXi.includes(p.id));
-        const bench = benchOrder.length
-          ? benchOrder.map((id) => rest.find((p) => p.id === id)).filter(Boolean)
-          : rest;
+        const bench = fielded
+          ? fielded.filter((p) => p.position > 11).map((p) => rowOf(p.element)).filter(Boolean)
+          : benchOrder.length
+            ? benchOrder.map((id) => rest.find((p) => p.id === id)).filter(Boolean)
+            : rest;
+        if (!fielded && source === 'fpl') {
+          addKids(sec.body, el('p', { class: 'hint' }, `Your current squad against GW${reviewGw} — the eleven you fielded that week is not on record.`));
+        }
         /* By `code` — the archive is keyed that way because Draft and classic
            disagree on element ids for 21 of 587 players. */
         const compare = (p) => {
@@ -289,7 +325,7 @@ if (squadIds.length !== SQUAD_RULES.size) {
             : act >= proj - 0.1 ? (act > proj + 0.1 ? 'over' : 'met') : 'under';
           return { left: proj == null ? '—' : proj.toFixed(1), right: String(act), hit };
         };
-        setKids(sec.body, squadPitch({
+        addKids(sec.body, squadPitch({
           xi, bench, teams, captain, vice, variant: 'classic',
           value: compare, onPlayer: openPlayer,
         }));
@@ -420,7 +456,7 @@ if (squadIds.length !== SQUAD_RULES.size) {
   /* ---------------- this week's move ---------------- */
   const rec = recommendedHorizon({ squad, freeTransfers });
   const sug = suggestTransfers(squadIds, rowsAt(rec.horizon), {
-    bank, freeTransfers, horizon: rec.horizon, riskAversion, maxSuggestions: 12,
+    bank, freeTransfers, horizon: rec.horizon, riskAversion, maxSuggestions: 12, sellPrices: sell,
   });
   if (!sug.error) {
     const gainAt = (move, h) => {
