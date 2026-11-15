@@ -39,11 +39,24 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/configure-pages@v6
+      # No build step — the site is plain HTML, CSS and ES modules, and the
+      # data it reads is committed JSON in the same repo. But only what a
+      # browser can ask for is published: the research warehouse (5.5MB, read by
+      # nothing on the site), the scripts, the tests and the docs were all being
+      # uploaded and deployed forty-eight times a day.
+      - name: Assemble the site
+        run: |
+          mkdir _site
+          rsync -a ./ _site/ \
+            --exclude '.git*' --exclude '_site' --exclude 'node_modules' \
+            --exclude 'data/warehouse' --exclude 'data/draft/raw' \
+            --exclude 'scripts' --exclude 'docs' --exclude 'supabase' \
+            --exclude '*.md' --exclude 'package*.json' --exclude '.mcp.json'
+          touch _site/.nojekyll
+          du -sh _site
       - uses: actions/upload-pages-artifact@v5
         with:
-          # No build step — the site is plain HTML, CSS and ES modules, and the
-          # data it reads is committed JSON in the same repo.
-          path: '.'
+          path: '_site'
       # Two failures in a month, neither ours: once deploy-pages listed the
       # artifact a fraction of a second after upload and found none, once the
       # deployment hung to its ten-minute timeout. Both cleared on the next
