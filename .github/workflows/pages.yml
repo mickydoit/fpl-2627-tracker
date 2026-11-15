@@ -34,15 +34,28 @@ jobs:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.first.outputs.page_url || steps.retry.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           # No build step — the site is plain HTML, CSS and ES modules, and the
           # data it reads is committed JSON in the same repo.
           path: '.'
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      # Two failures in a month, neither ours: once deploy-pages listed the
+      # artifact a fraction of a second after upload and found none, once the
+      # deployment hung to its ten-minute timeout. Both cleared on the next
+      # run. So: one attempt that may fail quietly, a pause, then one that
+      # may not.
+      - id: first
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+        with:
+          timeout: 180000
+      - if: steps.first.outcome == 'failure'
+        run: sleep 20
+      - id: retry
+        if: steps.first.outcome == 'failure'
+        uses: actions/deploy-pages@v5
