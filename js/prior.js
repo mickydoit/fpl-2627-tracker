@@ -516,8 +516,16 @@ export function hydrate(boot, prior, opts = {}, espnHistory = null) {
   }
 
   const elements = boot.elements.map((e) => {
-    const pr = prior.players[e.code];
-    if (!pr) return e;
+    /* A player with no row in the frozen prior is NOT skipped. The prior was
+       frozen before GW1, so everyone registered afterwards — 85 players by
+       GW10, 53 of them with minutes — is missing from it. Returning those rows
+       untouched left them without `modelMinutes`, and the model then spread
+       their real minutes over the pooled denominator (this season's games plus
+       half of last season's): Barcola, 7 starts and 579 minutes in 10 games,
+       came out at 20 minutes a game and P(start) 0.004. It also made the ESPN
+       tier below unreachable for exactly the players it was written for.
+       poolPlayerSeasons already treats a null prior as "this season only". */
+    const pr = prior.players[e.code] ?? null;
     const pooled = poolPlayerSeasons(e, pr, {
       gamesThis, games, lastSeasonWeight: lambda, lastSeasonGames: o.lastSeasonGames, priorSeason, opts: o,
     });
