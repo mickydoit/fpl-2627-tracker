@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-11-14T11:36:35.404Z",
+ "builtAt": "2026-11-15T02:52:34.016Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -86,14 +86,14 @@
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 110,
-   "espnName": "Internazionale",
+   "espnTeamId": 4056,
+   "espnName": "Spezia",
    "candidates": 0,
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 4056,
-   "espnName": "Spezia",
+   "espnTeamId": 110,
+   "espnName": "Internazionale",
    "candidates": 0,
    "reason": "no football-data club"
   },
