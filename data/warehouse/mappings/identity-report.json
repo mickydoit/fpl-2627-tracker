@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-11-16T12:13:42.807Z",
+ "builtAt": "2026-11-17T12:37:25.730Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -9,13 +9,13 @@
  "players": {
   "fplTotal": 672,
   "inFplEspnMap": 553,
-  "mappedToFootballData": 520,
+  "mappedToFootballData": 519,
   "byMethod": {
    "dob+full-name": 491,
-   "dob+surname": 29
+   "dob+surname": 28
   },
   "proposals": 0,
-  "unmapped": 33
+  "unmapped": 34
  },
  "footballDataPlayersSeen": 10221,
  "teamProblems": [
@@ -104,6 +104,12 @@
    "reason": "no football-data club"
   },
   {
+   "espnTeamId": 7868,
+   "espnName": "Angers",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
    "espnTeamId": 159,
    "espnName": "Bordeaux",
    "candidates": 0,
@@ -118,12 +124,6 @@
   {
    "espnTeamId": 167,
    "espnName": "Lyon",
-   "candidates": 0,
-   "reason": "no football-data club"
-  },
-  {
-   "espnTeamId": 7868,
-   "espnName": "Angers",
    "candidates": 0,
    "reason": "no football-data club"
   }
@@ -194,6 +194,26 @@
     {
      "footballDataId": 98993,
      "name": "Dmytro Riznyk"
+    }
+   ],
+   "reason": "date of birth matched but no name did"
+  },
+  {
+   "code": 457569,
+   "name": "Petrović",
+   "dateOfBirth": "2006-02-03",
+   "candidates": [
+    {
+     "footballDataId": 275579,
+     "name": "Sékou Koné"
+    },
+    {
+     "footballDataId": 274563,
+     "name": "Brayan"
+    },
+    {
+     "footballDataId": 263220,
+     "name": "Elijah Scott"
     }
    ],
    "reason": "date of birth matched but no name did"

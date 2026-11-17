@@ -1,11 +1,11 @@
 {
  "dataset": {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-16T12:13:44.586Z",
-  "coverageDigest": "930e87e926b29688",
+  "generatedAt": "2026-11-17T12:37:27.035Z",
+  "coverageDigest": "da00e1bedb35ac43",
   "entities": {
    "structural_match": 12326,
-   "team_match": 7004,
+   "team_match": 7244,
    "player_season": 25003,
    "teams": 227,
    "players": 553,
@@ -20,7 +20,7 @@
    "espn": {
     "minSeason": 2021,
     "competitionSeasons": 40,
-    "rows": 28505
+    "rows": 28625
    }
   },
   "seasonWindows": {
@@ -49,11 +49,11 @@
   },
   "files": 223
  },
- "builtAt": "2026-11-16T12:13:44.587Z",
+ "builtAt": "2026-11-17T12:37:27.036Z",
  "footprint": {
   "files": 223,
-  "bytes": 5622726,
-  "mb": 5.62
+  "bytes": 5685474,
+  "mb": 5.69
  },
  "competitions": [
   {
@@ -1203,10 +1203,10 @@
    "season": 2021,
    "structuralMatches": 0,
    "structuralPlayed": 0,
-   "espnMatches": 37,
+   "espnMatches": 157,
    "espnExpected": 306,
-   "espnCollectedPct": 12.1,
-   "teamMatchRows": 74,
+   "espnCollectedPct": 51.3,
+   "teamMatchRows": 314,
    "joinRatePct": 0,
    "teams": 0,
    "fdSquadPlayers": 0,
@@ -2038,7 +2038,7 @@
   "fplActive": 566,
   "fplDeparted": 106,
   "mappedToEspn": 553,
-  "mappedToFootballData": 520,
+  "mappedToFootballData": 519,
   "ambiguousRefused": 0,
   "unmappedActive": 14,
   "unmappedDeparted": 105,
