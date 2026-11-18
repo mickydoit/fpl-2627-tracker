@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-11-17T12:37:25.730Z",
+ "builtAt": "2026-11-18T12:24:29.168Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -104,12 +104,6 @@
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 7868,
-   "espnName": "Angers",
-   "candidates": 0,
-   "reason": "no football-data club"
-  },
-  {
    "espnTeamId": 159,
    "espnName": "Bordeaux",
    "candidates": 0,
@@ -118,6 +112,12 @@
   {
    "espnTeamId": 175,
    "espnName": "Lens",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 7868,
+   "espnName": "Angers",
    "candidates": 0,
    "reason": "no football-data club"
   },
