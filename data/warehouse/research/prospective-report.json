@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-18T12:24:31.104Z",
+ "generatedAt": "2026-11-19T12:18:22.286Z",
  "experimentFreeze": {
   "commit": "ae062f6",
   "at": "2026-08-29T01:18:26.376Z",
@@ -22,7 +22,7 @@
   1,
   2
  ],
- "cohortN": 29,
+ "cohortN": 30,
  "modelChanges": "NONE — no candidate was refitted, edited or re-versioned this run.",
  "measurability": {
   "opportunity (minutes, starts, 60+)": "SCORABLE — FPL element-summary carries per-gameweek minutes and starts",
@@ -31,7 +31,7 @@
  },
  "thresholds": {
   "180|ALL": {
-   "n": 24,
+   "n": 25,
    "status": "scorable"
   },
   "180|OUTFIELD": {
@@ -39,7 +39,7 @@
    "status": "scorable"
   },
   "180|GK": {
-   "n": 1,
+   "n": 2,
    "status": "NOT YET INDIVIDUALLY SCORABLE"
   },
   "450|ALL": {
@@ -87,14 +87,14 @@
    "scorable": 22
   },
   "GROUP B — COLD-START GAP": {
-   "n": 6,
+   "n": 7,
    "question": "Can warehouse evidence inform players where the live model has no comparable event-rate estimate?",
    "comparators": [
     "XG0/XA0 position baseline",
     "XG2/XA1 frozen bridge"
    ],
    "forbidden": "The incumbent is NOT a comparator here. Its xG/90 is a structural absence, not a forecast, and scoring the bridge against it would manufacture a win.",
-   "scorable": 2
+   "scorable": 3
   }
  },
  "rows": [
@@ -166,6 +166,29 @@
    "O0c_startRate": 0.4178,
    "O3_startRate": 0.4218,
    "incumbent_startProbability": 0.9064141683466651
+  },
+  {
+   "name": "Mike Penders",
+   "position": 1,
+   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
+   "eligibleGws": 8,
+   "excludedGws": 2,
+   "prospectiveMinutes": 285,
+   "prospectiveStarts": 3,
+   "played": 4,
+   "sixtyPlus": 3,
+   "realised_xG90": 0,
+   "realised_xA90": 0,
+   "realised_startRate": 0.375,
+   "realised_featureRate": 0.5,
+   "incumbent_xG90": 0,
+   "incumbent_xA90": 0,
+   "incumbentHasProductionEstimate": false,
+   "bridge_xG90": null,
+   "bridge_xA90": null,
+   "O0c_startRate": 0.2354,
+   "O3_startRate": 0.2402,
+   "incumbent_startProbability": null
   },
   {
    "name": "Darnell Furlong",
