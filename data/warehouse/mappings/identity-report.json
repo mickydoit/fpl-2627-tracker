@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-11-19T12:18:20.308Z",
+ "builtAt": "2026-11-20T12:21:09.251Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -128,18 +128,6 @@
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 139,
-   "espnName": "Ajax Amsterdam",
-   "candidates": 0,
-   "reason": "no football-data club"
-  },
-  {
-   "espnTeamId": 148,
-   "espnName": "PSV Eindhoven",
-   "candidates": 0,
-   "reason": "no football-data club"
-  },
-  {
    "espnTeamId": 147,
    "espnName": "NEC Nijmegen",
    "candidates": 0,
@@ -148,6 +136,18 @@
   {
    "espnTeamId": 140,
    "espnName": "AZ Alkmaar",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 139,
+   "espnName": "Ajax Amsterdam",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 148,
+   "espnName": "PSV Eindhoven",
    "candidates": 0,
    "reason": "no football-data club"
   }
