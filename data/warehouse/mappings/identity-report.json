@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-11-20T12:21:09.251Z",
+ "builtAt": "2026-11-21T11:56:30.824Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
@@ -17,7 +17,7 @@
   "proposals": 0,
   "unmapped": 34
  },
- "footballDataPlayersSeen": 10221,
+ "footballDataPlayersSeen": 10223,
  "teamProblems": [
   {
    "espnTeamId": 397,
@@ -134,8 +134,8 @@
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 140,
-   "espnName": "AZ Alkmaar",
+   "espnTeamId": 148,
+   "espnName": "PSV Eindhoven",
    "candidates": 0,
    "reason": "no football-data club"
   },
@@ -146,8 +146,8 @@
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 148,
-   "espnName": "PSV Eindhoven",
+   "espnTeamId": 140,
+   "espnName": "AZ Alkmaar",
    "candidates": 0,
    "reason": "no football-data club"
   }
@@ -637,14 +637,8 @@
   {
    "code": 661313,
    "name": "J.Angulo",
-   "dateOfBirth": "2008-01-12",
-   "candidates": [
-    {
-     "footballDataId": 283413,
-     "name": "Pedro Fernández"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
+   "dateOfBirth": "1988-09-26",
+   "reason": "no football-data player born that day in the collected competitions"
   },
   {
    "code": 665243,
