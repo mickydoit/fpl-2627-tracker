@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-21T11:56:32.838Z",
+ "generatedAt": "2026-11-22T12:10:28.196Z",
  "experimentFreeze": {
   "commit": "ae062f6",
   "at": "2026-08-29T01:18:26.376Z",
@@ -22,7 +22,7 @@
   1,
   2
  ],
- "cohortN": 30,
+ "cohortN": 28,
  "modelChanges": "NONE — no candidate was refitted, edited or re-versioned this run.",
  "measurability": {
   "opportunity (minutes, starts, 60+)": "SCORABLE — FPL element-summary carries per-gameweek minutes and starts",
@@ -31,23 +31,23 @@
  },
  "thresholds": {
   "180|ALL": {
-   "n": 25,
-   "status": "scorable"
-  },
-  "180|OUTFIELD": {
    "n": 23,
    "status": "scorable"
   },
+  "180|OUTFIELD": {
+   "n": 22,
+   "status": "scorable"
+  },
   "180|GK": {
-   "n": 2,
+   "n": 1,
    "status": "NOT YET INDIVIDUALLY SCORABLE"
   },
   "450|ALL": {
-   "n": 21,
+   "n": 20,
    "status": "scorable"
   },
   "450|OUTFIELD": {
-   "n": 20,
+   "n": 19,
    "status": "scorable"
   },
   "450|GK": {
@@ -68,33 +68,33 @@
   }
  },
  "pooled": {
-  "n": 26,
-  "totalProspectiveMinutes": 13350,
-  "realisedTotalXG": 15.68,
-  "bridgePredictedTotalXG": 23.087,
-  "incumbentPredictedTotalXG": 27.682,
+  "n": 25,
+  "totalProspectiveMinutes": 12861,
+  "realisedTotalXG": 15.62,
+  "bridgePredictedTotalXG": 22.758,
+  "incumbentPredictedTotalXG": 27.508,
   "caveat": "Pooled level agreement only. A model can match the aggregate and rank players badly, so this may never on its own justify promoting a candidate."
  },
  "populations": {
   "GROUP A — INCUMBENT-COMPARABLE": {
-   "n": 23,
+   "n": 22,
    "question": "Does the frozen bridge improve on the live model, in the same units?",
    "comparators": [
     "live incumbent xG/90 and xA/90",
     "XG0/XA0 position baseline",
     "XG2/XA1 frozen bridge"
    ],
-   "scorable": 22
+   "scorable": 21
   },
   "GROUP B — COLD-START GAP": {
-   "n": 7,
+   "n": 6,
    "question": "Can warehouse evidence inform players where the live model has no comparable event-rate estimate?",
    "comparators": [
     "XG0/XA0 position baseline",
     "XG2/XA1 frozen bridge"
    ],
    "forbidden": "The incumbent is NOT a comparator here. Its xG/90 is a structural absence, not a forecast, and scoring the bridge against it would manufacture a win.",
-   "scorable": 3
+   "scorable": 2
   }
  },
  "rows": [
@@ -166,29 +166,6 @@
    "O0c_startRate": 0.4178,
    "O3_startRate": 0.4218,
    "incumbent_startProbability": 0.9064141683466651
-  },
-  {
-   "name": "Mike Penders",
-   "position": 1,
-   "episodeType": "FOREIGN_TO_EPL_TRANSFER",
-   "eligibleGws": 8,
-   "excludedGws": 2,
-   "prospectiveMinutes": 285,
-   "prospectiveStarts": 3,
-   "played": 4,
-   "sixtyPlus": 3,
-   "realised_xG90": 0,
-   "realised_xA90": 0,
-   "realised_startRate": 0.375,
-   "realised_featureRate": 0.5,
-   "incumbent_xG90": 0,
-   "incumbent_xA90": 0,
-   "incumbentHasProductionEstimate": false,
-   "bridge_xG90": null,
-   "bridge_xA90": null,
-   "O0c_startRate": 0.2354,
-   "O3_startRate": 0.2402,
-   "incumbent_startProbability": null
   },
   {
    "name": "Darnell Furlong",
@@ -603,29 +580,6 @@
    "O0c_startRate": 0.3461,
    "O3_startRate": 0.3468,
    "incumbent_startProbability": 0.5032449438202248
-  },
-  {
-   "name": "Eiran Cashin",
-   "position": 2,
-   "episodeType": "CHAMPIONSHIP_TO_EPL_TRANSFER",
-   "eligibleGws": 8,
-   "excludedGws": 2,
-   "prospectiveMinutes": 489,
-   "prospectiveStarts": 5,
-   "played": 6,
-   "sixtyPlus": 5,
-   "realised_xG90": 0.011042944785276074,
-   "realised_xA90": 0.03865030674846626,
-   "realised_startRate": 0.625,
-   "realised_featureRate": 0.75,
-   "incumbent_xG90": 0.0321,
-   "incumbent_xA90": 0.0828,
-   "incumbentHasProductionEstimate": true,
-   "bridge_xG90": 0.0606,
-   "bridge_xA90": 0.054,
-   "O0c_startRate": 0.4178,
-   "O3_startRate": 0.4179,
-   "incumbent_startProbability": 0.8354857855125063
   },
   {
    "name": "Semi Ajayi",

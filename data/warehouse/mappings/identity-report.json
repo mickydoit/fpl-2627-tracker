@@ -1,23 +1,23 @@
 {
- "builtAt": "2026-11-21T11:56:30.824Z",
+ "builtAt": "2026-11-22T12:10:26.488Z",
  "teams": {
   "total": 227,
   "withFpl": 20,
-  "withEspn": 123,
-  "problems": 22
+  "withEspn": 136,
+  "problems": 27
  },
  "players": {
-  "fplTotal": 672,
+  "fplTotal": 674,
   "inFplEspnMap": 553,
-  "mappedToFootballData": 519,
+  "mappedToFootballData": 521,
   "byMethod": {
-   "dob+full-name": 491,
-   "dob+surname": 28
+   "dob+full-name": 492,
+   "dob+surname": 29
   },
   "proposals": 0,
-  "unmapped": 34
+  "unmapped": 32
  },
- "footballDataPlayersSeen": 10223,
+ "footballDataPlayersSeen": 10229,
  "teamProblems": [
   {
    "espnTeamId": 397,
@@ -128,6 +128,12 @@
    "reason": "no football-data club"
   },
   {
+   "espnTeamId": 139,
+   "espnName": "Ajax Amsterdam",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
    "espnTeamId": 147,
    "espnName": "NEC Nijmegen",
    "candidates": 0,
@@ -140,14 +146,38 @@
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 139,
-   "espnName": "Ajax Amsterdam",
+   "espnTeamId": 140,
+   "espnName": "AZ Alkmaar",
    "candidates": 0,
    "reason": "no football-data club"
   },
   {
-   "espnTeamId": 140,
-   "espnName": "AZ Alkmaar",
+   "espnTeamId": 3713,
+   "espnName": "Paços de Ferreira",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 1929,
+   "espnName": "Benfica",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 5309,
+   "espnName": "Vitória de Guimaraes",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 3519,
+   "espnName": "Belenenses",
+   "candidates": 0,
+   "reason": "no football-data club"
+  },
+  {
+   "espnTeamId": 12216,
+   "espnName": "Estoril",
    "candidates": 0,
    "reason": "no football-data club"
   }
@@ -223,26 +253,6 @@
    "reason": "date of birth matched but no name did"
   },
   {
-   "code": 457569,
-   "name": "Petrović",
-   "dateOfBirth": "2006-02-03",
-   "candidates": [
-    {
-     "footballDataId": 275579,
-     "name": "Sékou Koné"
-    },
-    {
-     "footballDataId": 274563,
-     "name": "Brayan"
-    },
-    {
-     "footballDataId": 263220,
-     "name": "Elijah Scott"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
    "code": 465390,
    "name": "Kesler-Hayden",
    "dateOfBirth": "2002-10-23",
@@ -290,22 +300,6 @@
     {
      "footballDataId": 186393,
      "name": "Duke Verduin"
-    }
-   ],
-   "reason": "date of birth matched but no name did"
-  },
-  {
-   "code": 487838,
-   "name": "Hall",
-   "dateOfBirth": "1999-12-07",
-   "candidates": [
-    {
-     "footballDataId": 122231,
-     "name": "Isaac Schmidt"
-    },
-    {
-     "footballDataId": 189593,
-     "name": "Sam Dalby"
     }
    ],
    "reason": "date of birth matched but no name did"
